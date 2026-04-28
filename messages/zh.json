@@ -1,0 +1,375 @@
+{
+  "header": {
+    "brand": "ArcWall",
+    "subhead": "壁纸生成器",
+    "nav": [],
+    "creditsLabel": "积分",
+    "login": "登录",
+    "loading": "加载中…"
+  },
+  "hero": {
+    "eyebrow": "ArcWall · 主题每日更新",
+    "title": "用 AI 创造精美壁纸",
+    "subtitle": "根据你的灵感快速生成背景。每日上新色彩、质感与构图，随时焕然一新。",
+    "startCta": "立即创作",
+    "exploreCta": "浏览画廊",
+    "stats": {
+      "generatedValue": "200万+",
+      "generatedLabel": "生成壁纸",
+      "stylesValue": "150+",
+      "stylesLabel": "主题与配色"
+    },
+    "cardBadge": "热门风格",
+    "cardTitle": "抽象极光",
+    "cardCaption": "AI 生成 · 8K 高清",
+    "tags": ["赛博朋克城市", "动漫", "唯美关键词", "自然风光"],
+    "joinCreators": "已有超过 10,000+ 创作者加入",
+    "placeholders": [
+      "赛博朋克霓虹城市，漂浮的植物花园...",
+      "一只穿着宇航服在火星喝咖啡的可爱柯基...",
+      "极简主义宁静风景，发光的月亮...",
+      "充满未来感的机器人电影级特写..."
+    ]
+  },
+  "palettes": {
+    "light": {
+      "eyebrow": "浅色调",
+      "title": "明亮主题",
+      "subtitle": "清爽柔和的渐变，让桌面更通透。"
+    },
+    "dark": {
+      "eyebrow": "深色调",
+      "title": "暗黑主题",
+      "subtitle": "沉浸式对比，呈现电影级氛围。"
+    }
+  },
+  "typography": {
+    "eyebrow": "字体系统",
+    "helper": "双语排版层级清晰，适配标题、说明与按钮。",
+    "items": [
+      {
+        "role": "标题",
+        "primary": "浏览数百万张 AI 壁纸，专属于你的风格。",
+        "secondary": "每日上新，灵感无限。"
+      },
+      {
+        "role": "正文",
+        "primary": "精选全球优质提示词。",
+        "secondary": "每天日出焕新灵感。"
+      }
+    ]
+  },
+  "prompt": {
+    "eyebrow": "提示词",
+    "helper": "描述你想要的壁纸",
+    "placeholder": "赛博朋克霓虹城市，漂浮的植物花园…",
+    "button": "开始生成",
+    "optimize": "优化提示词",
+    "optimizeTitle": "AI 优化提示词",
+    "loading": "生成中…",
+    "filterLabel": "按主题筛选",
+    "languageLabel": "语言",
+    "generationFailed": "生成失败",
+    "optimizePromptFailed": "提示词优化失败",
+    "pleaseEnterPrompt": "请输入提示词"
+  },
+  "trending": {
+    "eyebrow": "热门壁纸",
+    "title": "探索社区最受欢迎的场景",
+    "badge": "每小时更新",
+    "loading": "加载中…",
+    "download": "下载",
+    "copyPrompt": "复制提示词",
+    "makeSame": "做同款",
+    "failedToFavorite": "操作失败",
+    "networkError": "网络错误"
+  },
+  "footer": {
+    "brand": "ArcWall",
+    "tagline": "用 AI 创造美丽壁纸",
+    "crafted": "为设计师与创作者而生。",
+    "rights": "© 2026 ArcWall 版权所有。",
+    "links": [
+      { "label": "关于", "href": "/#about" },
+      { "label": "条款", "href": "/#terms" },
+      { "label": "隐私", "href": "/#privacy" },
+      { "label": "支持", "href": "mailto:me@idoubi.cc" }
+    ]
+  },
+  "myWorks": {
+    "title": "我的作品",
+    "viewTrash": "前往回收站",
+    "prompt": {
+      "label": "提示词",
+      "model": "模型",
+      "aspectRatio": "比例",
+      "style": "风格",
+      "placeholder": "描述你想要的壁纸...",
+      "generate": "生成",
+      "generating": "生成中...",
+      "styles": {
+        "realistic": "写实",
+        "artistic": "艺术",
+        "abstract": "抽象",
+        "minimalist": "极简"
+      }
+    },
+    "empty": "还没有作品，开始创作吧！",
+    "card": {
+      "edit": "编辑",
+      "preview": "预览",
+      "delete": "删除",
+      "download": "下载",
+      "more": "更多",
+      "unpublish": "取消发布",
+      "generating": "生成中",
+      "failed": "生成失败",
+      "published": "已发布",
+      "retry": "重试",
+      "makeSame": "做同款",
+      "unfavorite": "取消收藏",
+      "publishToHomepage": "发布至首页"
+    },
+    "workbench": {
+      "confirmDelete": "确定要删除这个作品吗？",
+      "confirmBatchDelete": "确定要删除 {count} 个作品吗？",
+      "confirmPublish": "确定要发布这个作品吗？",
+      "confirmUnpublish": "确定要取消发布这个作品吗？",
+      "confirmBatchUnfavorite": "确定要取消收藏选中的 {count} 个作品吗？",
+      "confirmBatchUnpublish": "确定要取消发布选中的 {count} 个作品吗？",
+      "confirmBatchPublish": "确定要发布选中的 {count} 个作品吗？",
+      "batchUnpublishedSuccess": "已取消发布 {count} 个作品",
+      "batchPublishedSuccess": "已发布 {count} 个作品",
+      "publishedSuccess": "发布成功",
+      "noEligibleWorks": "没有可发布的作品",
+      "deselectAll": "取消全选",
+      "selectAllOnPage": "全选本页",
+      "currentPage": "当前页共 {count} 个作品",
+      "filter": "筛选",
+      "filters": "筛选条件",
+      "keyword": "关键词",
+      "keywordPlaceholder": "搜索关键词...",
+      "sortByLikes": "按点赞数排序",
+      "sortDefault": "默认",
+      "sortDesc": "降序",
+      "sortAsc": "升序",
+      "dateRange": "日期范围",
+      "resetFilters": "重置筛选",
+      "emptyFavoritesTitle": "暂无收藏",
+      "emptyPublishedTitle": "已发布作品",
+      "emptyCreationsTitle": "暂无创作",
+      "emptyFavoritesDesc": "你还没有收藏任何壁纸。去灵感画廊探索一下吧！",
+      "emptyPublishedDesc": "当你将满意的作品发布到公开主页后，它们会在这里展示并接受社区的点赞。",
+      "emptyCreationsDesc": "开始创作你的专属 AI 壁纸吧！",
+      "failedToLoadWallpapers": "加载壁纸失败",
+      "retryFailed": "重试失败",
+      "deleteFailed": "删除失败",
+      "batchDeleteFailed": "批量删除失败",
+      "unpublishFailed": "取消发布失败",
+      "toggleFavoriteFailed": "切换收藏状态失败",
+      "networkError": "网络错误",
+      "batchUnfavoriteFailed": "批量取消收藏失败",
+      "batchUnpublishFailed": "批量取消发布失败",
+      "publishFailed": "发布失败",
+      "failedToGenerateDownloadUrl": "生成下载链接失败",
+      "downloadFailed": "下载失败"
+    },
+    "batch": {
+      "selected": "已选择",
+      "deleteSelected": "删除选中",
+      "downloadSelected": "下载选中",
+      "cancel": "取消",
+      "unpublishSelected": "取消发布选中",
+      "batchPublish": "批量发布",
+      "processing": "处理中...",
+      "unfavorite": "取消收藏"
+    },
+    "sidebar": {
+      "title": "数字资产工作台",
+      "creations": "我的创作",
+      "published": "已发布作品",
+      "favorites": "我的收藏",
+      "trash": "回收站"
+    },
+    "preview": {
+      "aspectRatio": "图片比例",
+      "resolution": "分辨率",
+      "prompt": "提示词",
+      "model": "模型",
+      "close": "关闭"
+    },
+    "pagination": {
+      "previous": "上一页",
+      "next": "下一页",
+      "page": "第"
+    }
+  },
+  "trash": {
+    "title": "回收站",
+    "empty": "没有已删除的作品",
+    "emptyTitle": "你的世界非常整洁",
+    "emptyDesc": "被删除的作品会暂存在这里，并在 30 天后自动物理销毁以节省空间。",
+    "confirmClearPrompt": "这是一个高危操作，壁纸配方将永久丢失。请输入 '{confirmText}' 确认清空：",
+    "confirmFailed": "验证失败，未执行清空",
+    "backToWorks": "返回我的作品",
+    "clearAll": "一键清空",
+    "restore": "恢复",
+    "delete": "删除",
+    "confirmClear": "确定要清空所有回收站内容吗？",
+    "confirmDelete": "确定要永久删除这个作品吗？",
+    "restoreFailed": "恢复失败",
+    "deleteFailed": "删除失败",
+    "clearTrashFailed": "清空回收站失败"
+  },
+  "categories": {
+    "title": "探索风格",
+    "tryStyle": "尝试此风格",
+    "items": [
+      { "icon": "monitor", "label": "赛博朋克城市", "image": "/banner.png" },
+      { "icon": "cpu", "label": "日系动漫", "image": "/banner.png" },
+      { "icon": "leaf", "label": "自然风光", "image": "/banner.png" },
+      { "icon": "grid", "label": "3D 抽象", "image": "/banner.png" }
+    ]
+  },
+  "features": {
+    "items": [
+      {
+        "decorativeText": "集中管理，得心应手",
+        "title": "一站式资产工作台",
+        "description": "在您的专属工作台中集中管理所有生成的壁纸资产。支持快速预览、编辑参数、批量下载及删除等操作。通过直观的网格视图，您的个人灵感库将一目了然，方便随时回顾和高效管理每一次的创作记录。",
+        "buttonText": "进入工作台",
+        "buttonLink": "/my-works",
+        "image": "/poster_01.png",
+        "imagePosition": "right"
+      },
+      {
+        "decorativeText": "后台生成，无需等待",
+        "title": "智能异步任务管理",
+        "description": "我们采用先进的异步处理机制，即使在生成高清复杂的AI壁纸时，您的当前操作也绝不会被阻塞。您可以继续畅快地浏览其他页面或同时发起多个生成任务，并通过任务状态提示器随时掌握各项创作的最新进度。",
+        "buttonText": "尝试生成",
+        "buttonLink": "/",
+        "image": "/poster_02.png",
+        "imagePosition": "left"
+      },
+      {
+        "decorativeText": "分享灵感，展示自我",
+        "title": "一键发布个人作品",
+        "description": "将您的得意之作一键发布到公共画廊，与整个创作社区分享您的独特创意与美学。发布的作品将有机会登上海量用户的推荐列表，不仅能收获他人的点赞与认可，更能成为激发全世界创作者灵感的重要源泉。",
+        "buttonText": "查看画廊",
+        "buttonLink": "/",
+        "image": "/poster_03.png",
+        "imagePosition": "right"
+      },
+      {
+        "decorativeText": "安全保障，轻松找回",
+        "title": "云端安全回收站",
+        "description": "不小心删除了心仪的作品？完全不必担心！所有被删除的壁纸资产都将安全地保存在云端回收站中。您可以随时浏览回收站，一键将误删的作品完好无损地恢复到工作台，或者选择永久清空以释放存储空间。",
+        "buttonText": "查看回收站",
+        "buttonLink": "/trash",
+        "image": "/poster_04.png",
+        "imagePosition": "left"
+      }
+    ]
+  },
+  "howItWorks": {
+    "title": "如何制作您自己的人工智能生成壁纸？",
+    "subtitle": "只需四个步骤即可创建个性化的4K壁纸",
+    "items": [
+      { "step": "1", "title": "输入您的想法", "desc": "描述您想要的墙纸场景" },
+      { "step": "2", "title": "设置比例", "desc": "指定长宽比（16:9、9:16、4:3或自定义），然后点击「生成」以创建您的AI壁纸" },
+      { "step": "3", "title": "选择墙纸风格", "desc": "选择风格 - 从15种以上的艺术风格中选择（如波普艺术、赛博朋克等）" },
+      { "step": "4", "title": "生成并下载", "desc": "浏览独特的数字艺术作品集，并立即下载您最喜欢的作品。将它们用作手机壁纸、桌面主题，甚至打印出来用于定制家居装饰——轻松将创意融入每个屏幕和空间" }
+    ],
+    "cta": "创建您的壁纸"
+  },
+  "testimonials": {
+    "title": "Imgkits AI 壁纸生成器的真实用户评价",
+    "items": [
+      { "initials": "EC", "name": "Emma Carter", "content": "AI 壁纸生成器真是个改变游戏规则的工具！短短几分钟我就为我的游戏设备创建了一幅惊艳的 4K 星云壁纸。喜欢赛博朋克霓虹风格让颜色更加鲜明的效果。完美的长宽比定制为我节省了数小时的编辑时间。是自定义壁纸的最佳工具！", "avatar": "https://randomuser.me/api/portraits/women/44.jpg" },
+      { "initials": "SJ", "name": "Sarah Johnson", "content": "终于找到了一个理解设备尺寸的AI艺术生成器。我的iPhone 15 Pro Max壁纸采用Anime Cel-Shading风格，在9:16的比例下看起来非常清晰。HD质量可与专业数字艺术作品相媲美。艺术风格的多样性得分10/10！", "avatar": "https://randomuser.me/api/portraits/women/68.jpg" },
+      { "initials": "SK", "name": "Sophia Kaur", "content": "使用印象派画笔风格为我的 iPad 和桌面创建了匹配的壁纸。4:3 的平板比例非常合适。只希望有更多的纹理选项，但 4K 的输出质量对于家庭装饰项目来说是卓越的" },
+      { "initials": "NJ", "name": "Noah Jensen", "content": "难以置信，这个深海蓝鲸壁纸在16:9格式下看起来是多么自然。人工智能保留的细节比我的 Photoshop 编辑还要好。未来派全息风格增添了神奇的深度。对于那些需要快速获取高清背景的用户来说，这是一个必不可少的工具！", "avatar": "https://randomuser.me/api/portraits/men/32.jpg" },
+      { "initials": "IR", "name": "Isabella Rossi", "content": "非常适合快速获取灵感！在确定最终设计之前生成了20多个波普艺术融合壁纸。自定义尺寸功能拯救了我的展览项目。希望能看到更多抽象风格的设计，但目前的艺术风格都非常出色", "avatar": "https://randomuser.me/api/portraits/women/12.jpg" },
+      { "initials": "RP", "name": "Raj Patel", "content": "完全改变了我的工作流程。为所有团队设备创建了极简几何壁纸，使用自定义比例。4K质量使文本/图标清晰突出。在美观和功能性之间达到完美平衡。SEO提示：这应该是「自定义AI壁纸」搜索的第一名！" }
+    ]
+  },
+  "faq": {
+    "title": "常见问题解答",
+    "subtitle": "找不到您正在寻找的答案吗？ 联系您的支持团队",
+    "items": [
+      { "q": "该工具支持哪些分辨率？", "a": "我们的人工智能引擎默认设置为 4K 超高清 (3840×2160)，针对所有设备进行了优化，包括 iOS/Android 智能手机、Windows/Mac 电脑和折叠显示器" },
+      { "q": "如何创建手机壁纸？", "a": "三个简单步骤：1）输入描述（例如「星空下的动漫女孩」） 2）从15种以上的艺术风格中选择 3）生成并下载。垂直布局会自动调整以适应相机切口和屏幕边缘" },
+      { "q": "是否提供免费试用？", "a": "新用户可获得3次免费生成。高级会员解锁无限导出、8K升级和20多种独家滤镜，提供按月或按年订阅选项" },
+      { "q": "我可以增强现有的图像吗？", "a": "使用我们的AI放大器将分辨率提升四倍（400%放大），同时修复细节 – 非常适合恢复复古照片或改善截图" },
+      { "q": "典型的生成时间？", "a": "4K 壁纸在使用 GPU 集群时渲染需时 12-25 秒。在高峰时段，95% 的请求通过智能排队优化在 30 秒内完成" },
+      { "q": "可用的艺术风格？", "a": "每周更新8个类别：赛博朋克、墨水画、平面插图等。新的动态光照模式创建完美的3D效果，非常适合AMOLED显示屏" },
+      { "q": "这与其他人工智能工具有什么不同？", "a": "我们与真实的艺术家合作来训练风格——就像口袋里有8位专业插画师一样" },
+      { "q": "桌面特定功能？", "a": "宽屏算法通过焦点区域检测来保留关键视觉元素。PSD 文件保留层以便于生成后的Photoshop编辑" }
+    ]
+  },
+  "cta": {
+    "title": "解锁一个令人印象深刻的个性化壁纸世界！",
+    "desc": "设计一款高质量的壁纸，独一无二，并适合您的尺寸和风格",
+    "button": "立即加入"
+  },
+  "language": {
+    "en": "EN",
+    "zh": "中文"
+  },
+  "gallery": {
+    "title": "灵感画廊",
+    "subtitle": "探索社区最受欢迎的场景",
+    "trending": "热门",
+    "latest": "最新"
+  },
+  "billing": {
+    "consumeHistory": "消耗记录",
+    "rechargeHistory": "充值记录"
+  },
+  "transaction": {
+    "date": "时间",
+    "type": "类型",
+    "amount": "积分变动",
+    "balance": "积分余额",
+    "remark": "备注",
+    "loading": "加载中...",
+    "empty": "暂无记录",
+    "page": "第 {page} 页，共 {total} 页",
+    "previous": "上一页",
+    "next": "下一页",
+    "typeConsume": "消耗",
+    "typePurchase": "充值",
+    "typeGift": "赠送"
+  },
+  "user": {
+    "myWorkspace": "资产工作台",
+    "trash": "回收站",
+    "billing": "账单与积分",
+    "generateRedeemCode": "生成兑换码",
+    "redeemCode": "兑换码",
+    "signOut": "退出登录",
+    "generateRedeemCodeFailed": "生成兑换码失败",
+    "redeemCodeFailed": "兑换失败",
+    "generateDialog": {
+      "title": "生成兑换码",
+      "description": "确认后将生成一个新的兑换码，可分享给用户使用。",
+      "generated": "兑换码已生成，请复制并发送给用户：",
+      "copy": "复制",
+      "cancel": "取消",
+      "confirm": "确认生成",
+      "generating": "生成中...",
+      "done": "完成",
+      "copied": "已复制到剪贴板",
+      "copyFailed": "复制失败，请手动复制"
+    },
+    "redeemDialog": {
+      "title": "兑换码",
+      "description": "请输入兑换码，确认后将自动增加您的积分。",
+      "placeholder": "请输入兑换码",
+      "cancel": "取消",
+      "confirm": "确认兑换",
+      "redeeming": "兑换中...",
+      "emptyError": "请输入兑换码"
+    }
+  }
+}

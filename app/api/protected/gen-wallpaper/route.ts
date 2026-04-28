@@ -1,0 +1,137 @@
+import { respData, respErr } from "@/lib/resp";
+
+import { Wallpaper } from "@/types/wallpaper";
+import { requireAuthOrResponse } from "@/lib/auth";
+import { getUserBalanceByEmail, consumeCreditsAndSaveWallpaper } from "@/services/credit";
+import { findUserByEmail } from "@/models/user";
+import { addSignedUrlsToWallpaper } from "@/lib/wallpaper-utils";
+import { buildImageGenerateParams, getModelConfig, ModelType } from "@/services/model-config";
+import { buildPrompt } from "@/lib/prompt-builder";
+import { redis } from "@/lib/redis";
+import { GenWallpaperSchema } from "@/lib/schemas";
+
+export async function POST(req: Request) {
+  const auth = await requireAuthOrResponse();
+  if (auth instanceof Response) {
+    return auth;
+  }
+
+  try {
+    const body = await req.json();
+    const parsed = GenWallpaperSchema.safeParse(body);
+    if (!parsed.success) {
+      return respErr("invalid.params");
+    }
+    const { description, aspectRatio, model, language, imgUrl, imgPath } = parsed.data;
+
+    // Default values
+    const ratio = aspectRatio || "16:9";
+    const modelType: ModelType | string = model || "doubao-seedream-4-0-250828";
+    const lang = language === "zh" ? "zh" : "EN";
+
+    const user_email = auth.email;
+
+    // 并行获取用户信息和余额
+    const [user, user_balance] = await Promise.all([
+      findUserByEmail(user_email),
+      getUserBalanceByEmail(user_email),
+    ]);
+
+    if (!user || !user.id) {
+      return respErr("user.not.found");
+    }
+
+    // Rate Limiting: Limit 10 requests per minute per user
+    const rateLimitKey = `rate_limit:gen_wallpaper:${user.id}`;
+    const currentRequests = await redis.incr(rateLimitKey);
+    if (currentRequests === 1) {
+      await redis.expire(rateLimitKey, 60);
+    }
+    if (currentRequests > 10) {
+      return respErr("too.many.requests");
+    }
+
+    const concurrencyKey = `lock:gen_wallpaper:${user.id}`;
+    const acquired = await redis.set(concurrencyKey, "1", "EX", 5, "NX");
+    if (!acquired) {
+      return respErr("request.pending");
+    }
+
+    if (user_balance < 1) {
+      return respErr("credits.not.enough");
+    }
+
+    // 获取模型配置
+    const modelConfig = getModelConfig(modelType);
+    const llm_name = modelConfig.model;
+
+    // 构建提示词（支持中英文切换）
+    const prompt = buildPrompt(description, lang);
+
+    // 使用模型配置服务构建参数
+    const llm_params = buildImageGenerateParams(modelType, prompt, ratio, { imgUrl });
+
+    // 从参数中获取图片尺寸（用于保存到数据库）
+    const img_size = llm_params.size as string;
+
+    const created_at = new Date().toISOString();
+
+    // 准备wallpaper数据 (初始状态)
+    const wallpaper: Wallpaper = {
+      user_id: user.id,
+      img_description: description,
+      img_size: img_size,
+      aspect_ratio_name: ratio,
+      model_key: modelType as string,
+      aspect_ratio_key: ratio,
+      img_path: "", // 初始为空
+      img_thumbnail_path: "", // 初始为空
+      img_watermark_path: "", // 初始为空
+      model_name: llm_name,
+      llm_params: JSON.stringify({ ...llm_params, imgPath }),
+      created_at: created_at,
+      status: 0, // Generating
+    };
+
+    // 在事务中同时扣减credit和保存wallpaper，确保原子性
+    let savedWallpaperId: number;
+    try {
+      const result = await consumeCreditsAndSaveWallpaper(user.id, wallpaper);
+      savedWallpaperId = result.wallpaperId;
+      wallpaper.id = savedWallpaperId;
+    } catch (e) {
+      console.log("consume credits and save wallpaper failed: ", e);
+      if (e instanceof Error && e.message === "insufficient.credits") {
+        return respErr("credits.not.enough");
+      }
+      return respErr("consume.credits.failed");
+    }
+
+    // Add job to queue
+    try {
+      const { wallpaperQueue } = await import("@/lib/queue");
+      await wallpaperQueue.add('generate', {
+        wallpaperId: savedWallpaperId,
+        llm_params: llm_params,
+      });
+    } catch (e) {
+      console.error("Failed to add job to queue:", e);
+      // Optional: revert credit deduction or mark as failed immediately
+      // For now, we'll just log it. The user will see it stuck in "Generating" or we can add a cleanup task later.
+      // Ideally, we should update status to Failed here.
+       await import("@/lib/prisma").then(m => m.prisma.wallpapers.update({
+          where: { id: savedWallpaperId },
+          data: { status: 2, failure_reason: "Failed to enqueue job" }
+       }));
+       return respErr("generate.wallpaper.failed");
+    }
+
+    // Generate signed URLs for client (even if empty, to match type)
+    const wallpaperWithUrls = await addSignedUrlsToWallpaper(wallpaper);
+
+    return respData(wallpaperWithUrls);
+  } catch (e) {
+    console.log("generate wallpaper failed: ", e);
+    return respErr("generate.wallpaper.failed");
+  }
+}

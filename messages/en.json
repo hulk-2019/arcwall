@@ -1,0 +1,375 @@
+{
+  "header": {
+    "brand": "ArcWall",
+    "subhead": "Wallpaper Generator",
+    "nav": [],
+    "creditsLabel": "Credits",
+    "login": "Login",
+    "loading": "Loading…"
+  },
+  "hero": {
+    "eyebrow": "ArcWall · New Styles Daily",
+    "title": "Create Wallpapers with AI",
+    "subtitle": "Craft unique backdrops that match your style. New palettes, moods, and compositions every day.",
+    "startCta": "Start Creating",
+    "exploreCta": "Explore Gallery",
+    "stats": {
+      "generatedValue": "2M+",
+      "generatedLabel": "Wallpapers Generated",
+      "stylesValue": "150+",
+      "stylesLabel": "Styles & Palettes"
+    },
+    "cardBadge": "Trending Style",
+    "cardTitle": "Abstract Aurora",
+    "cardCaption": "AI Generated · 8K Ready",
+    "tags": ["Cyberpunk City", "Anime", "Aesthetic Keywords", "Nature Landscape"],
+    "joinCreators": "Join 10,000+ creators",
+    "placeholders": [
+      "Neon cyberpunk skyline with floating gardens...",
+      "A cute corgi in a spacesuit drinking coffee on Mars...",
+      "Minimalist serene landscape with a glowing moon...",
+      "A futuristic cinematic portrait of a robot..."
+    ]
+  },
+  "palettes": {
+    "light": {
+      "eyebrow": "Light Palette",
+      "title": "Light Theme",
+      "subtitle": "Elevate your screen with bright, soft gradients."
+    },
+    "dark": {
+      "eyebrow": "Dark Palette",
+      "title": "Dark Theme",
+      "subtitle": "Immersive contrast with cinematic depth."
+    }
+  },
+  "typography": {
+    "eyebrow": "Typography System",
+    "helper": "Clear hierarchy for bilingual hero text, captions, and descriptions.",
+    "items": [
+      {
+        "role": "Heading",
+        "primary": "Browse millions of AI-generated wallpapers tailored to your style.",
+        "secondary": "New drops daily. Your style. Your vibe."
+      },
+      {
+        "role": "Body",
+        "primary": "Premium prompts curated globally.",
+        "secondary": "Refresh every sunrise. Inspiration never stops."
+      }
+    ]
+  },
+  "prompt": {
+    "eyebrow": "Prompt",
+    "helper": "Describe your wallpaper idea",
+    "placeholder": "Neon cyberpunk skyline with floating gardens…",
+    "button": "Generate",
+    "optimize": "Optimize",
+    "optimizeTitle": "AI Optimize Prompt",
+    "loading": "Generating…",
+    "filterLabel": "Filter by Theme",
+    "languageLabel": "Language",
+    "generationFailed": "Generation failed",
+    "optimizePromptFailed": "Failed to optimize prompt",
+    "pleaseEnterPrompt": "Please enter a prompt"
+  },
+  "trending": {
+    "eyebrow": "Trending Wallpapers",
+    "title": "Explore the community's favorite scenes",
+    "badge": "Updated hourly",
+    "loading": "Loading…",
+    "download": "Download",
+    "copyPrompt": "Copy Prompt",
+    "makeSame": "Make Same",
+    "failedToFavorite": "Failed to favorite",
+    "networkError": "Network error"
+  },
+  "footer": {
+    "brand": "ArcWall",
+    "tagline": "Create Wallpapers with AI",
+    "crafted": "Crafted with ♡ for designers & creators.",
+    "rights": "© 2026 ArcWall. All rights reserved.",
+    "links": [
+      { "label": "About", "href": "/#about" },
+      { "label": "Terms", "href": "/#terms" },
+      { "label": "Privacy", "href": "/#privacy" },
+      { "label": "Support", "href": "mailto:me@idoubi.cc" }
+    ]
+  },
+  "myWorks": {
+    "title": "My Wallpapers",
+    "viewTrash": "View Trash",
+    "prompt": {
+      "label": "Prompt",
+      "model": "Model",
+      "aspectRatio": "Aspect Ratio",
+      "style": "Style",
+      "placeholder": "Describe your perfect wallpaper...",
+      "generate": "Generate",
+      "generating": "Generating...",
+      "styles": {
+        "realistic": "Realistic",
+        "artistic": "Artistic",
+        "abstract": "Abstract",
+        "minimalist": "Minimalist"
+      }
+    },
+    "empty": "No wallpapers yet. Start creating!",
+    "card": {
+      "edit": "Edit",
+      "preview": "Preview",
+      "delete": "Delete",
+      "download": "Download",
+      "more": "More",
+      "unpublish": "Unpublish",
+      "generating": "Generating",
+      "failed": "Failed",
+      "published": "Published",
+      "retry": "Retry",
+      "makeSame": "Make Same",
+      "unfavorite": "Unfavorite",
+      "publishToHomepage": "Publish to Homepage"
+    },
+    "workbench": {
+      "confirmDelete": "Are you sure you want to delete this wallpaper?",
+      "confirmBatchDelete": "Are you sure you want to delete {count} wallpapers?",
+      "confirmPublish": "Are you sure you want to publish this wallpaper?",
+      "confirmUnpublish": "Are you sure you want to unpublish this wallpaper?",
+      "confirmBatchUnfavorite": "Are you sure you want to unfavorite {count} selected works?",
+      "confirmBatchUnpublish": "Are you sure you want to unpublish {count} selected works?",
+      "confirmBatchPublish": "Are you sure you want to publish {count} selected works?",
+      "batchUnpublishedSuccess": "Unpublished {count} works successfully",
+      "batchPublishedSuccess": "Published {count} works successfully",
+      "publishedSuccess": "Published successfully",
+      "noEligibleWorks": "No eligible works to publish",
+      "deselectAll": "Deselect all",
+      "selectAllOnPage": "Select all on page",
+      "currentPage": "Current page: {count} items",
+      "filter": "Filter",
+      "filters": "Filters",
+      "keyword": "Keyword",
+      "keywordPlaceholder": "Search keywords...",
+      "sortByLikes": "Sort by likes",
+      "sortDefault": "Default",
+      "sortDesc": "Descending",
+      "sortAsc": "Ascending",
+      "dateRange": "Date range",
+      "resetFilters": "Reset filters",
+      "emptyFavoritesTitle": "No Favorites Yet",
+      "emptyPublishedTitle": "Published Works",
+      "emptyCreationsTitle": "No Creations Yet",
+      "emptyFavoritesDesc": "You haven't favorited any wallpapers yet. Explore the gallery to find some!",
+      "emptyPublishedDesc": "Wallpapers you publish to your public profile will appear here.",
+      "emptyCreationsDesc": "Start creating your own AI wallpapers!",
+      "failedToLoadWallpapers": "Failed to load wallpapers",
+      "retryFailed": "Retry failed",
+      "deleteFailed": "Delete failed",
+      "batchDeleteFailed": "Batch delete failed",
+      "unpublishFailed": "Unpublish failed",
+      "toggleFavoriteFailed": "Toggle favorite failed",
+      "networkError": "Network error",
+      "batchUnfavoriteFailed": "Batch unfavorite failed",
+      "batchUnpublishFailed": "Batch unpublish failed",
+      "publishFailed": "Publish failed",
+      "failedToGenerateDownloadUrl": "Failed to generate download URL",
+      "downloadFailed": "Download failed"
+    },
+    "batch": {
+      "selected": "Selected",
+      "deleteSelected": "Delete Selected",
+      "downloadSelected": "Download Selected",
+      "cancel": "Cancel",
+      "unpublishSelected": "Unpublish Selected",
+      "batchPublish": "Batch Publish",
+      "processing": "Processing...",
+      "unfavorite": "Unfavorite"
+    },
+    "sidebar": {
+      "title": "My Workspace",
+      "creations": "My Creations",
+      "published": "Published",
+      "favorites": "My Favorites",
+      "trash": "Trash"
+    },
+    "preview": {
+      "aspectRatio": "Aspect ratio",
+      "resolution": "Resolution",
+      "prompt": "Prompt",
+      "model": "Model",
+      "close": "Close"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page"
+    }
+  },
+  "trash": {
+    "title": "Trash",
+    "empty": "No deleted wallpapers",
+    "emptyTitle": "Your trash is empty",
+    "emptyDesc": "Deleted items will appear here and will be permanently removed after 30 days.",
+    "confirmClearPrompt": "This is a destructive action. Type '{confirmText}' to permanently clear trash:",
+    "confirmFailed": "Confirmation failed",
+    "backToWorks": "Back to My Works",
+    "clearAll": "Clear All",
+    "restore": "Restore",
+    "delete": "Delete",
+    "confirmClear": "Are you sure you want to clear all trash?",
+    "confirmDelete": "Are you sure you want to permanently delete this wallpaper?",
+    "restoreFailed": "Restore failed",
+    "deleteFailed": "Delete failed",
+    "clearTrashFailed": "Clear trash failed"
+  },
+  "categories": {
+    "title": "Explore Styles",
+    "tryStyle": "Try this style",
+    "items": [
+      { "icon": "monitor", "label": "Cyberpunk City", "image": "/banner.png" },
+      { "icon": "cpu", "label": "Anime Style", "image": "/banner.png" },
+      { "icon": "leaf", "label": "Nature Landscape", "image": "/banner.png" },
+      { "icon": "grid", "label": "3D Abstract", "image": "/banner.png" }
+    ]
+  },
+  "features": {
+    "items": [
+      {
+        "decorativeText": "Centralized & Efficient",
+        "title": "All-in-One Asset Workbench",
+        "description": "Centrally manage all your generated wallpaper assets in your personal workbench. Enjoy features like quick preview, parameter editing, batch downloading, and effortless deletion. With an intuitive grid view, your entire inspiration library is clear at a glance, making it easy to review and organize your creative journey.",
+        "buttonText": "Go to Workbench",
+        "buttonLink": "/my-works",
+        "image": "/poster_01.png",
+        "imagePosition": "right"
+      },
+      {
+        "decorativeText": "Background Generation",
+        "title": "Smart Async Task Management",
+        "description": "We use advanced asynchronous processing mechanisms. Even when generating high-definition, complex AI wallpapers, your workflow will never be blocked. You can continue browsing other pages or queue up multiple generation tasks simultaneously, while seamlessly tracking the real-time progress of all your ongoing creations.",
+        "buttonText": "Try Generating",
+        "buttonLink": "/",
+        "image": "/poster_02.png",
+        "imagePosition": "left"
+      },
+      {
+        "decorativeText": "Share Your Inspiration",
+        "title": "One-Click Publishing",
+        "description": "Proud of your creation? Publish your masterpieces to the public gallery with a single click and share your unique aesthetics with the entire creative community. Your published works can be featured on recommendation lists, earning recognition, likes, and becoming an inspiring muse for creators worldwide.",
+        "buttonText": "View Gallery",
+        "buttonLink": "/",
+        "image": "/poster_03.png",
+        "imagePosition": "right"
+      },
+      {
+        "decorativeText": "Safe & Secure",
+        "title": "Cloud Recycle Bin",
+        "description": "Accidentally deleted a favorite wallpaper? No worries! All deleted assets are safely preserved in the cloud recycle bin. You can browse your deleted items anytime and restore them back to your workbench with a single click, or choose to empty the trash permanently to free up digital space.",
+        "buttonText": "View Trash",
+        "buttonLink": "/trash",
+        "image": "/poster_04.png",
+        "imagePosition": "left"
+      }
+    ]
+  },
+  "howItWorks": {
+    "title": "How to make your own AI generated wallpaper?",
+    "subtitle": "Just four steps to create a personalized 4K wallpaper",
+    "items": [
+      { "step": "1", "title": "Enter your ideas", "desc": "Describe the wallpaper scene you want" },
+      { "step": "2", "title": "Set ratio", "desc": "Specify aspect ratio (16:9, 9:16, 4:3 or custom), then click Generate to create your AI wallpaper" },
+      { "step": "3", "title": "Select style", "desc": "Choose a style - select from 15+ art styles (like Pop Art, Cyberpunk, etc.)" },
+      { "step": "4", "title": "Generate and Download", "desc": "Browse the unique digital art collection and instantly download your favorites. Use them as phone wallpapers, desktop themes, or even print them for custom home decor—easily infuse creativity into every screen and space" }
+    ],
+    "cta": "Create your wallpaper"
+  },
+  "testimonials": {
+    "title": "Real User Reviews of AI Wallpaper Generator",
+    "items": [
+      { "initials": "EC", "name": "Emma Carter", "content": "AI Wallpaper Generator is a game changer! In just minutes I created a stunning 4K nebula wallpaper for my gaming rig. Love the Cyberpunk Neon style that makes colors pop. Perfect aspect ratio customization saved me hours of editing time. Best tool for custom wallpapers!", "avatar": "https://randomuser.me/api/portraits/women/44.jpg" },
+      { "initials": "SJ", "name": "Sarah Johnson", "content": "Finally found an AI art generator that understands device sizes. My iPhone 15 Pro Max wallpaper in Anime Cel-Shading style looks crisp at 9:16 ratio. HD quality rivals professional digital artwork. Art style diversity gets a 10/10!", "avatar": "https://randomuser.me/api/portraits/women/68.jpg" },
+      { "initials": "SK", "name": "Sophia Kaur", "content": "Created matching wallpapers for my iPad and desktop using the Impressionist brush style. 4:3 tablet ratio is perfect. Just wish there were more texture options, but 4K output quality is exceptional for home decor projects" },
+      { "initials": "NJ", "name": "Noah Jensen", "content": "Unbelievable how natural this deep sea blue whale wallpaper looks in 16:9 format. AI preserves details better than my Photoshop edits. Futuristic hologram style adds magical depth. Essential tool for those needing quick high-def backgrounds!", "avatar": "https://randomuser.me/api/portraits/men/32.jpg" },
+      { "initials": "IR", "name": "Isabella Rossi", "content": "Perfect for quick inspiration! Generated over 20 Pop Art fusion wallpapers before finalizing a design. Custom size feature saved my exhibition project. Hope to see more abstract styles, but current art styles are all outstanding", "avatar": "https://randomuser.me/api/portraits/women/12.jpg" },
+      { "initials": "RP", "name": "Raj Patel", "content": "Completely changed my workflow. Created minimalist geometric wallpapers for all team devices using custom ratios. 4K quality makes text/icons stand out clearly. Perfect balance between aesthetics and functionality. SEO tip: This should be #1 for 'custom AI wallpaper' searches!" }
+    ]
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "subtitle": "Can't find the answer you're looking for? Contact our support team",
+    "items": [
+      { "q": "What resolutions are supported?", "a": "Our AI engine defaults to 4K Ultra HD (3840×2160), optimized for all devices including iOS/Android smartphones, Windows/Mac computers, and foldable displays" },
+      { "q": "How to create a mobile wallpaper?", "a": "3 simple steps: 1) Enter description (e.g. 'anime girl under starry sky') 2) Choose from 15+ art styles 3) Generate & download. Vertical layout automatically adjusts to fit camera cutouts and screen edges" },
+      { "q": "Is there a free trial?", "a": "New users get 3 free generations. Premium members unlock unlimited exports, 8K upscaling, and 20+ exclusive filters, with monthly or annual subscription options" },
+      { "q": "Can I enhance existing images?", "a": "Use our AI upscaler to quadruple the resolution (400% upscale) while restoring details – perfect for restoring vintage photos or improving screenshots" },
+      { "q": "Typical generation time?", "a": "4K wallpapers take 12-25 seconds to render using our GPU cluster. During peak hours, 95% of requests are completed within 30 seconds via smart queue optimization" },
+      { "q": "Available art styles?", "a": "Updated weekly with 8 categories: Cyberpunk, Ink painting, Flat illustration, etc. New dynamic lighting mode creates perfect 3D effects, ideal for AMOLED displays" },
+      { "q": "How is this different from other AI tools?", "a": "We work with real artists to train styles – it's like having 8 professional illustrators in your pocket" },
+      { "q": "Desktop-specific features?", "a": "Widescreen algorithms detect focus areas to preserve key visual elements. PSD files retain layers for easy post-generation Photoshop editing" }
+    ]
+  },
+  "cta": {
+    "title": "Unlock an Impressive World of Personalized Wallpapers!",
+    "desc": "Design a high-quality wallpaper that is uniquely yours and fits your size and style",
+    "button": "Join Now"
+  },
+  "language": {
+    "en": "EN",
+    "zh": "中文"
+  },
+  "gallery": {
+    "title": "Explore Gallery",
+    "subtitle": "Discover the community's favorite scenes",
+    "trending": "Trending",
+    "latest": "Latest"
+  },
+  "billing": {
+    "consumeHistory": "Consumption History",
+    "rechargeHistory": "Recharge History"
+  },
+  "transaction": {
+    "date": "Date",
+    "type": "Type",
+    "amount": "Amount",
+    "balance": "Balance",
+    "remark": "Remark",
+    "loading": "Loading...",
+    "empty": "No records found.",
+    "page": "Page {page} of {total}",
+    "previous": "Previous",
+    "next": "Next",
+    "typeConsume": "Consume",
+    "typePurchase": "Purchase",
+    "typeGift": "Gift"
+  },
+  "user": {
+    "myWorkspace": "My Workspace",
+    "trash": "Trash",
+    "billing": "Billing & Credits",
+    "generateRedeemCode": "Generate Redeem Code",
+    "redeemCode": "Redeem Code",
+    "signOut": "Sign Out",
+    "generateRedeemCodeFailed": "Generate redeem code failed",
+    "redeemCodeFailed": "Redeem code failed",
+    "generateDialog": {
+      "title": "Generate Redeem Code",
+      "description": "Confirm to generate a new redeem code that you can share with users.",
+      "generated": "Redeem code generated, please copy and share it with users:",
+      "copy": "Copy",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "generating": "Generating...",
+      "done": "Done",
+      "copied": "Copied to clipboard",
+      "copyFailed": "Copy failed, please copy manually"
+    },
+    "redeemDialog": {
+      "title": "Redeem Code",
+      "description": "Enter your redeem code. After confirmation, credits will be added to your account.",
+      "placeholder": "Enter redeem code",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "redeeming": "Redeeming...",
+      "emptyError": "Please enter redeem code"
+    }
+  }
+}

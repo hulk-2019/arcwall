@@ -1,0 +1,38 @@
+import { respData, respErr } from "@/lib/resp";
+import { requireAuthOrResponse } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { findUserByEmail } from "@/models/user";
+import { BatchUnfavoriteSchema } from "@/lib/schemas";
+
+export async function POST(req: Request) {
+  const auth = await requireAuthOrResponse();
+  if (auth instanceof Response) {
+    return auth;
+  }
+
+  try {
+    const body = await req.json();
+    const parsed = BatchUnfavoriteSchema.safeParse(body);
+    if (!parsed.success) {
+      return respErr("wallpaperIds is required");
+    }
+    const { wallpaperIds } = parsed.data;
+
+    const user = await findUserByEmail(auth.email);
+    if (!user?.id) {
+      return respErr("user.not.found");
+    }
+
+    const { count } = await prisma.favorites.deleteMany({
+      where: {
+        user_id: user.id,
+        system_wallpaper_id: { in: wallpaperIds },
+      },
+    });
+
+    return respData({ deleted: count });
+  } catch (e) {
+    console.log("batch unfavorite failed: ", e);
+    return respErr("batch.unfavorite.failed");
+  }
+}

@@ -1,0 +1,182 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // binaryTargets = ["native", "linux-musl-openssl-3.0.x", "linux-musl"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model users {
+  id         Int           @id @default(autoincrement())
+  email      String        @unique @db.VarChar(255)
+  nickname   String?       @db.VarChar(255)
+  avatar_url String?       @db.VarChar(255)
+  created_at DateTime?     @db.Timestamptz()
+  orders     orders[]
+  wallpapers wallpapers[]
+  user_roles user_roles[]
+  created_redeem_codes redeem_codes[] @relation("redeem_code_creator")
+  used_redeem_codes    redeem_codes[] @relation("redeem_code_user")
+  prompt_optimizations prompt_optimizations[]
+  favorites  favorites[]
+  system_wallpapers    system_wallpapers[]
+}
+
+model roles {
+  id          Int          @id @default(autoincrement())
+  name        String       @db.VarChar(50)
+  code        String       @unique @db.VarChar(50)
+  description String?      @db.VarChar(255)
+  user_roles  user_roles[]
+}
+
+model user_roles {
+  user_id Int
+  role_id Int
+  user    users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  role    roles @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  @@id([user_id, role_id])
+  @@index([user_id])
+  @@index([role_id])
+}
+
+model wallpapers {
+  id                  Int       @id @default(autoincrement())
+  user_id             Int
+  img_description     String?   @db.Text
+  img_size            String?   @db.VarChar(255)
+  model_key           String?   @db.VarChar(50)
+  aspect_ratio_key    String?   @db.VarChar(50)
+  img_path            String?   @db.Text
+  img_thumbnail_path  String?   @db.Text
+  img_watermark_path  String?   @db.Text
+  status              Int       @default(0) // 0: Generating, 1: Success, 2: Failed
+  failure_reason      String?   @db.Text
+  llm_params          Json?
+  is_public           Boolean   @default(false)
+  created_at          DateTime? @db.Timestamptz()
+  deleted_at          DateTime? @db.Timestamptz()
+  permanently_deleted_at DateTime? @db.Timestamptz()
+  is_permanently_delete Boolean   @default(false)
+  is_delete           Boolean   @default(false)
+  user                users     @relation(fields: [user_id], references: [id])
+  system_wallpapers   system_wallpapers[]
+  @@index([user_id])
+}
+
+model favorites {
+  id                  Int       @id @default(autoincrement())
+  user_id             Int
+  system_wallpaper_id Int?
+  created_at          DateTime? @default(now()) @db.Timestamptz()
+  user             users               @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  system_wallpaper system_wallpapers?  @relation(fields: [system_wallpaper_id], references: [id], onDelete: Cascade)
+  @@unique([user_id, system_wallpaper_id])
+  @@index([user_id])
+}
+
+model orders {
+  id                Int       @id @default(autoincrement())
+  order_no          String    @unique @db.VarChar(255)
+  created_at        DateTime? @db.Timestamptz()
+  user_id           Int
+  amount            Int
+  plan              String?   @db.VarChar(50)
+  expired_at        DateTime? @db.Timestamptz()
+  order_status      Int       @db.SmallInt
+  paied_at          DateTime? @db.Timestamptz()
+  credits           Int
+  user              users     @relation(fields: [user_id], references: [id])
+  @@index([user_id])
+}
+
+model system_wallpapers {
+  id             Int       @id @default(autoincrement())
+  img_description String?  @db.Text
+  img_size       String?   @db.VarChar(255)
+  model_key      String?   @db.VarChar(50)
+  aspect_ratio_key String? @db.VarChar(50)
+  img_path       String?   @db.Text
+  img_thumbnail_path String? @db.Text
+  img_watermark_path String? @db.Text
+  llm_params     Json?
+  created_at     DateTime? @db.Timestamptz()
+  updated_at     DateTime? @db.Timestamptz()
+  is_active      Boolean   @default(true)
+  creator_id     Int?      @db.Integer
+  wallpaper_id   Int?      @db.Integer
+  user           users?    @relation(fields: [creator_id], references: [id])
+  wallpaper      wallpapers? @relation(fields: [wallpaper_id], references: [id])
+  favorites      favorites[]
+}
+
+model user_balance {
+  user_id       Int       @id @db.Integer
+  total_credits Int
+  updated_at    DateTime? @db.Timestamptz()
+}
+
+model dictionaries {
+  id          Int       @id @default(autoincrement())
+  category    String    @db.VarChar(50)
+  key         String    @db.VarChar(50)
+  label_en    String?   @db.VarChar(100)
+  label_zh    String?   @db.VarChar(100)
+  sort_order  Int       @default(0)
+  is_active   Boolean   @default(true)
+  created_at  DateTime? @db.Timestamptz()
+  updated_at  DateTime? @db.Timestamptz()
+  @@unique([category, key])
+  @@index([category, is_active])
+}
+
+enum TransactionType {
+  gift
+  purchase
+  consume
+  refund
+  expire
+}
+
+model credit_transactions {
+  id           Int             @id @default(autoincrement())
+  user_id      Int             @db.Integer
+  amount       Int
+  type         TransactionType
+  remark       String?         @db.VarChar(255)
+  balance_after Int
+  created_at   DateTime?       @db.Timestamptz()
+}
+
+model redeem_codes {
+  id          Int       @id @default(autoincrement())
+  code        String    @unique @db.VarChar(255)
+  creator_id  Int       @db.Integer
+  created_at  DateTime? @db.Timestamptz()
+  is_used     Boolean   @default(false)
+  used_by     Int?      @db.Integer
+  used_at     DateTime? @db.Timestamptz()
+  creator users  @relation("redeem_code_creator", fields: [creator_id], references: [id])
+  user    users? @relation("redeem_code_user", fields: [used_by], references: [id])
+  @@index([creator_id])
+  @@index([used_by])
+}
+
+model prompt_optimizations {
+  id               Int       @id @default(autoincrement())
+  user_id          Int
+  original_prompt  String    @db.Text
+  optimized_prompt String    @db.Text
+  created_at       DateTime? @default(now()) @db.Timestamptz()
+  user             users     @relation(fields: [user_id], references: [id])
+  @@index([user_id])
+}
