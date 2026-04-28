@@ -24,7 +24,7 @@ ArcWall is an AI-powered wallpaper platform for creators. You provide prompts, a
 
 > Preview assets are from the `public/` directory.
 
-![ArcWall Banner](./public/banner.png)
+![ArcWall Banner](./public/demo.png)
 
 <div align="center">
   <table>
