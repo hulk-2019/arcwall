@@ -214,7 +214,7 @@ export default function Hero() {
           </div>
 
           <div className="relative bg-gray-50/50 dark:bg-white/5 rounded-[20px] p-4 md:p-6 min-h-[180px] flex flex-col justify-between border border-gray-100 dark:border-white/5 transition-colors hover:bg-gray-100/50 dark:hover:bg-white/10">
-            <div className="flex flex-col gap-3 md:gap-4">
+            <div className="flex flex-row items-start gap-3 md:gap-4 relative w-full">
               <input
                 type="file"
                 ref={fileInputRef}
@@ -272,43 +272,116 @@ export default function Hero() {
               />
 
               {/* Reference image thumbnails */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {uploadedImageUrls.map((url, index) => (
-                  <div key={index} className="relative w-14 h-14 rounded-lg overflow-hidden group shrink-0 border border-gray-200 dark:border-white/10">
-                    <img src={url} alt="" className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newUrls = uploadedImageUrls.filter((_, i) => i !== index);
-                        const newPaths = (uploadedImagePath || []).filter((_, i) => i !== index);
-                        setUploadedImageUrls(newUrls);
-                        setUploadedImagePath(newPaths.length > 0 ? newPaths : null);
-                        setUploadedImageUrl(newUrls[0] || null);
-                        signedPathsRef.current = newPaths.length > 0 ? newPaths.join(",") : null;
-                      }}
-                      className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="w-2.5 h-2.5 text-white" />
-                    </button>
-                  </div>
-                ))}
-                {uploadedImageUrls.length < 5 && (
-                  <div
+              {(() => {
+                const items = [...uploadedImageUrls];
+                if (items.length < 5) items.push("ADD_BUTTON");
+                const stackRotations = [0, -10, 12, -8, 10, -12];
+                const stackX = [0, -8, 8, -6, 6, -8];
+                const stackY = [0, 2, 4, 6, 8, 10];
+                const fanRotations = [-4, 3, -2, 4, -3, 2];
+
+                return uploadedImageUrls.length === 0 ? (
+                  <div 
+                    className="relative shrink-0 w-[72px] h-[96px] z-20 cursor-pointer"
                     onClick={() => { if (!isSignedIn) { router.push("/sign-in"); return; } fileInputRef.current?.click(); }}
-                    className="shrink-0 w-14 h-14 bg-gray-200/50 dark:bg-white/5 rounded-lg border border-dashed border-gray-300 dark:border-white/10 flex items-center justify-center cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-all duration-300 group"
                   >
-                    {isUploading ? (
-                      <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
-                    ) : (
-                      <Plus className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
+                    <div className="w-full h-full bg-gray-100 dark:bg-white/5 border border-dashed border-gray-300 dark:border-white/10 rounded-xl flex flex-col items-center justify-center gap-1 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">
+                      {isUploading ? (
+                        <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                      ) : (
+                        <Plus className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative shrink-0 w-[82px] h-[96px] group z-20">
+                    <div className="absolute left-0 top-0 h-[96px] hidden group-hover:block" style={{ width: `${items.length * 82}px` }} />
+                    {items.map((item, index) => {
+                      const isAddBtn = item === "ADD_BUTTON";
+                      const zIndex = 50 - index;
+                      return (
+                        <div
+                          key={index}
+                          className={`absolute left-0 top-0 w-[72px] h-[96px] rounded-xl shadow-md transition-all duration-300 origin-bottom-left cursor-pointer
+                            [transform:translate(var(--stack-x),var(--stack-y))_rotate(var(--stack-rot))]
+                            group-hover:[transform:translate(var(--fan-x),var(--fan-y))_rotate(var(--fan-rot))]
+                            ${isAddBtn ? "opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto" : "opacity-100 pointer-events-auto"}
+                          `}
+                          style={{
+                            '--stack-x': `${stackX[index]}px`,
+                            '--stack-y': `${stackY[index]}px`,
+                            '--stack-rot': `${stackRotations[index]}deg`,
+                            '--fan-x': `${index * 82}px`,
+                            '--fan-y': `0px`,
+                            '--fan-rot': `${fanRotations[index]}deg`,
+                            zIndex,
+                          } as React.CSSProperties}
+                          onClick={() => {
+                            if (isAddBtn) {
+                              if (!isSignedIn) { router.push("/sign-in"); return; } 
+                              fileInputRef.current?.click();
+                            }
+                          }}
+                        >
+                          {isAddBtn ? (
+                            <div className="w-full h-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-xl flex flex-col items-center justify-center gap-1 hover:bg-[#333] transition-colors overflow-hidden">
+                              {isUploading ? (
+                                <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                              ) : (
+                                <Plus className="w-6 h-6 text-gray-300" />
+                              )}
+                            </div>
+                          ) : (
+                            <div className="w-full h-full relative group/card border-[2px] border-white/20 dark:border-gray-600/50 rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-800">
+                              <img src={item} alt="" className="w-full h-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  const newUrls = uploadedImageUrls.filter((_, i) => i !== index);
+                                  const newPaths = (uploadedImagePath || []).filter((_, i) => i !== index);
+                                  setUploadedImageUrls(newUrls);
+                                  setUploadedImagePath(newPaths.length > 0 ? newPaths : null);
+                                  setUploadedImageUrl(newUrls[0] || null);
+                                  signedPathsRef.current = newPaths.length > 0 ? newPaths.join(",") : null;
+                                }}
+                                className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity"
+                              >
+                                <X className="w-3 h-3 text-white" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                    {/* The circular Add button when stacked */}
+                    {uploadedImageUrls.length < 5 && (
+                      <div 
+                        className="absolute -bottom-2 -right-3 z-[60] w-10 h-10 bg-[#2a2a2a] border-[2px] border-[#3a3a3a] rounded-full flex flex-col items-center justify-center cursor-pointer transition-all duration-300 opacity-100 group-hover:opacity-0 group-hover:scale-50 shadow-xl"
+                        onClick={(e) => { 
+                          e.stopPropagation();
+                          if (!isSignedIn) { router.push("/sign-in"); return; } 
+                          fileInputRef.current?.click(); 
+                        }}
+                      >
+                        {isUploading ? (
+                          <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                        ) : (
+                          <>
+                            <Plus className="w-4 h-4 text-gray-300 mb-[-2px]" />
+                            <span className="text-[7px] text-gray-400 scale-90">Ref</span>
+                          </>
+                        )}
+                      </div>
                     )}
                   </div>
-                )}
-              </div>
+                );
+              })()}
 
               <textarea
                 placeholder={currentPlaceholder}
-                className="w-full h-24 md:h-28 bg-transparent border-0 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-none focus:ring-0 text-base md:text-lg leading-relaxed outline-none py-2"
+                className="flex-1 h-24 md:h-28 bg-transparent border-0 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-none focus:ring-0 text-base md:text-lg leading-relaxed outline-none py-2"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleGenerate(); } }}
