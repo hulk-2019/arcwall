@@ -38,7 +38,8 @@ export default function WallpapersGrid({ wallpapers, loading }: Props) {
     if (wallpaper.model_key) setModel(wallpaper.model_key);
     if (wallpaper.aspect_ratio_key) setAspectRatio(wallpaper.aspect_ratio_key);
     if (wallpaper.llm_params?.imgPath) {
-      setImgPath(wallpaper.llm_params.imgPath);
+      const imgPath = wallpaper.llm_params.imgPath;
+      setImgPath(Array.isArray(imgPath) ? imgPath : [imgPath]);
       setImgUrl(null);
     } else {
       setImgPath(null);

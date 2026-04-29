@@ -55,6 +55,7 @@ export default function Hero() {
   const [activeTab, setActiveTab] = useState("image");
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const signedPathsRef = useRef<string | null>(null);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [currentPlaceholder, setCurrentPlaceholder] = useState("");
 
@@ -78,17 +79,20 @@ export default function Hero() {
   const signedUrlMutation = useMutation({
     mutationFn: getSignedUrl,
     onSuccess: (data: any) => {
-      if (data.code === 0 && data.data && data.data[uploadedImagePath!]) {
-        setUploadedImageUrl(data.data[uploadedImagePath!]);
+      const firstPath = uploadedImagePath?.[0];
+      if (data.code === 0 && data.data && firstPath && data.data[firstPath]) {
+        setUploadedImageUrl(data.data[firstPath]);
       }
     },
     onError: (e) => console.error("Sign url failed", e),
   });
 
   useEffect(() => {
-    if (uploadedImagePath && !uploadedImageUrl) {
-      signedUrlMutation.mutate({ paths: [uploadedImagePath] });
-    }
+    if (!uploadedImagePath || uploadedImagePath.length === 0 || uploadedImageUrl) return;
+    const key = uploadedImagePath.join(",");
+    if (signedPathsRef.current === key) return;
+    signedPathsRef.current = key;
+    signedUrlMutation.mutate({ paths: uploadedImagePath });
   }, [uploadedImagePath, uploadedImageUrl]);
 
   const { data: dictionariesData } = useQuery({
@@ -218,7 +222,7 @@ export default function Hero() {
                   formData.append("file", file);
                   uploadImage(formData)
                     .then((res: any) => {
-                      if (res.code === 0) { setUploadedImageUrl(res.data.url); setUploadedImagePath(res.data.name); }
+                      if (res.code === 0) { setUploadedImageUrl(res.data.url); setUploadedImagePath([res.data.name]); }
                     })
                     .catch((e) => console.error("Upload error", e))
                     .finally(() => setIsUploading(false));

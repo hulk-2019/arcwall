@@ -5,6 +5,7 @@ import { requireAuthOrResponse } from "@/lib/auth";
 import { getUserBalanceByEmail, consumeCreditsAndSaveWallpaper } from "@/services/credit";
 import { findUserByEmail } from "@/models/user";
 import { addSignedUrlsToWallpaper } from "@/lib/wallpaper-utils";
+import { getSignedUrl, fetchImageAsBase64 } from "@/lib/oss";
 import { buildImageGenerateParams, getModelConfig, ModelType } from "@/services/model-config";
 import { buildPrompt } from "@/lib/prompt-builder";
 import { redis } from "@/lib/redis";
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
     if (!parsed.success) {
       return respErr("invalid.params");
     }
-    const { description, aspectRatio, model, language, imgUrl, imgPath } = parsed.data;
+    const { description, aspectRatio, model, language, imgPath } = parsed.data;
 
     // Default values
     const ratio = aspectRatio || "16:9";
@@ -68,8 +69,20 @@ export async function POST(req: Request) {
     // 构建提示词（支持中英文切换）
     const prompt = buildPrompt(description, lang);
 
+    // 如果有参考图，下载后转 base64 传给模型，绕过 OSS 防盗链
+    let resolvedImgUrl: string | string[] | undefined;
+    if (imgPath && imgPath.length > 0) {
+      const base64List = await Promise.all(
+        imgPath.map(async (p) => {
+          const signedUrl = await getSignedUrl(p, 3600);
+          return fetchImageAsBase64(signedUrl);
+        })
+      );
+      resolvedImgUrl = base64List.length === 1 ? base64List[0] : base64List;
+    }
+
     // 使用模型配置服务构建参数
-    const llm_params = buildImageGenerateParams(modelType, prompt, ratio, { imgUrl });
+    const llm_params = buildImageGenerateParams(modelType, prompt, ratio, { imgUrl: resolvedImgUrl });
 
     // 从参数中获取图片尺寸（用于保存到数据库）
     const img_size = llm_params.size as string;
@@ -88,7 +101,7 @@ export async function POST(req: Request) {
       img_thumbnail_path: "", // 初始为空
       img_watermark_path: "", // 初始为空
       model_name: llm_name,
-      llm_params: JSON.stringify({ ...llm_params, imgPath }),
+      llm_params: JSON.stringify({ ...llm_params, image: undefined, imgPath }),
       created_at: created_at,
       status: 0, // Generating
     };

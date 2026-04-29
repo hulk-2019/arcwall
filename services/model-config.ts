@@ -100,7 +100,7 @@ export function buildImageGenerateParams(
   options?: {
     quality?: "standard" | "hd";
     size?: string;
-    imgUrl?: string;
+    imgUrl?: string | string[];
   }
 ): ImageGenerateParamsType {
   const modelConfig = getModelConfig(modelType);

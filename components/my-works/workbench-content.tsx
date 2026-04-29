@@ -179,7 +179,7 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
 
     if (wallpaper.llm_params && wallpaper.llm_params.imgPath) {
       const imgPath = wallpaper.llm_params.imgPath;
-      setImgPath(imgPath);
+      setImgPath(Array.isArray(imgPath) ? imgPath : [imgPath]);
       setImgUrl(null); // Clear previous URL to trigger re-sign in Hero
     } else {
       setImgUrl(null);
