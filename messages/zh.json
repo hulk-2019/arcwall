@@ -74,7 +74,8 @@
     "pleaseEnterPrompt": "请输入提示词",
     "maxReferenceImages": "最多上传5张参考图",
     "imageTooLarge": "每张图片大小不能超过50MB",
-    "uploadFailed": "上传失败，请重试"
+    "uploadFailed": "上传失败，请重试",
+    "referenceImage": "参考图"
   },
   "trending": {
     "eyebrow": "热门壁纸",
