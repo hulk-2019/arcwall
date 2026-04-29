@@ -10,6 +10,7 @@ import {
   Plus,
   Layout,
   Loader2,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
@@ -54,6 +55,7 @@ export default function Hero() {
 
   const [activeTab, setActiveTab] = useState("image");
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const signedPathsRef = useRef<string | null>(null);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
@@ -79,21 +81,26 @@ export default function Hero() {
   const signedUrlMutation = useMutation({
     mutationFn: getSignedUrl,
     onSuccess: (data: any) => {
-      const firstPath = uploadedImagePath?.[0];
-      if (data.code === 0 && data.data && firstPath && data.data[firstPath]) {
-        setUploadedImageUrl(data.data[firstPath]);
+      if (data.code === 0 && data.data && uploadedImagePath) {
+        const urls = uploadedImagePath.map((p: string) => data.data[p]).filter(Boolean);
+        setUploadedImageUrls(urls);
+        if (urls[0]) setUploadedImageUrl(urls[0]);
       }
     },
     onError: (e) => console.error("Sign url failed", e),
   });
 
   useEffect(() => {
-    if (!uploadedImagePath || uploadedImagePath.length === 0 || uploadedImageUrl) return;
+    if (!uploadedImagePath || uploadedImagePath.length === 0) {
+      setUploadedImageUrls([]);
+      signedPathsRef.current = null;
+      return;
+    }
     const key = uploadedImagePath.join(",");
     if (signedPathsRef.current === key) return;
     signedPathsRef.current = key;
     signedUrlMutation.mutate({ paths: uploadedImagePath });
-  }, [uploadedImagePath, uploadedImageUrl]);
+  }, [uploadedImagePath]);
 
   const { data: dictionariesData } = useQuery({
     queryKey: ["dictionaries", ["model", "aspect_ratio"]],
@@ -207,39 +214,98 @@ export default function Hero() {
           </div>
 
           <div className="relative bg-gray-50/50 dark:bg-white/5 rounded-[20px] p-4 md:p-6 min-h-[180px] flex flex-col justify-between border border-gray-100 dark:border-white/5 transition-colors hover:bg-gray-100/50 dark:hover:bg-white/10">
-            <div className="flex gap-3 md:gap-4">
+            <div className="flex flex-col gap-3 md:gap-4">
               <input
                 type="file"
                 ref={fileInputRef}
                 className="hidden"
                 accept="image/*"
+                multiple
                 onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  if (file.size > 10 * 1024 * 1024) { alert("File too large"); return; }
+                  const files = Array.from(e.target.files || []);
+                  if (fileInputRef.current) fileInputRef.current.value = "";
+                  if (!files.length) return;
+
+                  const currentCount = uploadedImagePath?.length || 0;
+                  const remaining = 5 - currentCount;
+                  if (remaining <= 0) {
+                    toast.error(t("maxReferenceImages"));
+                    return;
+                  }
+
+                  const filesToUpload = files.slice(0, remaining);
+                  const oversized = filesToUpload.filter(f => f.size > 50 * 1024 * 1024);
+                  if (oversized.length > 0) {
+                    toast.error(t("imageTooLarge"));
+                    return;
+                  }
+
                   setIsUploading(true);
-                  const formData = new FormData();
-                  formData.append("file", file);
-                  uploadImage(formData)
-                    .then((res: any) => {
-                      if (res.code === 0) { setUploadedImageUrl(res.data.url); setUploadedImagePath([res.data.name]); }
-                    })
-                    .catch((e) => console.error("Upload error", e))
-                    .finally(() => setIsUploading(false));
+                  try {
+                    const results = await Promise.all(
+                      filesToUpload.map(file => {
+                        const formData = new FormData();
+                        formData.append("file", file);
+                        return uploadImage(formData);
+                      })
+                    );
+                    const newUrls: string[] = [];
+                    const newPaths: string[] = [];
+                    results.forEach((res: any) => {
+                      if (res.code === 0) {
+                        newUrls.push(res.data.url);
+                        newPaths.push(res.data.name);
+                      }
+                    });
+                    const mergedPaths = [...(uploadedImagePath || []), ...newPaths];
+                    setUploadedImageUrls(prev => [...prev, ...newUrls]);
+                    setUploadedImagePath(mergedPaths);
+                    setUploadedImageUrl(newUrls[0] || uploadedImageUrl || null);
+                    signedPathsRef.current = mergedPaths.join(",");
+                  } catch (err) {
+                    console.error("Upload error", err);
+                    toast.error(t("uploadFailed"));
+                  } finally {
+                    setIsUploading(false);
+                  }
                 }}
               />
-              <div
-                onClick={() => { if (!isSignedIn) { router.push("/sign-in"); return; } fileInputRef.current?.click(); }}
-                className="shrink-0 w-16 h-24 md:w-20 md:h-28 bg-gray-200/50 dark:bg-white/5 rounded-lg border border-dashed border-gray-300 dark:border-white/10 flex items-center justify-center cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-all duration-300 group hover:-rotate-[8deg] hover:scale-110 relative overflow-hidden"
-              >
-                {isUploading ? (
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-500" />
-                ) : uploadedImageUrl ? (
-                  <img src={uploadedImageUrl} alt="Uploaded" className="absolute inset-0 w-full h-full object-cover" />
-                ) : (
-                  <Plus className="w-6 h-6 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
+
+              {/* Reference image thumbnails */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {uploadedImageUrls.map((url, index) => (
+                  <div key={index} className="relative w-14 h-14 rounded-lg overflow-hidden group shrink-0 border border-gray-200 dark:border-white/10">
+                    <img src={url} alt="" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newUrls = uploadedImageUrls.filter((_, i) => i !== index);
+                        const newPaths = (uploadedImagePath || []).filter((_, i) => i !== index);
+                        setUploadedImageUrls(newUrls);
+                        setUploadedImagePath(newPaths.length > 0 ? newPaths : null);
+                        setUploadedImageUrl(newUrls[0] || null);
+                        signedPathsRef.current = newPaths.length > 0 ? newPaths.join(",") : null;
+                      }}
+                      className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-2.5 h-2.5 text-white" />
+                    </button>
+                  </div>
+                ))}
+                {uploadedImageUrls.length < 5 && (
+                  <div
+                    onClick={() => { if (!isSignedIn) { router.push("/sign-in"); return; } fileInputRef.current?.click(); }}
+                    className="shrink-0 w-14 h-14 bg-gray-200/50 dark:bg-white/5 rounded-lg border border-dashed border-gray-300 dark:border-white/10 flex items-center justify-center cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-all duration-300 group"
+                  >
+                    {isUploading ? (
+                      <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                    ) : (
+                      <Plus className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
+                    )}
+                  </div>
                 )}
               </div>
+
               <textarea
                 placeholder={currentPlaceholder}
                 className="w-full h-24 md:h-28 bg-transparent border-0 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-none focus:ring-0 text-base md:text-lg leading-relaxed outline-none py-2"
