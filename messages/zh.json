@@ -159,6 +159,8 @@
       "sortAsc": "升序",
       "dateRange": "日期范围",
       "resetFilters": "重置筛选",
+      "startCreating": "开始创作",
+      "create": "创作",
       "emptyFavoritesTitle": "暂无收藏",
       "emptyPublishedTitle": "已发布作品",
       "emptyCreationsTitle": "暂无创作",

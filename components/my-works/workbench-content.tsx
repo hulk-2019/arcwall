@@ -2,21 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useDesignStore } from "@/store/useDesignStore";
 import { useAppStore } from "@/store/useAppStore";
 import { useUser } from "@clerk/nextjs";
 import { Wallpaper } from "@/types/wallpaper";
 import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getMyWorks,
@@ -33,8 +24,15 @@ import {
 import { BatchActions } from "@/components/my-works/batch-actions";
 import { WallpaperCard } from "@/components/my-works/wallpaper-card";
 import { PreviewDialog } from "@/components/my-works/preview-dialog";
+import { WorkbenchToolbar } from "@/components/my-works/workbench-toolbar";
+import { GeneratePanel } from "@/components/generate-panel";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  WorkbenchEmptyState,
+  WorkbenchGridSkeleton,
+} from "@/components/my-works/workbench-grid-states";
+import { WorkbenchPagination } from "@/components/my-works/workbench-pagination";
 import { useTranslations, useLocale } from "next-intl";
-
 interface WorkbenchContentProps {
   activeTab: "creations" | "published" | "favorites";
 }
@@ -92,6 +90,7 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
   );
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
 
   // Filters
   const [keyword, setKeyword] = useState("");
@@ -573,142 +572,42 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        {/* Batch Toolbar and Filters */}
-        <div className="flex items-center justify-between gap-4 px-2">
-          <div className="flex items-center gap-4 text-sm text-muted-foreground whitespace-nowrap">
-            <button
-              type="button"
-              onClick={toggleSelectAll}
-              className="inline-flex items-center gap-1 text-primary hover:underline"
-            >
-              {selectedIds.length === wallpapers.length && wallpapers.length > 0
-                ? tWorkbench("deselectAll")
-                : tWorkbench("selectAllOnPage")}
-            </button>
-            {wallpapers.length > 0 && (
-              <span>{tWorkbench("currentPage", { count: wallpapers.length })}</span>
-            )}
-          </div>
+        <WorkbenchToolbar
+          selectedCount={selectedIds.length}
+          totalCount={wallpapers.length}
+          activeTab={activeTab}
+          keyword={keyword}
+          startDate={startDate}
+          endDate={endDate}
+          sortByLikes={sortByLikes}
+          tWorkbench={tWorkbench}
+          onToggleSelectAll={toggleSelectAll}
+          onKeywordChange={(value) => {
+            setKeyword(value);
+            setPage(1);
+          }}
+          onStartDateChange={(value) => {
+            setStartDate(value);
+            setPage(1);
+          }}
+          onEndDateChange={(value) => {
+            setEndDate(value);
+            setPage(1);
+          }}
+          onSortByLikesChange={(value) => {
+            setSortByLikes(value);
+            setPage(1);
+          }}
+          onResetFilters={() => {
+            setKeyword("");
+            setStartDate("");
+            setEndDate("");
+            setSortByLikes("");
+            setPage(1);
+          }}
+          onOpenGenerate={() => setIsGenerateDialogOpen(true)}
+        />
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9 gap-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="4" x2="20" y1="6" y2="6" />
-                  <line x1="8" x2="16" y1="12" y2="12" />
-                  <line x1="11" x2="13" y1="18" y2="18" />
-                </svg>
-                {tWorkbench("filter")}
-                {(keyword || startDate || endDate || sortByLikes) && (
-                  <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-                    {
-                      [keyword, startDate, endDate, sortByLikes].filter(Boolean)
-                        .length
-                    }
-                  </span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80">
-              <div className="flex flex-col gap-4">
-                <p className="text-sm font-medium">
-                  {tWorkbench("filters")}
-                </p>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs text-muted-foreground">
-                    {tWorkbench("keyword")}
-                  </label>
-                  <Input
-                    placeholder={tWorkbench("keywordPlaceholder")}
-                    value={keyword}
-                    onChange={(e) => {
-                      setKeyword(e.target.value);
-                      setPage(1);
-                    }}
-                    className="h-9"
-                  />
-                </div>
-
-                {activeTab === "published" && (
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-muted-foreground">
-                      {tWorkbench("sortByLikes")}
-                    </label>
-                    <select
-                      className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      value={sortByLikes}
-                      onChange={(e) => {
-                        setSortByLikes(e.target.value as "asc" | "desc" | "");
-                        setPage(1);
-                      }}
-                    >
-                      <option value="">{tWorkbench("sortDefault")}</option>
-                      <option value="desc">{tWorkbench("sortDesc")}</option>
-                      <option value="asc">{tWorkbench("sortAsc")}</option>
-                    </select>
-                  </div>
-                )}
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs text-muted-foreground">
-                    {tWorkbench("dateRange")}
-                  </label>
-                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                    <Input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => {
-                        setStartDate(e.target.value);
-                        setPage(1);
-                      }}
-                      className="h-9"
-                    />
-                    <span className="text-muted-foreground text-center">-</span>
-                    <Input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => {
-                        setEndDate(e.target.value);
-                        setPage(1);
-                      }}
-                      className="h-9"
-                    />
-                  </div>
-                </div>
-
-                {(keyword || startDate || endDate || sortByLikes) && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setKeyword("");
-                      setStartDate("");
-                      setEndDate("");
-                      setSortByLikes("");
-                      setPage(1);
-                    }}
-                    className="h-9 w-full"
-                  >
-                    {tWorkbench("resetFilters")}
-                  </Button>
-                )}
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        {/* Batch Actions */}
         <BatchActions
           selectedIds={selectedIds}
           activeTab={activeTab}
@@ -722,57 +621,10 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
           handleBatchPublish={handleBatchPublish}
         />
 
-        {/* Wallpapers Grid */}
         {loading ? (
-          <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <article
-                key={i}
-                className="overflow-hidden rounded-[28px] border border-white/20 bg-card shadow-xl dark:border-white/10 dark:bg-slate-900"
-              >
-                <Skeleton className="aspect-square w-full rounded-none" />
-                <div className="space-y-2 px-4 pt-4 pb-3">
-                  <Skeleton className="h-4 w-2/3" />
-                  <div className="flex justify-end gap-2 mt-2">
-                    <Skeleton className="h-8 w-8 rounded-md" />
-                    <Skeleton className="h-8 w-8 rounded-md" />
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
+          <WorkbenchGridSkeleton />
         ) : wallpapers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-12">
-            <div className="p-6 bg-muted/50 rounded-full">
-              <svg
-                className="w-12 h-12 text-muted-foreground"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-                />
-              </svg>
-            </div>
-            <h3 className="text-xl font-medium">
-              {activeTab === "favorites"
-                ? tWorkbench("emptyFavoritesTitle")
-                : activeTab === "published"
-                  ? tWorkbench("emptyPublishedTitle")
-                  : tWorkbench("emptyCreationsTitle")}
-            </h3>
-            <p className="text-muted-foreground max-w-sm">
-              {activeTab === "favorites"
-                ? tWorkbench("emptyFavoritesDesc")
-                : activeTab === "published"
-                  ? tWorkbench("emptyPublishedDesc")
-                  : tWorkbench("emptyCreationsDesc")}
-            </p>
-          </div>
+          <WorkbenchEmptyState activeTab={activeTab} tWorkbench={tWorkbench} />
         ) : (
           <>
             <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
@@ -797,30 +649,15 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
               ))}
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-4 pt-6">
-                <Button
-                  variant="outline"
-                  disabled={page === 1}
-                  onClick={() => setPage(page - 1)}
-                >
-                  <ChevronLeft className="mr-2 h-4 w-4" />
-                  {copy.pagination.previous}
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  {copy.pagination.page} {page} / {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage(page + 1)}
-                >
-                  {copy.pagination.next}
-                  <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            )}
+            <WorkbenchPagination
+              page={page}
+              totalPages={totalPages}
+              previousText={copy.pagination.previous}
+              nextText={copy.pagination.next}
+              pageText={copy.pagination.page}
+              onPrev={() => setPage(page - 1)}
+              onNext={() => setPage(page + 1)}
+            />
           </>
         )}
       </div>
@@ -854,6 +691,20 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
           handlePreviewNavigate(next);
         }}
       />
+
+      <Dialog open={isGenerateDialogOpen} onOpenChange={setIsGenerateDialogOpen}>
+        <DialogContent className="w-[95vw] max-w-4xl p-0 bg-transparent border-0 shadow-none sm:rounded-3xl [&>button]:top-4 [&>button]:right-4 [&>button]:text-gray-500 hover:[&>button]:text-gray-900 dark:[&>button]:text-gray-400 dark:hover:[&>button]:text-gray-100 [&>button]:z-50 [&>button]:bg-white/80 dark:[&>button]:bg-black/50 [&>button]:p-1 [&>button]:rounded-full backdrop-blur-sm">
+          <DialogTitle className="sr-only">Generate Wallpaper</DialogTitle>
+          <DialogDescription className="sr-only">Create a new wallpaper</DialogDescription>
+          <GeneratePanel 
+            className="border-0 ring-0 m-0" 
+            onSuccess={() => {
+              setIsGenerateDialogOpen(false);
+              queryClient.invalidateQueries({ queryKey });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 }

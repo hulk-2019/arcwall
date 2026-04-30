@@ -159,6 +159,8 @@
       "sortAsc": "Ascending",
       "dateRange": "Date range",
       "resetFilters": "Reset filters",
+      "startCreating": "Start Creating",
+      "create": "Create",
       "emptyFavoritesTitle": "No Favorites Yet",
       "emptyPublishedTitle": "Published Works",
       "emptyCreationsTitle": "No Creations Yet",
