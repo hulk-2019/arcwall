@@ -25,6 +25,8 @@ import { BatchActions } from "@/components/my-works/batch-actions";
 import { WallpaperCard } from "@/components/my-works/wallpaper-card";
 import { PreviewDialog } from "@/components/my-works/preview-dialog";
 import { WorkbenchToolbar } from "@/components/my-works/workbench-toolbar";
+import { GeneratePanel } from "@/components/generate-panel";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   WorkbenchEmptyState,
   WorkbenchGridSkeleton,
@@ -88,6 +90,7 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
   );
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
 
   // Filters
   const [keyword, setKeyword] = useState("");
@@ -602,6 +605,7 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
             setSortByLikes("");
             setPage(1);
           }}
+          onOpenGenerate={() => setIsGenerateDialogOpen(true)}
         />
 
         <BatchActions
@@ -687,6 +691,20 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
           handlePreviewNavigate(next);
         }}
       />
+
+      <Dialog open={isGenerateDialogOpen} onOpenChange={setIsGenerateDialogOpen}>
+        <DialogContent className="w-[95vw] max-w-4xl p-0 bg-transparent border-0 shadow-none sm:rounded-3xl [&>button]:top-4 [&>button]:right-4 [&>button]:text-gray-500 hover:[&>button]:text-gray-900 dark:[&>button]:text-gray-400 dark:hover:[&>button]:text-gray-100 [&>button]:z-50 [&>button]:bg-white/80 dark:[&>button]:bg-black/50 [&>button]:p-1 [&>button]:rounded-full backdrop-blur-sm">
+          <DialogTitle className="sr-only">Generate Wallpaper</DialogTitle>
+          <DialogDescription className="sr-only">Create a new wallpaper</DialogDescription>
+          <GeneratePanel 
+            className="border-0 ring-0 m-0" 
+            onSuccess={() => {
+              setIsGenerateDialogOpen(false);
+              queryClient.invalidateQueries({ queryKey });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 }

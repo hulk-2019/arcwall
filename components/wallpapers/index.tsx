@@ -167,7 +167,7 @@ export default function WallpapersGrid({ wallpapers, loading }: Props) {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 text-white shrink-0"
+                        className="h-8 w-8 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 text-white hover:text-white shrink-0"
                         onClick={(e) => handleFavorite(e, wallpaper)}
                         disabled={favoritingId === wallpaper.id}
                       >
@@ -179,7 +179,7 @@ export default function WallpapersGrid({ wallpapers, loading }: Props) {
                             <Button
                               size="icon"
                               variant="ghost"
-                              className="h-8 w-8 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 text-white shrink-0"
+                              className="h-8 w-8 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 text-white hover:text-white shrink-0"
                               onClick={(e) => { e.stopPropagation(); setPreviewIndex(idx); }}
                             >
                               <Eye className="h-4 w-4" />
@@ -192,7 +192,7 @@ export default function WallpapersGrid({ wallpapers, loading }: Props) {
                             <Button
                               size="icon"
                               variant="ghost"
-                              className="h-8 w-8 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 text-white shrink-0"
+                              className="h-8 w-8 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 text-white hover:text-white shrink-0"
                               onClick={(e) => { e.stopPropagation(); handleMakeSame(wallpaper); }}
                             >
                               <Sparkles className="h-4 w-4" />

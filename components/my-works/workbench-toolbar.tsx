@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Plus } from "lucide-react";
 
 interface WorkbenchToolbarProps {
   selectedCount: number;
@@ -17,6 +18,7 @@ interface WorkbenchToolbarProps {
   onEndDateChange: (value: string) => void;
   onSortByLikesChange: (value: "asc" | "desc" | "") => void;
   onResetFilters: () => void;
+  onOpenGenerate?: () => void;
 }
 
 export function WorkbenchToolbar({
@@ -34,6 +36,7 @@ export function WorkbenchToolbar({
   onEndDateChange,
   onSortByLikesChange,
   onResetFilters,
+  onOpenGenerate,
 }: WorkbenchToolbarProps) {
   const hasFilters = Boolean(keyword || startDate || endDate || sortByLikes);
 
@@ -52,9 +55,21 @@ export function WorkbenchToolbar({
         {totalCount > 0 && <span>{tWorkbench("currentPage", { count: totalCount })}</span>}
       </div>
 
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="h-9 gap-2">
+      <div className="flex items-center gap-2">
+        {onOpenGenerate && (
+          <Button 
+            onClick={onOpenGenerate} 
+            size="sm" 
+            className="h-9 gap-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white hover:opacity-90 border-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">{tWorkbench("startCreating", { defaultValue: "Start Creating" })}</span>
+            <span className="inline sm:hidden">{tWorkbench("create", { defaultValue: "Create" })}</span>
+          </Button>
+        )}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="h-9 gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="15"
@@ -129,11 +144,12 @@ export function WorkbenchToolbar({
             {hasFilters && (
               <Button variant="ghost" size="sm" onClick={onResetFilters} className="h-9 w-full">
                 {tWorkbench("resetFilters")}
-              </Button>
-            )}
-          </div>
-        </PopoverContent>
-      </Popover>
+                </Button>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
     </div>
   );
 }
