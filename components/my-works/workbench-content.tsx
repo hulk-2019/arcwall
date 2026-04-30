@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDesignStore } from "@/store/useDesignStore";
 import { useAppStore } from "@/store/useAppStore";
-import { useUser } from "@clerk/nextjs";
 import { Wallpaper } from "@/types/wallpaper";
 import { toast } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -46,8 +45,7 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
     setImgUrl,
     setImgPath,
   } = useDesignStore();
-  const { user, fetchUserInfo } = useAppStore();
-  const { isSignedIn, isLoaded } = useUser();
+  const { user, fetchUserCredits } = useAppStore();
   const router = useRouter();
   const tMyWorks = useTranslations("myWorks");
   const tWorkbench = useTranslations("myWorks.workbench");
@@ -230,7 +228,7 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
     },
     onSuccess: (res: any) => {
       if (res.code === 0) {
-        fetchUserInfo(isSignedIn, isLoaded);
+        fetchUserCredits();
         queryClient.invalidateQueries({ queryKey });
         return;
       }

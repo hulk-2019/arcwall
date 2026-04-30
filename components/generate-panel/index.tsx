@@ -52,8 +52,8 @@ export function GeneratePanel({ onSuccess, className = "" }: GeneratePanelProps)
     setImgPath: setUploadedImagePath,
   } = useDesignStore();
   
-  const { isSignedIn, isLoaded } = useUser();
-  const { fetchUserInfo } = useAppStore();
+  const { isSignedIn } = useUser();
+  const { fetchUserCredits } = useAppStore();
   const router = useRouter();
   const t = useTranslations("prompt");
   const tHero = useTranslations("hero");
@@ -133,7 +133,7 @@ export function GeneratePanel({ onSuccess, className = "" }: GeneratePanelProps)
     mutationFn: genWallpaper,
     onSuccess: (res: any) => {
       if (res.code === 0 && res.data) {
-        fetchUserInfo(isSignedIn, isLoaded);
+        fetchUserCredits();
         if (onSuccess) {
           onSuccess();
         } else {
@@ -167,7 +167,7 @@ export function GeneratePanel({ onSuccess, className = "" }: GeneratePanelProps)
     onSuccess: (res: any) => {
       if (res.code === 0 && res.data) {
         setPrompt(res.data);
-        fetchUserInfo(isSignedIn, isLoaded);
+        fetchUserCredits();
         return;
       }
       toast.error(t("optimizePromptFailed"));

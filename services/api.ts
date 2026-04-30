@@ -37,6 +37,7 @@ export async function fetcher<T = any>(url: string, options?: RequestInit): Prom
 // User & Redeem Codes
 export const generateRedeemCode = () => fetcher("/api/protected/redeem-code/generate", { method: "POST" });
 export const useRedeemCode = (code: string) => fetcher("/api/protected/redeem-code/use", { method: "POST", body: JSON.stringify({ code }) });
+export const getCredits = () => fetcher("/api/get-user-credits", { method: "POST", body: "{}" });
 
 // Wallpapers & Favorites
 export const toggleFavorite = (data: { wallpaperId: number }) => fetcher("/api/protected/favorite", { method: "POST", body: JSON.stringify(data) });

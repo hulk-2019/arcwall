@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useUser, useClerk } from "@clerk/nextjs";
+import { useClerk } from "@clerk/nextjs";
 import {
   DropdownMenu,
   DropdownMenuItem,
@@ -34,8 +34,7 @@ interface Props {
 
 export default function ({ user }: Props) {
   const t = useTranslations("user");
-  const { fetchUserInfo } = useAppStore();
-  const { isSignedIn, isLoaded } = useUser();
+  const { fetchUserCredits } = useAppStore();
   const { signOut } = useClerk();
 
   const [showGenerateDialog, setShowGenerateDialog] = React.useState(false);
@@ -75,7 +74,7 @@ export default function ({ user }: Props) {
       if (res.code === 0) {
         setShowRedeemDialog(false);
         setRedeemCode("");
-        fetchUserInfo(isSignedIn, isLoaded);
+        fetchUserCredits();
         return;
       }
       toast.error(t("redeemCodeFailed"));

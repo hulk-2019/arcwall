@@ -22,7 +22,7 @@ export async function updateUserCredits(
   const now = new Date();
 
   // 增加事务超时时间到 30 秒
-  return await prisma.$transaction(
+  const newBalance = await prisma.$transaction(
     async (tx) => {
       // 先获取当前余额（使用 select 只查询需要的字段，提高性能）
       const balance = await tx.user_balance.findUnique({
@@ -76,6 +76,8 @@ export async function updateUserCredits(
       timeout: 30000, // 事务超时时间：30秒
     }
   );
+
+  return newBalance;
 }
 
 /**
@@ -94,7 +96,7 @@ export async function consumeCreditsAndSavePromptOptimization(
   const userId = Number(user_id);
   const now = new Date();
 
-  return await prisma.$transaction(
+  const result = await prisma.$transaction(
     async (tx) => {
       // 1. 获取当前余额
       const balance = await tx.user_balance.findUnique({
@@ -158,6 +160,8 @@ export async function consumeCreditsAndSavePromptOptimization(
       timeout: 30000, // 事务超时时间：30秒
     }
   );
+
+  return result;
 }
 
 /**
@@ -207,7 +211,7 @@ export async function consumeCreditsAndSaveWallpaper(
   const userId = Number(user_id);
   const now = new Date();
 
-  return await prisma.$transaction(
+  const result = await prisma.$transaction(
     async (tx) => {
       // 1. 获取当前余额
       const balance = await tx.user_balance.findUnique({
@@ -279,6 +283,8 @@ export async function consumeCreditsAndSaveWallpaper(
       timeout: 30000, // 事务超时时间：30秒
     }
   );
+
+  return result;
 }
 
 
@@ -288,6 +294,8 @@ export async function consumeCreditsAndSaveWallpaper(
  * @returns 
  */
 export async function getUserCredits(user_id: number): Promise<UserCredits> {
+  const userId = Number(user_id);
+
   let user_credits: UserCredits = {
     total_credits: 0,
     used_credits: 0,
@@ -296,8 +304,8 @@ export async function getUserCredits(user_id: number): Promise<UserCredits> {
 
   try {
     const [balance, used_credits] = await Promise.all([
-      getUserBalance(user_id),
-      getUserWallpapersCount(user_id)
+      getUserBalance(userId),
+      getUserWallpapersCount(userId)
     ]);
 
     user_credits.left_credits = balance;
