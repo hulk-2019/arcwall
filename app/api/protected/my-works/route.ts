@@ -66,17 +66,51 @@ export async function POST(req: Request) {
         prisma.favorites.count({ where: favoriteWhere }),
         prisma.favorites.findMany({
           where: favoriteWhere,
-          orderBy: { created_at: "desc" },
+          orderBy: [{ created_at: "desc" }, { id: "desc" }],
           take: l,
           skip: offset,
-          include: { system_wallpaper: { include: { user: true } } },
+          select: { system_wallpaper_id: true },
         }),
       ]);
 
-      const wallpapers = favoriteRecords
-        .map(f => f.system_wallpaper ? formatSystemWallpaper(f.system_wallpaper) : null)
-        .filter(Boolean);
-      const wallpapersWithUrls = await addThumbnailUrlsToWallpapers(wallpapers as any[]);
+      const wallpaperIds = favoriteRecords
+        .map((f) => f.system_wallpaper_id)
+        .filter((id): id is number => typeof id === "number");
+
+      if (wallpaperIds.length === 0) {
+        return respData({ wallpapers: [], total });
+      }
+
+      const items = await prisma.system_wallpapers.findMany({
+        where: { id: { in: wallpaperIds }, is_active: true },
+        select: {
+          id: true,
+          creator_id: true,
+          img_description: true,
+          img_size: true,
+          model_key: true,
+          aspect_ratio_key: true,
+          img_path: true,
+          img_thumbnail_path: true,
+          img_watermark_path: true,
+          llm_params: true,
+          created_at: true,
+          user: {
+            select: {
+              nickname: true,
+              avatar_url: true,
+            },
+          },
+        },
+      });
+
+      const itemMap = new Map(items.map((item) => [item.id, item]));
+      const orderedWallpapers = wallpaperIds
+        .map((id) => itemMap.get(id))
+        .filter(Boolean)
+        .map((item) => formatSystemWallpaper(item));
+
+      const wallpapersWithUrls = await addThumbnailUrlsToWallpapers(orderedWallpapers as any[]);
 
       return respData({
         wallpapers: wallpapersWithUrls,
