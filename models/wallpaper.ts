@@ -1,12 +1,17 @@
 import { Wallpaper } from "@/types/wallpaper";
 import { prisma } from "@/lib/prisma";
+import { redis } from "@/lib/redis";
+import { redisKeys, redisTTL } from "@/lib/constants";
 
 async function getDictionaryLabelMaps() {
+  const cached = await redis.get(redisKeys.dictionaryLabelMaps);
+  if (cached) {
+    return JSON.parse(cached) as { modelLabels: Record<string, string>; aspectRatioLabels: Record<string, string> };
+  }
+
   const dicts = await prisma.dictionaries.findMany({
     where: {
-      category: {
-        in: ['model', 'aspect_ratio'],
-      },
+      category: { in: ['model', 'aspect_ratio'] },
       is_active: true,
     },
   });
@@ -23,7 +28,9 @@ async function getDictionaryLabelMaps() {
     }
   }
 
-  return { modelLabels, aspectRatioLabels };
+  const result = { modelLabels, aspectRatioLabels };
+  await redis.set(redisKeys.dictionaryLabelMaps, JSON.stringify(result), "EX", redisTTL.dictionaryCache);
+  return result;
 }
 
 export async function insertWallpaper(wallpaper: Wallpaper) {
@@ -102,7 +109,7 @@ export async function getUserWallpapers(
     }
   }
 
-  const [rows, total] = await Promise.all([
+  const [rows, total, { modelLabels, aspectRatioLabels }] = await Promise.all([
     prisma.wallpapers.findMany({
       where: whereClause,
       include: {
@@ -117,6 +124,7 @@ export async function getUserWallpapers(
     prisma.wallpapers.count({
       where: whereClause,
     }),
+    getDictionaryLabelMaps(),
   ]);
 
   if (rows.length === 0) {
@@ -125,8 +133,6 @@ export async function getUserWallpapers(
       total,
     };
   }
-
-  const { modelLabels, aspectRatioLabels } = await getDictionaryLabelMaps();
 
   const wallpapers = rows.map((row: any) => {
     const modelName =

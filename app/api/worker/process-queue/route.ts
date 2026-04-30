@@ -3,8 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { downloadAndUploadImageWithThumbnail, generateOssKey } from "@/lib/oss";
 import { getDoubaoAIClient } from "@/services/openai";
 import { getRabbitMQChannel, closeRabbitMQ } from "@/lib/rabbitmq";
-import { QUEUE_NAME } from "@/lib/queue";
 import { redis } from "@/lib/redis";
+import { QUEUE_WALLPAPER_GENERATION, redisKeys, redisTTL } from "@/lib/constants";
 
 // Vercel Cron Job secret validation
 function isAuthorized(request: Request): boolean {
@@ -15,15 +15,15 @@ function isAuthorized(request: Request): boolean {
 async function processJob(data: any) {
   const { wallpaperId, llm_params } = data;
 
-  const lockKey = `processing:${wallpaperId}`;
-  const acquired = await redis.set(lockKey, "1", "EX", 600, "NX");
+  const lockKey = redisKeys.wallpaperProcessingLock(wallpaperId);
+  const acquired = await redis.set(lockKey, "1", "EX", redisTTL.processingLock, "NX");
   if (!acquired) {
     console.log(`Job ${wallpaperId} is already being processed. Skipping.`);
     return;
   }
 
   try {
-    await redis.set(`task:progress:${wallpaperId}`, 10, "EX", 600);
+    await redis.set(redisKeys.taskProgress(wallpaperId), 10, "EX", redisTTL.taskProgress);
 
     const wallpaper = await prisma.wallpapers.findUnique({
       where: { id: wallpaperId },
@@ -35,7 +35,7 @@ async function processJob(data: any) {
       return;
     }
 
-    await redis.set(`task:progress:${wallpaperId}`, 30, "EX", 600);
+    await redis.set(redisKeys.taskProgress(wallpaperId), 30, "EX", redisTTL.taskProgress);
 
     const client = getDoubaoAIClient();
     const res = await client.images.generate(llm_params);
@@ -43,12 +43,12 @@ async function processJob(data: any) {
 
     if (!raw_img_url) throw new Error("Failed to generate image from Doubao");
 
-    await redis.set(`task:progress:${wallpaperId}`, 70, "EX", 600);
+    await redis.set(redisKeys.taskProgress(wallpaperId), 70, "EX", redisTTL.taskProgress);
 
     const { img_path, img_thumbnail_path, img_watermark_path } =
       await downloadAndUploadImageWithThumbnail(raw_img_url, generateOssKey());
 
-    await redis.set(`task:progress:${wallpaperId}`, 90, "EX", 600);
+    await redis.set(redisKeys.taskProgress(wallpaperId), 90, "EX", redisTTL.taskProgress);
 
     await prisma.wallpapers.update({
       where: { id: wallpaperId },
@@ -60,9 +60,9 @@ async function processJob(data: any) {
       },
     });
 
-    await redis.set(`task:progress:${wallpaperId}`, 100, "EX", 600);
+    await redis.set(redisKeys.taskProgress(wallpaperId), 100, "EX", redisTTL.taskProgress);
     await redis.set(
-      `task:result:${wallpaperId}`,
+      redisKeys.taskResult(wallpaperId),
       JSON.stringify({ img_path, img_thumbnail_path, img_watermark_path }),
       "EX",
       3600,
@@ -81,7 +81,7 @@ async function processJob(data: any) {
               error instanceof Error ? error.message : "Unknown error",
           },
         });
-        await redis.del(`task:progress:${wallpaperId}`);
+        await redis.del(redisKeys.taskProgress(wallpaperId));
       } catch (dbError) {
         console.error("Failed to update wallpaper status to failed:", dbError);
       }
@@ -105,11 +105,10 @@ export async function GET(request: Request) {
 
   try {
     channel = await getRabbitMQChannel();
-    await channel.assertQueue(QUEUE_NAME, { durable: true });
+    await channel.assertQueue(QUEUE_WALLPAPER_GENERATION, { durable: true });
 
     for (let i = 0; i < MAX_JOBS_PER_RUN; i++) {
-      // get() does a single synchronous pull (no long-lived consumer needed)
-      const msg = await channel.get(QUEUE_NAME, { noAck: false });
+      const msg = await channel.get(QUEUE_WALLPAPER_GENERATION, { noAck: false });
       if (!msg) break; // queue empty
 
       let jobKey: string | undefined;
@@ -121,7 +120,7 @@ export async function GET(request: Request) {
         let attempts = 0;
 
         if (jobId) {
-          jobKey = `job:${jobId}`;
+          jobKey = redisKeys.jobData(jobId);
           const jobDataRaw = await redis.get(jobKey);
           if (!jobDataRaw) {
             console.error(`Job data not found in Redis for ID: ${jobId}`);
@@ -161,7 +160,7 @@ export async function GET(request: Request) {
                   jobKey,
                   JSON.stringify({ ...parsed, attempts }),
                   "EX",
-                  86400,
+                  redisTTL.jobData,
                 );
                 channel.nack(msg, false, true);
                 continue;

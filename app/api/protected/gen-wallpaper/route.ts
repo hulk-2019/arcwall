@@ -12,6 +12,7 @@ import type { ModelType } from "@/types/model-config";
 import { buildPrompt } from "@/lib/prompt-builder";
 import { redis } from "@/lib/redis";
 import { GenWallpaperSchema } from "@/lib/schemas";
+import { redisKeys, redisTTL } from "@/lib/constants";
 
 export async function POST(req: Request) {
   const { respErr } = createLocaleResp(req);
@@ -45,17 +46,17 @@ export async function POST(req: Request) {
     }
 
     // Rate Limiting: Limit 10 requests per minute per user
-    const rateLimitKey = `rate_limit:gen_wallpaper:${user.id}`;
+    const rateLimitKey = redisKeys.genWallpaperRateLimit(user.id);
     const currentRequests = await redis.incr(rateLimitKey);
     if (currentRequests === 1) {
-      await redis.expire(rateLimitKey, 60);
+      await redis.expire(rateLimitKey, redisTTL.rateLimitWindow);
     }
     if (currentRequests > 10) {
       return respErr(errMsg("too.many.requests"));
     }
 
-    const concurrencyKey = `lock:gen_wallpaper:${user.id}`;
-    const acquired = await redis.set(concurrencyKey, "1", "EX", 5, "NX");
+    const concurrencyKey = redisKeys.genWallpaperConcurrencyLock(user.id);
+    const acquired = await redis.set(concurrencyKey, "1", "EX", redisTTL.concurrencyLock, "NX");
     if (!acquired) {
       return respErr(errMsg("request.pending"));
     }

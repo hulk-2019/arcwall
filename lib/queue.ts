@@ -1,23 +1,20 @@
 import { getRabbitMQChannel } from './rabbitmq';
 import { redis } from './redis';
 import { randomUUID } from 'crypto';
-
-export const QUEUE_NAME = 'wallpaper-generation';
+import { QUEUE_WALLPAPER_GENERATION, redisKeys, redisTTL } from './constants';
 
 export const wallpaperQueue = {
   add: async (name: string, data: any) => {
     const channel = await getRabbitMQChannel();
-    await channel.assertQueue(QUEUE_NAME, { durable: true });
+    await channel.assertQueue(QUEUE_WALLPAPER_GENERATION, { durable: true });
 
     const jobId = randomUUID();
-    const jobKey = `job:${jobId}`;
+    const jobKey = redisKeys.jobData(jobId);
 
-    // Store job data in Redis with 24h expiration
-    await redis.set(jobKey, JSON.stringify({ name, data }), 'EX', 86400);
+    await redis.set(jobKey, JSON.stringify({ name, data }), 'EX', redisTTL.jobData);
 
-    // Send Job ID to RabbitMQ
     const message = JSON.stringify({ jobId });
-    const sent = channel.sendToQueue(QUEUE_NAME, Buffer.from(message), { persistent: true });
+    const sent = channel.sendToQueue(QUEUE_WALLPAPER_GENERATION, Buffer.from(message), { persistent: true });
 
     if (!sent) {
       console.warn('RabbitMQ queue full, message might be dropped or delayed');

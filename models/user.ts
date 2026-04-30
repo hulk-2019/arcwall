@@ -1,5 +1,7 @@
 import { User } from "@/types/user";
 import { prisma } from "@/lib/prisma";
+import { redis } from "@/lib/redis";
+import { redisKeys, redisTTL } from "@/lib/constants";
 import { updateUserCredits } from "@/services/credit";
 import { TransactionType } from "@prisma/client";
 
@@ -49,24 +51,26 @@ export async function insertUser(user: User): Promise<{ id: number; email: strin
 export async function findUserByEmail(
   email: string
 ): Promise<User | undefined> {
+  const cacheKey = redisKeys.userByEmail(email);
+  const cached = await redis.get(cacheKey);
+  if (cached) {
+    return JSON.parse(cached) as User;
+  }
+
   const user = await prisma.users.findUnique({
-    where: {
-      email: email,
-    },
+    where: { email },
     include: {
       user_roles: {
-        include: {
-          role: true,
-        },
+        include: { role: true },
       },
     },
   });
-  
+
   if (!user) {
     return undefined;
   }
 
-  return {
+  const result: User = {
     id: user.id,
     email: user.email,
     nickname: user.nickname || "",
@@ -74,4 +78,11 @@ export async function findUserByEmail(
     created_at: user.created_at ? user.created_at.toISOString() : undefined,
     roles: user.user_roles.map((ur: { role: { code: string } }) => ur.role.code),
   };
+
+  await redis.set(cacheKey, JSON.stringify(result), "EX", redisTTL.userCache);
+  return result;
+}
+
+export async function invalidateUserCache(email: string): Promise<void> {
+  await redis.del(redisKeys.userByEmail(email));
 }

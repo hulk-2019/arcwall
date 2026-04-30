@@ -41,8 +41,8 @@ export const useRedeemCode = (code: string) => fetcher("/api/protected/redeem-co
 // Wallpapers & Favorites
 export const toggleFavorite = (data: { wallpaperId: number }) => fetcher("/api/protected/favorite", { method: "POST", body: JSON.stringify(data) });
 export const batchUnfavorite = (data: { wallpaperIds: number[] }) => fetcher("/api/protected/favorite/batch-unfavorite", { method: "POST", body: JSON.stringify(data) });
-export const getMyWorks = (params: any, signal?: AbortSignal) => {
-  return fetcher("/api/protected/my-works", { method: "POST", body: JSON.stringify(params), signal });
+export const getMyWorks = (params: any) => {
+  return fetcher("/api/protected/my-works", { method: "POST", body: JSON.stringify(params) });
 };
 export const genWallpaper = (data: any) => fetcher("/api/protected/gen-wallpaper", { method: "POST", body: JSON.stringify(data) });
 export const deleteMyWork = (id: number) => fetcher("/api/protected/my-works/delete", { method: "POST", body: JSON.stringify({ id }) });
@@ -50,6 +50,42 @@ export const batchDeleteMyWorks = (ids: number[]) => fetcher("/api/protected/my-
 export const publishWallpaper = (data: { wallpaperId?: number, wallpaperIds?: number[] }) => fetcher("/api/protected/publish-wallpaper", { method: "POST", body: JSON.stringify(data) });
 export const unpublishWallpaper = (params: { wallpaperId?: number, systemWallpaperId?: number, wallpaperIds?: number[], systemWallpaperIds?: number[] }) => fetcher("/api/protected/unpublish-wallpaper", { method: "POST", body: JSON.stringify(params) });
 export const getWallpaperUrls = (data: { wallpaperId?: number, systemWallpaperId?: number, type: string }) => fetcher("/api/protected/wallpaper-urls", { method: "POST", body: JSON.stringify(data) });
+
+// Generation status SSE
+export interface GenStatusCallbacks {
+  onUpdate: (wallpapers: any[]) => void;
+  onDone: () => void;
+  onError?: (err: Error) => void;
+}
+
+export function subscribeGenStatus(callbacks: GenStatusCallbacks): () => void {
+  const { onUpdate, onDone, onError } = callbacks;
+  const es = new EventSource("/api/protected/generating-tasks/stream");
+
+  es.addEventListener("status_update", (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      onUpdate(data.wallpapers ?? []);
+    } catch {}
+  });
+
+  es.addEventListener("done", () => {
+    es.close();
+    onDone();
+  });
+
+  es.addEventListener("error", (e: any) => {
+    es.close();
+    onError?.(new Error(e.data ?? "SSE connection error"));
+  });
+
+  es.onerror = () => {
+    es.close();
+    onError?.(new Error("SSE connection lost"));
+  };
+
+  return () => es.close();
+}
 
 // Trash
 export const getTrash = (params: any) => {

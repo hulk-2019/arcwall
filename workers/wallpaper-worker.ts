@@ -2,8 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { downloadAndUploadImageWithThumbnail, generateOssKey } from "@/lib/oss";
 import { getDoubaoAIClient } from "@/services/openai";
 import { getRabbitMQChannel, closeRabbitMQ } from "@/lib/rabbitmq";
-import { QUEUE_NAME } from "@/lib/queue";
 import { redis } from "@/lib/redis";
+import { wallpaperStatusChannel } from "@/lib/redis-subscriber";
+import { QUEUE_WALLPAPER_GENERATION, redisKeys, redisTTL } from "@/lib/constants";
 
 async function processJob(data: any) {
   const { wallpaperId, llm_params } = data;
@@ -12,17 +13,17 @@ async function processJob(data: any) {
   );
 
   // Scenario A & E: Deduplication & Distributed Lock
-  const lockKey = `processing:${wallpaperId}`;
-  // ioredis syntax: key, value, 'EX', seconds, 'NX'
-  const acquired = await redis.set(lockKey, "1", "EX", 600, "NX"); // 10 minutes lock
+  const lockKey = redisKeys.wallpaperProcessingLock(wallpaperId);
+  const acquired = await redis.set(lockKey, "1", "EX", redisTTL.processingLock, "NX");
   if (!acquired) {
     console.log(`Job ${wallpaperId} is already being processed. Skipping.`);
     return;
   }
 
+  let wallpaperUserId: number | undefined;
+
   try {
-    // Scenario B: Real-time Progress (Starting)
-    await redis.set(`task:progress:${wallpaperId}`, 10, "EX", 600);
+    await redis.set(redisKeys.taskProgress(wallpaperId), 10, "EX", redisTTL.taskProgress);
 
     // 1. Fetch wallpaper record to ensure it exists
     const wallpaper = await prisma.wallpapers.findUnique({
@@ -38,8 +39,9 @@ async function processJob(data: any) {
       return;
     }
 
-    // Scenario B: Progress (Generating)
-    await redis.set(`task:progress:${wallpaperId}`, 30, "EX", 600);
+    wallpaperUserId = wallpaper.user_id;
+
+    await redis.set(redisKeys.taskProgress(wallpaperId), 30, "EX", redisTTL.taskProgress);
 
     // 2. Generate Image
     const client = getDoubaoAIClient();
@@ -50,68 +52,60 @@ async function processJob(data: any) {
       throw new Error("Failed to generate image from Doubao");
     }
 
-    // Scenario B: Progress (Uploading)
-    await redis.set(`task:progress:${wallpaperId}`, 70, "EX", 600);
+    await redis.set(redisKeys.taskProgress(wallpaperId), 70, "EX", redisTTL.taskProgress);
 
     // 3. Download and Upload to OSS
     const { img_path, img_thumbnail_path, img_watermark_path } =
       await downloadAndUploadImageWithThumbnail(raw_img_url, generateOssKey());
 
-    // Scenario B: Progress (Saving)
-    await redis.set(`task:progress:${wallpaperId}`, 90, "EX", 600);
+    await redis.set(redisKeys.taskProgress(wallpaperId), 90, "EX", redisTTL.taskProgress);
 
     // 4. Update Wallpaper Record (Success)
     await prisma.wallpapers.update({
       where: { id: wallpaperId },
       data: {
-        status: 1, // Success
+        status: 1,
         img_path: img_path || "",
         img_thumbnail_path: img_thumbnail_path || "",
         img_watermark_path: img_watermark_path || "",
       },
     });
 
-    // Scenario B: Progress (Done)
-    await redis.set(`task:progress:${wallpaperId}`, 100, "EX", 600);
-
-    // Scenario C: Result Caching
+    await redis.set(redisKeys.taskProgress(wallpaperId), 100, "EX", redisTTL.taskProgress);
     await redis.set(
-      `task:result:${wallpaperId}`,
-      JSON.stringify({
-        img_path,
-        img_thumbnail_path,
-        img_watermark_path,
-      }),
+      redisKeys.taskResult(wallpaperId),
+      JSON.stringify({ img_path, img_thumbnail_path, img_watermark_path }),
       "EX",
-      3600, // Cache for 1 hour
+      3600,
+    );
+
+    await redis.publish(
+      wallpaperStatusChannel(wallpaperUserId),
+      JSON.stringify({ wallpaperId, status: 1, img_path, img_thumbnail_path, img_watermark_path }),
     );
 
     console.log(`Wallpaper ${wallpaperId} generated successfully`);
   } catch (error) {
     console.error(`Wallpaper ${wallpaperId} generation failed:`, error);
 
-    // 5. Update Wallpaper Record (Failed)
-    // Only update to failed if it's a hard error or we've given up retrying.
-    // However, the caller logic will handle retries.
-    // If processJob throws, it means "failed this attempt".
-    // We update status to 2 here anyway to provide immediate feedback to UI,
-    // but if we retry, we might want to set it back to "processing"?
-    // Actually, setting it to failed immediately might be confusing if it succeeds later.
-    // But currently UI probably polls.
-
-    // Optimistic failure update:
     if (wallpaperId) {
       try {
+        const failureReason = error instanceof Error ? error.message : "Unknown error";
         await prisma.wallpapers.update({
           where: { id: wallpaperId },
           data: {
-            status: 2, // Failed
-            failure_reason:
-              error instanceof Error ? error.message : "Unknown error",
+            status: 2,
+            failure_reason: failureReason,
           },
         });
-        // Clear progress on failure
-        await redis.del(`task:progress:${wallpaperId}`);
+        await redis.del(redisKeys.taskProgress(wallpaperId));
+
+        if (wallpaperUserId !== undefined) {
+          await redis.publish(
+            wallpaperStatusChannel(wallpaperUserId),
+            JSON.stringify({ wallpaperId, status: 2, failure_reason: failureReason }),
+          );
+        }
       } catch (dbError) {
         console.error("Failed to update wallpaper status to failed:", dbError);
       }
@@ -119,7 +113,6 @@ async function processJob(data: any) {
 
     throw error;
   } finally {
-    // Release lock
     await redis.del(lockKey);
   }
 }
@@ -144,13 +137,12 @@ const startConsumer = async () => {
       // 'close' event will likely follow
     });
 
-    await channel.assertQueue(QUEUE_NAME, { durable: true });
-    // Process one at a time
+    await channel.assertQueue(QUEUE_WALLPAPER_GENERATION, { durable: true });
     await channel.prefetch(1);
 
-    console.log(`Worker listening on queue: ${QUEUE_NAME}`);
+    console.log(`Worker listening on queue: ${QUEUE_WALLPAPER_GENERATION}`);
 
-    await channel.consume(QUEUE_NAME, async (msg) => {
+    await channel.consume(QUEUE_WALLPAPER_GENERATION, async (msg) => {
       if (!msg) return;
 
       let jobKey: string | undefined;
@@ -159,10 +151,9 @@ const startConsumer = async () => {
         const content = JSON.parse(msg.content.toString());
         const { jobId } = content;
         let data;
-        let attempts = 0;
 
         if (jobId) {
-          jobKey = `job:${jobId}`;
+          jobKey = redisKeys.jobData(jobId);
           const jobDataRaw = await redis.get(jobKey);
           if (!jobDataRaw) {
             console.error(`Job data not found in Redis for ID: ${jobId}`);
@@ -171,7 +162,6 @@ const startConsumer = async () => {
           }
           const parsed = JSON.parse(jobDataRaw);
           data = parsed.data;
-          attempts = parsed.attempts || 0;
         } else {
           data = content.data;
         }
@@ -206,7 +196,7 @@ const startConsumer = async () => {
                   jobKey,
                   JSON.stringify({ ...parsed, attempts }),
                   "EX",
-                  86400,
+                  redisTTL.jobData,
                 );
 
                 // Nack with requeue to retry

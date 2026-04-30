@@ -19,6 +19,7 @@ import {
   batchUnfavorite,
   publishWallpaper,
   getWallpaperUrls,
+  subscribeGenStatus,
 } from "@/services/api";
 
 import { BatchActions } from "@/components/my-works/batch-actions";
@@ -121,24 +122,18 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
 
   const { data: myWorksData, isLoading: loading } = useQuery({
     queryKey,
-    queryFn: async ({ signal }) => {
+    queryFn: async () => {
       try {
-        return await getMyWorks(
-          {
-            page,
-            limit,
-            type: activeTab,
-            keyword: debouncedKeyword || undefined,
-            startDate: startDate || undefined,
-            endDate: endDate || undefined,
-            sortByLikes: sortByLikes || undefined,
-          },
-          signal,
-        );
+        return await getMyWorks({
+          page,
+          limit,
+          type: activeTab,
+          keyword: debouncedKeyword || undefined,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
+          sortByLikes: sortByLikes || undefined,
+        });
       } catch (e: any) {
-        if (e?.name === "AbortError") {
-          throw e;
-        }
         if (e.message?.includes("401")) {
           router.push("/sign-in");
         } else {
@@ -146,24 +141,43 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
         }
         throw e;
       }
-    },
-    staleTime: 5000,
-    retry: 1,
-    retryDelay: 1000,
-    refetchInterval: (query) => {
-      const currentWallpapers = query.state.data?.data?.wallpapers || [];
-      if (
-        activeTab === "creations" &&
-        currentWallpapers.some((w: any) => w.status === 0)
-      ) {
-        return 3000;
-      }
-      return false;
-    },
+    }
   });
 
   const wallpapers: Wallpaper[] = myWorksData?.data?.wallpapers || [];
   const total = myWorksData?.data?.total || 0;
+
+  const hasPending = activeTab === "creations" && wallpapers.some((w) => w.status === 0);
+
+  useEffect(() => {
+    if (!hasPending) return;
+
+    const unsubscribe = subscribeGenStatus({
+      onUpdate: (updated) => {
+        queryClient.setQueryData(queryKey, (old: any) => {
+          if (!old?.data?.wallpapers) return old;
+          const updatedMap = new Map(updated.map((w: any) => [w.id, w]));
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              wallpapers: old.data.wallpapers.map((w: any) =>
+                updatedMap.has(w.id) ? { ...w, ...updatedMap.get(w.id) } : w
+              ),
+            },
+          };
+        });
+      },
+      onDone: () => {
+        queryClient.invalidateQueries({ queryKey });
+      },
+      onError: () => {
+        queryClient.invalidateQueries({ queryKey });
+      },
+    });
+
+    return unsubscribe;
+  }, [hasPending, queryKey.join(",")]);
 
   // Keep selected IDs in sync with current page wallpapers
   useEffect(() => {
