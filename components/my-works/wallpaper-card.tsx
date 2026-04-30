@@ -1,11 +1,12 @@
 "use client";
 
 import {
-  Edit, Eye, Trash2, Download, X, CheckSquare, Square, Upload, MoreHorizontal, Sparkles, Heart,
+  Edit, Eye, Trash2, Download, X, CheckSquare, Square, Upload, MoreHorizontal, Sparkles, Heart, ImageOff, AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Wallpaper } from "@/types/wallpaper";
 import { Loading } from "@/components/ui/loading";
@@ -46,14 +47,29 @@ export function WallpaperCard({
             <p className="mt-2 text-xs text-muted-foreground animate-pulse">{t("generating")}</p>
           </div>
         ) : wallpaper.status === 2 ? (
-          <div className="flex h-full w-full flex-col items-center justify-center bg-destructive/10 p-4 text-center">
-            <X className="h-8 w-8 text-destructive mb-2" />
-            <p className="text-xs font-medium text-destructive">{t("failed")}</p>
-            {wallpaper.failure_reason && (
-              <p className="mt-1 text-[10px] text-muted-foreground line-clamp-2" title={wallpaper.failure_reason}>
-                {wallpaper.failure_reason}
-              </p>
-            )}
+          <div className="flex h-full w-full flex-col items-center justify-center bg-muted/50 p-4 text-center">
+            <div className="rounded-full bg-destructive/10 p-3 mb-3">
+              <ImageOff className="h-8 w-8 text-destructive" />
+            </div>
+            <div className="flex items-center gap-1.5 text-destructive">
+              <span className="text-xs font-medium">{t("failed")}</span>
+              {wallpaper.failure_reason && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button type="button" className="cursor-pointer flex items-center outline-none" onClick={(e) => e.stopPropagation()}>
+                      <AlertCircle className="h-4 w-4 opacity-80 hover:opacity-100 transition-opacity active:scale-95" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent 
+                    side="top" 
+                    className="max-w-[250px] w-auto p-2.5 text-xs bg-destructive/90 text-destructive-foreground border-none shadow-lg"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <p className="break-words leading-relaxed">{wallpaper.failure_reason}</p>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
           </div>
         ) : (
           <div onClick={() => handlePreview(wallpaper)} className="h-full w-full cursor-pointer">

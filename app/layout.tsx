@@ -55,7 +55,6 @@ export default async function RootLayout({
             attribute="class"
             defaultTheme="dark"
             enableSystem
-            disableTransitionOnChange
           >
             <NextIntlClientProvider messages={messages}>
               <ReactQueryProvider>
