@@ -206,7 +206,7 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
       setImgPath(null);
     }
 
-    router.push("/");
+    setIsGenerateDialogOpen(true);
   };
 
   const retryMutation = useMutation({
