@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Sparkles, Heart } from "lucide-react";
+import { Sparkles, Heart, Eye } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Wallpaper } from "@/types/wallpaper";
 import { toast } from "sonner";
 import { useAppStore } from "@/store/useAppStore";
@@ -160,34 +162,65 @@ export default function WallpapersGrid({ wallpapers, loading }: Props) {
                       className="object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                    <div className="absolute inset-x-0 bottom-0 p-4 opacity-0 transition-all duration-300 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 z-10">
-                      <div className="space-y-3">
-                        <p className="line-clamp-2 text-xs text-white/90 font-medium drop-shadow-md">{wallpaper.img_description}</p>
-                        <Button
-                          size="sm"
-                          className="w-full h-9 gap-2 text-xs font-semibold bg-white/20 hover:bg-white/30 text-white border border-white/20 backdrop-blur-md rounded-full shadow-lg transition-all"
-                          onClick={(e) => { e.stopPropagation(); handleMakeSame(wallpaper); }}
-                        >
-                          <Sparkles className="h-3.5 w-3.5" />
-                          {t("makeSame")}
-                        </Button>
-                      </div>
-                    </div>
+                    
                     <div className="absolute top-3 right-3 left-3 flex justify-between items-start opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 text-white"
+                        className="h-8 w-8 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 text-white shrink-0"
                         onClick={(e) => handleFavorite(e, wallpaper)}
                         disabled={favoritingId === wallpaper.id}
                       >
                         <Heart className={`h-4 w-4 ${localFavorites[wallpaper.id as number] ? "fill-red-500 text-red-500" : "text-white"}`} />
                       </Button>
-                      {wallpaper.aspect_ratio_name && (
+                      <div className="flex gap-2">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 text-white shrink-0"
+                              onClick={(e) => { e.stopPropagation(); setPreviewIndex(idx); }}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>{tPreview("card.preview")}</p></TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 text-white shrink-0"
+                              onClick={(e) => { e.stopPropagation(); handleMakeSame(wallpaper); }}
+                            >
+                              <Sparkles className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>{t("makeSame")}</p></TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </div>
+
+                    <div className="absolute inset-x-0 bottom-0 p-3 opacity-0 transition-all duration-300 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 z-10 flex items-end justify-between">
+                      {wallpaper.aspect_ratio_name ? (
                         <Badge variant="secondary" className="bg-black/40 text-white backdrop-blur-md border border-white/10 text-[10px] h-5 px-2">
                           {wallpaper.aspect_ratio_name}
                         </Badge>
-                      )}
+                      ) : <div />}
+                      
+                      <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md border border-white/10 rounded-full py-1 pr-2 pl-1" onClick={(e) => e.stopPropagation()}>
+                        <Avatar className="h-5 w-5 border border-white/20">
+                          <AvatarImage src={wallpaper.created_user?.avatar_url || ""} />
+                          <AvatarFallback className="text-[10px] bg-primary/40 text-white">
+                            {(wallpaper.created_user?.nickname || "momo").charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-[10px] text-white/90 font-medium truncate max-w-[80px]">
+                          {wallpaper.created_user?.nickname || "momo"}
+                        </span>
+                      </div>
                     </div>
                   </article>
                 ))}

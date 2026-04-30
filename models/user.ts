@@ -14,7 +14,7 @@ export async function insertUser(user: User): Promise<{ id: number; email: strin
   const res = await prisma.users.create({
     data: {
       email: user.email!,
-      nickname: user.nickname,
+      nickname: user.nickname || 'momo',
       avatar_url: user.avatar_url,
       created_at: createdAt,
     },
