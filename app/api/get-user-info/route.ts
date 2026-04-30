@@ -1,4 +1,4 @@
-import { respData, respErr } from "@/lib/resp";
+import { respData, createLocaleResp } from "@/lib/resp";
 import { errMsg } from "@/messages/errors";
 
 import { User } from "@/types/user";
@@ -7,7 +7,8 @@ import { getUserCredits } from "@/services/credit";
 import { findUserByEmail, insertUser } from "@/models/user";
 
 export async function POST(req: Request) {
-  const auth = await requireAuthOrResponse();
+  const { respErr } = createLocaleResp(req);
+  const auth = await requireAuthOrResponse(req);
   if (auth instanceof Response) {
     return auth;
   }

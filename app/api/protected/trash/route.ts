@@ -1,4 +1,4 @@
-import { respData, respErr } from "@/lib/resp";
+import { respData, createLocaleResp } from "@/lib/resp";
 import { errMsg } from "@/messages/errors";
 import { requireAuthOrResponse } from "@/lib/auth";
 import { getUserTrash } from "@/models/wallpaper";
@@ -6,7 +6,8 @@ import { addThumbnailUrlsToWallpapers } from "@/lib/wallpaper-utils";
 import { findUserByEmail } from "@/models/user";
 
 export async function POST(req: Request) {
-  const auth = await requireAuthOrResponse();
+  const { respErr } = createLocaleResp(req);
+  const auth = await requireAuthOrResponse(req);
   if (auth instanceof Response) {
     return auth;
   }

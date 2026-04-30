@@ -1,4 +1,4 @@
-import { respData, respErr } from "@/lib/resp";
+import { respData, createLocaleResp } from "@/lib/resp";
 import { errMsg } from "@/messages/errors";
 import { requireAuthOrResponse } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -7,7 +7,8 @@ import { TransactionType } from "@prisma/client";
 import { TransactionsQuerySchema } from "@/lib/schemas";
 
 export async function GET(req: Request) {
-  const auth = await requireAuthOrResponse();
+  const { respErr } = createLocaleResp(req);
+  const auth = await requireAuthOrResponse(req);
   if (auth instanceof Response) {
     return auth;
   }

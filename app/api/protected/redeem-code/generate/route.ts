@@ -1,11 +1,12 @@
-import { respData, respErr } from "@/lib/resp";
+import { respData, createLocaleResp } from "@/lib/resp";
 import { errMsg } from "@/messages/errors";
 import { requireAuthOrResponse } from "@/lib/auth";
 import { findUserByEmail } from "@/models/user";
 import { generateRedeemCodeForUser } from "@/models/redeem-code";
 
 export async function POST(req: Request) {
-  const auth = await requireAuthOrResponse();
+  const { respErr } = createLocaleResp(req);
+  const auth = await requireAuthOrResponse(req);
   if (auth instanceof Response) {
     return auth; // 未登录，直接返回 401
   }

@@ -1,4 +1,4 @@
-import { respData, respErr } from "@/lib/resp";
+import { respData, createLocaleResp } from "@/lib/resp";
 import { errMsg } from "@/messages/errors";
 import { requireAuthOrResponse } from "@/lib/auth";
 import { batchSoftDeleteWallpapers } from "@/models/wallpaper";
@@ -6,7 +6,8 @@ import { findUserByEmail } from "@/models/user";
 import { BatchDeleteWorksSchema } from "@/lib/schemas";
 
 export async function POST(req: Request) {
-  const auth = await requireAuthOrResponse();
+  const { respErr } = createLocaleResp(req);
+  const auth = await requireAuthOrResponse(req);
   if (auth instanceof Response) {
     return auth;
   }

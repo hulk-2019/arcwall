@@ -1,7 +1,10 @@
+import Cookies from "js-cookie";
+
 export async function fetcher<T = any>(url: string, options?: RequestInit): Promise<T> {
   const isFormData = options?.body instanceof FormData;
   const headers: HeadersInit = {
     ...(!isFormData && { "Content-Type": "application/json" }),
+    "Arcwall-Language": Cookies.get("arcwall-language") ?? "zh",
     ...options?.headers,
   };
 

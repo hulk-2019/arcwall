@@ -38,10 +38,10 @@ export const ERROR_MESSAGES = {
   "upload.failed": { zh: "上传失败", en: "Upload failed" },
   "generate.signed.urls.failed": { zh: "生成签名链接失败", en: "Failed to generate signed URLs" },
   unauthorized: { zh: "未授权", en: "Unauthorized" },
-  "wallpaperId is required": { zh: "wallpaperId 为必填项", en: "wallpaperId is required" },
-  "wallpaperIds is required": { zh: "wallpaperIds 为必填项", en: "wallpaperIds is required" },
-  "prompt is required": { zh: "prompt 为必填项", en: "prompt is required" },
-  "failed to optimize prompt": { zh: "优化提示词失败", en: "Failed to optimize prompt" }
+  "invalid.params.wallpaper.id.required": { zh: "wallpaperId 为必填项", en: "wallpaperId is required" },
+  "invalid.params.wallpaper.ids.required": { zh: "wallpaperIds 为必填项", en: "wallpaperIds is required" },
+  "invalid.params.prompt.required": { zh: "prompt 为必填项", en: "prompt is required" },
+  "optimize.prompt.failed": { zh: "优化提示词失败", en: "Failed to optimize prompt" }
 } as const;
 
 export type ErrorMessageKey = keyof typeof ERROR_MESSAGES;

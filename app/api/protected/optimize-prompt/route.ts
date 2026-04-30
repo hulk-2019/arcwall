@@ -1,5 +1,5 @@
 import { getDoubaoAIClient } from "@/services/openai";
-import { respData, respErr } from "@/lib/resp";
+import { respData, createLocaleResp } from "@/lib/resp";
 import { errMsg } from "@/messages/errors";
 import { requireAuthOrResponse } from "@/lib/auth";
 import { getUserBalanceByEmail, consumeCreditsAndSavePromptOptimization } from "@/services/credit";
@@ -7,8 +7,9 @@ import { findUserByEmail } from "@/models/user";
 import { OptimizePromptSchema } from "@/lib/schemas";
 
 export async function POST(req: Request) {
+  const { respErr } = createLocaleResp(req);
   try {
-    const auth = await requireAuthOrResponse();
+    const auth = await requireAuthOrResponse(req);
     if (auth instanceof Response) {
       return auth;
     }
@@ -18,7 +19,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = OptimizePromptSchema.safeParse(body);
     if (!parsed.success) {
-      return respErr(errMsg("prompt is required"));
+      return respErr(errMsg("invalid.params.prompt.required"));
     }
     const { prompt, language } = parsed.data;
 
@@ -61,7 +62,7 @@ export async function POST(req: Request) {
 
     const optimizedPrompt = response.choices[0]?.message?.content?.trim();
     if (!optimizedPrompt) {
-      return respErr(errMsg("failed to optimize prompt"));
+      return respErr(errMsg("optimize.prompt.failed"));
     }
 
     // 在事务中同时扣减credit和保存提示词优化记录，确保原子性
@@ -82,6 +83,6 @@ export async function POST(req: Request) {
     return respData(optimizedPrompt);
   } catch (error) {
     console.error("Optimize prompt failed:", error);
-    return respErr(errMsg("failed to optimize prompt"));
+    return respErr(errMsg("optimize.prompt.failed"));
   }
 }
