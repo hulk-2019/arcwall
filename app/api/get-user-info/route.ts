@@ -1,4 +1,5 @@
-import { respData, respErr } from "@/lib/resp";
+import { respData, createLocaleResp } from "@/lib/resp";
+import { errMsg } from "@/messages/errors";
 
 import { User } from "@/types/user";
 import { requireAuthOrResponse } from "@/lib/auth";
@@ -6,7 +7,8 @@ import { getUserCredits } from "@/services/credit";
 import { findUserByEmail, insertUser } from "@/models/user";
 
 export async function POST(req: Request) {
-  const auth = await requireAuthOrResponse();
+  const { respErr } = createLocaleResp(req);
+  const auth = await requireAuthOrResponse(req);
   if (auth instanceof Response) {
     return auth;
   }
@@ -27,7 +29,7 @@ export async function POST(req: Request) {
     }
 
     if (!dbUser?.id) {
-      return respErr("user.not.found");
+      return respErr(errMsg("user.not.found"));
     }
 
     const user_credits = await getUserCredits(dbUser.id);
@@ -38,6 +40,6 @@ export async function POST(req: Request) {
     return respData(userInfo);
   } catch (e) {
     console.log("get user info failed");
-    return respErr("get.user.info.failed");
+    return respErr(errMsg("get.user.info.failed"));
   }
 }

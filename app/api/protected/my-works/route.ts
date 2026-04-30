@@ -1,4 +1,5 @@
-import { respData, respErr } from "@/lib/resp";
+import { respData, createLocaleResp } from "@/lib/resp";
+import { errMsg } from "@/messages/errors";
 import { requireAuthOrResponse } from "@/lib/auth";
 import { getUserWallpapers } from "@/models/wallpaper";
 import { addThumbnailUrlsToWallpapers } from "@/lib/wallpaper-utils";
@@ -6,7 +7,8 @@ import { findUserByEmail } from "@/models/user";
 import { MyWorksSchema } from "@/lib/schemas";
 
 export async function POST(req: Request) {
-  const auth = await requireAuthOrResponse();
+  const { respErr } = createLocaleResp(req);
+  const auth = await requireAuthOrResponse(req);
   if (auth instanceof Response) {
     return auth;
   }
@@ -15,7 +17,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = MyWorksSchema.safeParse(body);
     if (!parsed.success) {
-      return respErr("invalid.params");
+      return respErr(errMsg("invalid.params"));
     }
     const { page, limit, type, keyword, startDate, endDate, sortByLikes } = parsed.data;
 
@@ -23,7 +25,7 @@ export async function POST(req: Request) {
 
     const user = await findUserByEmail(auth.email);
     if (!user?.id) {
-      return respErr("user.not.found");
+      return respErr(errMsg("user.not.found"));
     }
 
     if (type === 'favorites') {
@@ -172,7 +174,7 @@ export async function POST(req: Request) {
     });
   } catch (e) {
     console.log("get my works failed: ", e);
-    return respErr("get.my.works.failed");
+    return respErr(errMsg("get.my.works.failed"));
   }
 }
 

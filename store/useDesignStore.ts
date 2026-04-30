@@ -6,12 +6,12 @@ export interface DesignState {
   model: string;
   aspectRatio: string;
   imgUrl: string | null;
-  imgPath: string | null;
+  imgPath: string[] | null;
   setPrompt: (prompt: string) => void;
   setModel: (model: string) => void;
   setAspectRatio: (ratio: string) => void;
   setImgUrl: (url: string | null) => void;
-  setImgPath: (path: string | null) => void;
+  setImgPath: (path: string[] | null) => void;
 }
 
 export type DesignStore = ReturnType<typeof createDesignStore>;
@@ -19,8 +19,8 @@ export type DesignStore = ReturnType<typeof createDesignStore>;
 export const createDesignStore = (initProps?: Partial<DesignState>) => {
   return createStore<DesignState>()((set) => ({
     prompt: "",
-    model: "doubao-seedream-4-0-250828",
-    aspectRatio: "9:16",
+    model: "",
+    aspectRatio: "",
     imgUrl: null,
     imgPath: null,
     ...initProps,

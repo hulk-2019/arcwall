@@ -1,14 +1,16 @@
-import { respData, respErr } from "@/lib/resp";
+import { respData, createLocaleResp } from "@/lib/resp";
+import { errMsg } from "@/messages/errors";
 import { uploadFile, generateOssKey, getSignedUrl } from "@/lib/oss";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
+  const { respErr } = createLocaleResp(req);
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File;
 
     if (!file) {
-      return respErr("invalid.params.file.missing");
+      return respErr(errMsg("invalid.params.file.missing"));
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -27,6 +29,6 @@ export async function POST(req: NextRequest) {
 
   } catch (e) {
     console.log("upload file failed:", e);
-    return respErr("upload.failed");
+    return respErr(errMsg("upload.failed"));
   }
 }

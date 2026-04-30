@@ -1,5 +1,4 @@
 import OSS from "ali-oss";
-import { Readable } from "stream";
 import axios from "axios";
 import fs from "fs";
 import sharp from "sharp";
@@ -148,6 +147,25 @@ export async function downloadAndUploadImageWithThumbnail(
     console.log("upload with thumbnail and watermark failed:", e);
     throw e;
   }
+}
+
+/**
+ * Download an image and return it as a base64 data URL so downstream services
+ * (e.g. Doubao) receive the image inline without hitting OSS anti-hotlinking.
+ */
+export async function fetchImageAsBase64(imageUrl: string): Promise<string> {
+  const response = await axios({
+    method: "GET",
+    url: imageUrl,
+    responseType: "arraybuffer",
+    headers: {
+      Referer: process.env.NEXT_PUBLIC_APP_URL,
+    },
+  });
+
+  const buffer = Buffer.from(response.data);
+  const contentType = (response.headers["content-type"] as string) || "image/jpeg";
+  return `data:${contentType};base64,${buffer.toString("base64")}`;
 }
 
 export async function uploadFile(buffer: Buffer, path: string): Promise<string> {

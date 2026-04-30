@@ -1,10 +1,12 @@
-import { respData, respErr } from "@/lib/resp";
+import { respData, createLocaleResp } from "@/lib/resp";
+import { errMsg } from "@/messages/errors";
 import { requireAuthOrResponse } from "@/lib/auth";
 import { findUserByEmail } from "@/models/user";
 import { UnpublishWallpaperSchema } from "@/lib/schemas";
 
 export async function POST(req: Request) {
-  const auth = await requireAuthOrResponse();
+  const { respErr } = createLocaleResp(req);
+  const auth = await requireAuthOrResponse(req);
   if (auth instanceof Response) {
     return auth;
   }
@@ -13,7 +15,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = UnpublishWallpaperSchema.safeParse(body);
     if (!parsed.success) {
-      return respErr("invalid.params");
+      return respErr(errMsg("invalid.params"));
     }
     const { wallpaperId, systemWallpaperId, wallpaperIds = [], systemWallpaperIds = [] } = parsed.data;
 
@@ -25,7 +27,7 @@ export async function POST(req: Request) {
     const user = await findUserByEmail(email);
 
     if (!user) {
-      return respErr("user.not.found");
+      return respErr(errMsg("user.not.found"));
     }
 
     const isSuperAdmin = user.roles?.includes("superadmin") || user.roles?.includes("admin");
@@ -86,7 +88,7 @@ export async function POST(req: Request) {
     validWpIds = Array.from(new Set(validWpIds));
 
     if (validImgPaths.length === 0 && validWpIds.length === 0) {
-      return respErr("permission.denied");
+      return respErr(errMsg("permission.denied"));
     }
 
     const actions = [];
@@ -115,6 +117,6 @@ export async function POST(req: Request) {
     return respData({ success: true, count: validImgPaths.length || validWpIds.length });
   } catch (e) {
     console.log("unpublish wallpaper failed: ", e);
-    return respErr("unpublish.failed");
+    return respErr(errMsg("unpublish.failed"));
   }
 }

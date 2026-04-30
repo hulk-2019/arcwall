@@ -1,13 +1,15 @@
-import { respData, respErr } from "@/lib/resp";
+import { respData, createLocaleResp } from "@/lib/resp";
+import { errMsg } from "@/messages/errors";
 import { getSignedUrl } from "@/lib/oss";
 import { SignedUrlSchema } from "@/lib/schemas";
 
 export async function POST(req: Request) {
+  const { respErr } = createLocaleResp(req);
   try {
     const body = await req.json();
     const parsed = SignedUrlSchema.safeParse(body);
     if (!parsed.success) {
-      return respErr("invalid.params.paths.array");
+      return respErr(errMsg("invalid.params.paths.array"));
     }
     const { paths } = parsed.data;
 
@@ -28,7 +30,7 @@ export async function POST(req: Request) {
     return respData(urls);
   } catch (e) {
     console.log("generate signed urls failed: ", e);
-    return respErr("generate.signed.urls.failed");
+    return respErr(errMsg("generate.signed.urls.failed"));
   }
 }
 

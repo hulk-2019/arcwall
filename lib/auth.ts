@@ -1,5 +1,6 @@
 import { currentUser, auth } from "@clerk/nextjs/server";
-import { respErr } from "./resp";
+import { createLocaleResp } from "./resp";
+import { errMsg } from "@/messages/errors";
 
 export interface AuthResult {
   email: string;
@@ -103,10 +104,11 @@ export async function requireAuth(): Promise<AuthResult | null> {
  * 在 API 路由中使用，如果鉴权失败则直接返回错误响应
  * @returns 返回用户信息，如果鉴权失败则返回 401 错误响应
  */
-export async function requireAuthOrResponse(): Promise<AuthResult | Response> {
+export async function requireAuthOrResponse(req?: Request): Promise<AuthResult | Response> {
   const auth = await requireAuth();
   if (!auth) {
-    return respErr("unauthorized", 401);
+    const { respErr } = createLocaleResp(req ?? new Request("http://localhost"));
+    return respErr(errMsg("unauthorized"), 401);
   }
   return auth;
 }

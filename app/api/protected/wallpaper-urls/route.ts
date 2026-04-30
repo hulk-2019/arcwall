@@ -1,4 +1,5 @@
-import { respData, respErr } from "@/lib/resp";
+import { respData, createLocaleResp } from "@/lib/resp";
+import { errMsg } from "@/messages/errors";
 import { requireAuthOrResponse } from "@/lib/auth";
 import { getSignedUrl } from "@/lib/oss";
 import { prisma } from "@/lib/prisma";
@@ -6,7 +7,8 @@ import { findUserByEmail } from "@/models/user";
 import { WallpaperUrlsSchema } from "@/lib/schemas";
 
 export async function POST(req: Request) {
-  const auth = await requireAuthOrResponse();
+  const { respErr } = createLocaleResp(req);
+  const auth = await requireAuthOrResponse(req);
   if (auth instanceof Response) {
     return auth;
   }
@@ -15,13 +17,13 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = WallpaperUrlsSchema.safeParse(body);
     if (!parsed.success) {
-      return respErr("invalid.params.wallpaperId.required");
+      return respErr(errMsg("invalid.params.wallpaperId.required"));
     }
     const { wallpaperId, systemWallpaperId, type } = parsed.data;
 
     const user = await findUserByEmail(auth.email);
     if (!user?.id) {
-      return respErr("user.not.found");
+      return respErr(errMsg("user.not.found"));
     }
 
     let wallpaper = null;
@@ -72,7 +74,7 @@ export async function POST(req: Request) {
     }
 
     if (!wallpaper) {
-      return respErr("wallpaper.not.found");
+      return respErr(errMsg("wallpaper.not.found"));
     }
 
     let path: string | null = null;
@@ -83,7 +85,7 @@ export async function POST(req: Request) {
     }
 
     if (!path) {
-      return respErr("path.not.available");
+      return respErr(errMsg("path.not.available"));
     }
 
     // Generate signed URL
@@ -92,7 +94,7 @@ export async function POST(req: Request) {
     return respData({ url: signedUrl });
   } catch (e) {
     console.log("generate wallpaper URL failed: ", e);
-    return respErr("generate.wallpaper.url.failed");
+    return respErr(errMsg("generate.wallpaper.url.failed"));
   }
 }
 

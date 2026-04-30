@@ -10,6 +10,7 @@ import {
   Plus,
   Layout,
   Loader2,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
@@ -29,6 +30,7 @@ import {
   uploadImage,
   getDictionaries,
 } from "@/services/api";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations, useLocale } from "next-intl";
 
 export default function Hero() {
@@ -54,7 +56,9 @@ export default function Hero() {
 
   const [activeTab, setActiveTab] = useState("image");
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const signedPathsRef = useRef<string | null>(null);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [currentPlaceholder, setCurrentPlaceholder] = useState("");
 
@@ -78,20 +82,28 @@ export default function Hero() {
   const signedUrlMutation = useMutation({
     mutationFn: getSignedUrl,
     onSuccess: (data: any) => {
-      if (data.code === 0 && data.data && data.data[uploadedImagePath!]) {
-        setUploadedImageUrl(data.data[uploadedImagePath!]);
+      if (data.code === 0 && data.data && uploadedImagePath) {
+        const urls = uploadedImagePath.map((p: string) => data.data[p]).filter(Boolean);
+        setUploadedImageUrls(urls);
+        if (urls[0]) setUploadedImageUrl(urls[0]);
       }
     },
     onError: (e) => console.error("Sign url failed", e),
   });
 
   useEffect(() => {
-    if (uploadedImagePath && !uploadedImageUrl) {
-      signedUrlMutation.mutate({ paths: [uploadedImagePath] });
+    if (!uploadedImagePath || uploadedImagePath.length === 0) {
+      setUploadedImageUrls([]);
+      signedPathsRef.current = null;
+      return;
     }
-  }, [uploadedImagePath, uploadedImageUrl]);
+    const key = uploadedImagePath.join(",");
+    if (signedPathsRef.current === key) return;
+    signedPathsRef.current = key;
+    signedUrlMutation.mutate({ paths: uploadedImagePath });
+  }, [uploadedImagePath]);
 
-  const { data: dictionariesData } = useQuery({
+  const { data: dictionariesData, isLoading: isDictionariesLoading } = useQuery({
     queryKey: ["dictionaries", ["model", "aspect_ratio"]],
     queryFn: () => getDictionaries(["model", "aspect_ratio"]),
   });
@@ -203,42 +215,236 @@ export default function Hero() {
           </div>
 
           <div className="relative bg-gray-50/50 dark:bg-white/5 rounded-[20px] p-4 md:p-6 min-h-[180px] flex flex-col justify-between border border-gray-100 dark:border-white/5 transition-colors hover:bg-gray-100/50 dark:hover:bg-white/10">
-            <div className="flex gap-3 md:gap-4">
+            <div className="flex flex-col md:flex-row items-start gap-3 md:gap-4 relative w-full">
               <input
                 type="file"
                 ref={fileInputRef}
                 className="hidden"
                 accept="image/*"
+                multiple
                 onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  if (file.size > 10 * 1024 * 1024) { alert("File too large"); return; }
+                  const files = Array.from(e.target.files || []);
+                  if (fileInputRef.current) fileInputRef.current.value = "";
+                  if (!files.length) return;
+
+                  const currentCount = uploadedImagePath?.length || 0;
+                  const remaining = 5 - currentCount;
+                  if (remaining <= 0) {
+                    toast.error(t("maxReferenceImages"));
+                    return;
+                  }
+
+                  const filesToUpload = files.slice(0, remaining);
+                  const oversized = filesToUpload.filter(f => f.size > 50 * 1024 * 1024);
+                  if (oversized.length > 0) {
+                    toast.error(t("imageTooLarge"));
+                    return;
+                  }
+
                   setIsUploading(true);
-                  const formData = new FormData();
-                  formData.append("file", file);
-                  uploadImage(formData)
-                    .then((res: any) => {
-                      if (res.code === 0) { setUploadedImageUrl(res.data.url); setUploadedImagePath(res.data.name); }
-                    })
-                    .catch((e) => console.error("Upload error", e))
-                    .finally(() => setIsUploading(false));
+                  try {
+                    const results = await Promise.all(
+                      filesToUpload.map(file => {
+                        const formData = new FormData();
+                        formData.append("file", file);
+                        return uploadImage(formData);
+                      })
+                    );
+                    const newUrls: string[] = [];
+                    const newPaths: string[] = [];
+                    results.forEach((res: any) => {
+                      if (res.code === 0) {
+                        newUrls.push(res.data.url);
+                        newPaths.push(res.data.name);
+                      }
+                    });
+                    const mergedPaths = [...(uploadedImagePath || []), ...newPaths];
+                    setUploadedImageUrls(prev => [...prev, ...newUrls]);
+                    setUploadedImagePath(mergedPaths);
+                    setUploadedImageUrl(newUrls[0] || uploadedImageUrl || null);
+                    signedPathsRef.current = mergedPaths.join(",");
+                  } catch (err) {
+                    console.error("Upload error", err);
+                    toast.error(t("uploadFailed"));
+                  } finally {
+                    setIsUploading(false);
+                  }
                 }}
               />
-              <div
-                onClick={() => { if (!isSignedIn) { router.push("/sign-in"); return; } fileInputRef.current?.click(); }}
-                className="shrink-0 w-16 h-24 md:w-20 md:h-28 bg-gray-200/50 dark:bg-white/5 rounded-lg border border-dashed border-gray-300 dark:border-white/10 flex items-center justify-center cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-all duration-300 group hover:-rotate-[8deg] hover:scale-110 relative overflow-hidden"
-              >
-                {isUploading ? (
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-500" />
-                ) : uploadedImageUrl ? (
-                  <img src={uploadedImageUrl} alt="Uploaded" className="absolute inset-0 w-full h-full object-cover" />
-                ) : (
-                  <Plus className="w-6 h-6 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
-                )}
+
+              {/* Reference image thumbnails */}
+              <div className="order-2 md:order-1 w-full md:w-auto">
+                {(() => {
+                  const items = [...uploadedImageUrls];
+                  if (items.length < 5) items.push("ADD_BUTTON");
+                  const stackRotations = [0, -10, 12, -8, 10, -12];
+                  const stackX = [0, -8, 8, -6, 6, -8];
+                  const stackY = [0, 2, 4, 6, 8, 10];
+                  const fanRotations = [-4, 3, -2, 4, -3, 2];
+
+                  return uploadedImageUrls.length === 0 ? (
+                    <div 
+                      className="relative shrink-0 w-[72px] h-[96px] z-20 cursor-pointer"
+                      onClick={() => { if (!isSignedIn) { router.push("/sign-in"); return; } fileInputRef.current?.click(); }}
+                    >
+                      <div className="w-full h-full bg-gray-100 dark:bg-white/5 border border-dashed border-gray-300 dark:border-white/10 rounded-xl flex flex-col items-center justify-center gap-1 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">
+                        {isUploading ? (
+                          <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                        ) : (
+                          <>
+                            <Plus className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500">{t("referenceImage")}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Mobile view: horizontal scroll list */}
+                      <div className="flex md:hidden flex-row gap-3 overflow-x-auto pb-2 w-full snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        {items.map((item, index) => {
+                          const isAddBtn = item === "ADD_BUTTON";
+                          return (
+                            <div
+                              key={`mobile-${index}`}
+                              className="shrink-0 w-[72px] h-[96px] snap-start relative cursor-pointer"
+                              onClick={() => {
+                                if (isAddBtn) {
+                                  if (!isSignedIn) { router.push("/sign-in"); return; } 
+                                  fileInputRef.current?.click();
+                                }
+                              }}
+                            >
+                              {isAddBtn ? (
+                                <div className="w-full h-full bg-gray-100 dark:bg-white/5 border border-dashed border-gray-300 dark:border-white/10 rounded-xl flex flex-col items-center justify-center gap-1 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">
+                                  {isUploading ? (
+                                    <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <Plus className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                                      <span className="text-[10px] text-gray-400 dark:text-gray-500">{t("referenceImage")}</span>
+                                    </>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="w-full h-full relative border-[2px] border-white/20 dark:border-gray-600/50 rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-800">
+                                  <img src={item} alt="" className="w-full h-full object-cover" />
+                                  <button
+                                    type="button"
+                                    onClick={(e) => { 
+                                      e.stopPropagation(); 
+                                      const newUrls = uploadedImageUrls.filter((_, i) => i !== index);
+                                      const newPaths = (uploadedImagePath || []).filter((_, i) => i !== index);
+                                      setUploadedImageUrls(newUrls);
+                                      setUploadedImagePath(newPaths.length > 0 ? newPaths : null);
+                                      setUploadedImageUrl(newUrls[0] || null);
+                                      signedPathsRef.current = newPaths.length > 0 ? newPaths.join(",") : null;
+                                    }}
+                                    className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center transition-opacity"
+                                  >
+                                    <X className="w-3 h-3 text-white" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Desktop view: stacked cards */}
+                      <div className="hidden md:block relative shrink-0 w-[82px] h-[96px] group z-20">
+                        <div className="absolute left-0 top-0 h-[96px] hidden group-hover:block" style={{ width: `${items.length * 82}px` }} />
+                        {items.map((item, index) => {
+                          const isAddBtn = item === "ADD_BUTTON";
+                          const zIndex = 50 - index;
+                          return (
+                            <div
+                              key={`desktop-${index}`}
+                              className={`absolute left-0 top-0 w-[72px] h-[96px] rounded-xl shadow-md transition-all duration-300 origin-bottom-left cursor-pointer
+                                [transform:translate(var(--stack-x),var(--stack-y))_rotate(var(--stack-rot))]
+                                group-hover:[transform:translate(var(--fan-x),var(--fan-y))_rotate(var(--fan-rot))]
+                                ${isAddBtn ? "opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto" : "opacity-100 pointer-events-auto"}
+                              `}
+                              style={{
+                                '--stack-x': `${stackX[index]}px`,
+                                '--stack-y': `${stackY[index]}px`,
+                                '--stack-rot': `${stackRotations[index]}deg`,
+                                '--fan-x': `${index * 82}px`,
+                                '--fan-y': `0px`,
+                                '--fan-rot': `${fanRotations[index]}deg`,
+                                zIndex,
+                              } as React.CSSProperties}
+                              onClick={() => {
+                                if (isAddBtn) {
+                                  if (!isSignedIn) { router.push("/sign-in"); return; } 
+                                  fileInputRef.current?.click();
+                                }
+                              }}
+                            >
+                              {isAddBtn ? (
+                                <div className="w-full h-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-xl flex flex-col items-center justify-center gap-1 hover:bg-[#333] transition-colors overflow-hidden">
+                                  {isUploading ? (
+                                    <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <Plus className="w-6 h-6 text-gray-300" />
+                                      <span className="text-[10px] text-gray-300">{t("referenceImage")}</span>
+                                    </>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="w-full h-full relative group/card border-[2px] border-white/20 dark:border-gray-600/50 rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-800">
+                                  <img src={item} alt="" className="w-full h-full object-cover" />
+                                  <button
+                                    type="button"
+                                    onClick={(e) => { 
+                                      e.stopPropagation(); 
+                                      const newUrls = uploadedImageUrls.filter((_, i) => i !== index);
+                                      const newPaths = (uploadedImagePath || []).filter((_, i) => i !== index);
+                                      setUploadedImageUrls(newUrls);
+                                      setUploadedImagePath(newPaths.length > 0 ? newPaths : null);
+                                      setUploadedImageUrl(newUrls[0] || null);
+                                      signedPathsRef.current = newPaths.length > 0 ? newPaths.join(",") : null;
+                                    }}
+                                    className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity"
+                                  >
+                                    <X className="w-3 h-3 text-white" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+
+                        {/* The circular Add button when stacked */}
+                        {uploadedImageUrls.length < 5 && (
+                          <div 
+                            className="absolute -bottom-2 -right-3 z-[60] w-10 h-10 bg-[#2a2a2a] border-[2px] border-[#3a3a3a] rounded-full flex flex-col items-center justify-center cursor-pointer transition-all duration-300 opacity-100 group-hover:opacity-0 group-hover:scale-50 shadow-xl"
+                            onClick={(e) => { 
+                              e.stopPropagation();
+                              if (!isSignedIn) { router.push("/sign-in"); return; } 
+                              fileInputRef.current?.click(); 
+                            }}
+                          >
+                            {isUploading ? (
+                              <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                            ) : (
+                              <>
+                                <Plus className="w-4 h-4 text-gray-300 mb-[-2px]" />
+                                <span className="text-[7px] text-gray-400 scale-90">{t("referenceImage")}</span>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
+
               <textarea
                 placeholder={currentPlaceholder}
-                className="w-full h-24 md:h-28 bg-transparent border-0 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-none focus:ring-0 text-base md:text-lg leading-relaxed outline-none py-2"
+                className="order-1 md:order-2 w-full md:flex-1 h-24 md:h-28 bg-transparent border-0 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-none focus:ring-0 text-base md:text-lg leading-relaxed outline-none py-2"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleGenerate(); } }}
@@ -247,6 +453,9 @@ export default function Hero() {
 
             <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
               <div className="flex items-center gap-2 flex-wrap">
+                {isDictionariesLoading ? (
+                  <Skeleton className="h-8 w-32 rounded-xl bg-gray-200 dark:bg-white/20" />
+                ) : (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-900 dark:bg-white/10 text-white border border-transparent dark:border-white/10 text-xs font-medium hover:bg-gray-800 dark:hover:bg-white/20 transition-colors shadow-sm outline-none">
@@ -262,7 +471,11 @@ export default function Hero() {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
+                )}
 
+                {isDictionariesLoading ? (
+                  <Skeleton className="h-8 w-24 rounded-xl bg-gray-200 dark:bg-white/20" />
+                ) : (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-900 dark:bg-white/10 text-white border border-transparent dark:border-white/10 text-xs font-medium hover:bg-gray-800 dark:hover:bg-white/20 transition-colors shadow-sm outline-none">
@@ -278,6 +491,7 @@ export default function Hero() {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
+                )}
 
                 <button
                   onClick={handleOptimizePrompt}

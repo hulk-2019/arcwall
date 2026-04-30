@@ -1,11 +1,13 @@
-import { respData, respErr } from "@/lib/resp";
+import { respData, createLocaleResp } from "@/lib/resp";
+import { errMsg } from "@/messages/errors";
 import { requireAuthOrResponse } from "@/lib/auth";
 import { findUserByEmail } from "@/models/user";
 import { prisma } from "@/lib/prisma";
 import { PublishWallpaperSchema } from "@/lib/schemas";
 
 export async function POST(req: Request) {
-  const auth = await requireAuthOrResponse();
+  const { respErr } = createLocaleResp(req);
+  const auth = await requireAuthOrResponse(req);
   if (auth instanceof Response) {
     return auth;
   }
@@ -14,7 +16,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = PublishWallpaperSchema.safeParse(body);
     if (!parsed.success) {
-      return respErr("invalid.params");
+      return respErr(errMsg("invalid.params"));
     }
     const { wallpaperId, wallpaperIds } = parsed.data;
 
@@ -31,7 +33,7 @@ export async function POST(req: Request) {
     const user = await findUserByEmail(email);
 
     if (!user) {
-      return respErr("user.not.found");
+      return respErr(errMsg("user.not.found"));
     }
 
     const wallpapers = await prisma.wallpapers.findMany({
@@ -79,6 +81,6 @@ export async function POST(req: Request) {
     return respData({ success: true, count: wallpapers.length });
   } catch (e) {
     console.log("publish wallpaper failed: ", e);
-    return respErr("publish.failed");
+    return respErr(errMsg("publish.failed"));
   }
 }

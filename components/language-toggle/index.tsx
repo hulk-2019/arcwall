@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown, Globe } from "lucide-react";
+import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -20,7 +21,7 @@ const LanguageToggle = () => {
   ];
 
   const handleSelect = (value: string) => {
-    document.cookie = `arcwall-language=${value}; path=/; max-age=31536000; SameSite=Lax`;
+    Cookies.set("arcwall-language", value, { path: "/", expires: 365, sameSite: "Lax" });
     router.refresh();
   };
 

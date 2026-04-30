@@ -1,13 +1,15 @@
 import { getDoubaoAIClient } from "@/services/openai";
-import { respData, respErr } from "@/lib/resp";
+import { respData, createLocaleResp } from "@/lib/resp";
+import { errMsg } from "@/messages/errors";
 import { requireAuthOrResponse } from "@/lib/auth";
 import { getUserBalanceByEmail, consumeCreditsAndSavePromptOptimization } from "@/services/credit";
 import { findUserByEmail } from "@/models/user";
 import { OptimizePromptSchema } from "@/lib/schemas";
 
 export async function POST(req: Request) {
+  const { respErr } = createLocaleResp(req);
   try {
-    const auth = await requireAuthOrResponse();
+    const auth = await requireAuthOrResponse(req);
     if (auth instanceof Response) {
       return auth;
     }
@@ -17,7 +19,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = OptimizePromptSchema.safeParse(body);
     if (!parsed.success) {
-      return respErr("prompt is required");
+      return respErr(errMsg("invalid.params.prompt.required"));
     }
     const { prompt, language } = parsed.data;
 
@@ -33,13 +35,13 @@ export async function POST(req: Request) {
     // 获取用户信息以获取用户ID
     const user = await findUserByEmail(user_email);
     if (!user || !user.id) {
-      return respErr("user.not.found");
+      return respErr(errMsg("user.not.found"));
     }
 
     // 从 user_balance 表查询余额
     const user_balance = await getUserBalanceByEmail(user_email);
     if (user_balance < 1) {
-      return respErr("credits.not.enough");
+      return respErr(errMsg("credits.not.enough"));
     }
 
     const response = await openai.chat.completions.create({
@@ -60,7 +62,7 @@ export async function POST(req: Request) {
 
     const optimizedPrompt = response.choices[0]?.message?.content?.trim();
     if (!optimizedPrompt) {
-      return respErr("failed to optimize prompt");
+      return respErr(errMsg("optimize.prompt.failed"));
     }
 
     // 在事务中同时扣减credit和保存提示词优化记录，确保原子性
@@ -73,14 +75,14 @@ export async function POST(req: Request) {
     } catch (e) {
       console.error("consume credits and save prompt optimization failed: ", e);
       if (e instanceof Error && e.message === "insufficient.credits") {
-        return respErr("credits.not.enough");
+        return respErr(errMsg("credits.not.enough"));
       }
-      return respErr("consume.credits.failed");
+      return respErr(errMsg("consume.credits.failed"));
     }
 
     return respData(optimizedPrompt);
   } catch (error) {
     console.error("Optimize prompt failed:", error);
-    return respErr("failed to optimize prompt");
+    return respErr(errMsg("optimize.prompt.failed"));
   }
 }

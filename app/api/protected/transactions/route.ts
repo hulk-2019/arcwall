@@ -1,4 +1,5 @@
-import { respData, respErr } from "@/lib/resp";
+import { respData, createLocaleResp } from "@/lib/resp";
+import { errMsg } from "@/messages/errors";
 import { requireAuthOrResponse } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { findUserByEmail } from "@/models/user";
@@ -6,7 +7,8 @@ import { TransactionType } from "@prisma/client";
 import { TransactionsQuerySchema } from "@/lib/schemas";
 
 export async function GET(req: Request) {
-  const auth = await requireAuthOrResponse();
+  const { respErr } = createLocaleResp(req);
+  const auth = await requireAuthOrResponse(req);
   if (auth instanceof Response) {
     return auth;
   }
@@ -19,13 +21,13 @@ export async function GET(req: Request) {
       limit: searchParams.get("limit") ?? undefined,
     });
     if (!parsed.success) {
-      return respErr("invalid.params");
+      return respErr(errMsg("invalid.params"));
     }
     const { type, page = 1, limit = 20 } = parsed.data;
 
     const user = await findUserByEmail(auth.email);
     if (!user) {
-      return respErr("user.not.found");
+      return respErr(errMsg("user.not.found"));
     }
 
     let whereCondition: any = {
@@ -58,6 +60,6 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     console.error("fetch transactions failed:", error);
-    return respErr("fetch.transactions.failed");
+    return respErr(errMsg("fetch.transactions.failed"));
   }
 }

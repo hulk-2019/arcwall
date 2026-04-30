@@ -1,13 +1,15 @@
-import { respData, respErr } from "@/lib/resp";
+import { respData, createLocaleResp } from "@/lib/resp";
+import { errMsg } from "@/messages/errors";
 import { getDictionariesByCategory } from "@/models/dictionary";
 import { DictionariesSchema } from "@/lib/schemas";
 
 export async function POST(req: Request) {
+  const { respErr } = createLocaleResp(req);
   try {
     const body = await req.json();
     const parsed = DictionariesSchema.safeParse(body);
     if (!parsed.success) {
-      return respErr("invalid.params");
+      return respErr(errMsg("invalid.params"));
     }
     const { categories } = parsed.data;
 
@@ -16,6 +18,6 @@ export async function POST(req: Request) {
     return respData(dictionaries);
   } catch (e) {
     console.log("get dictionaries failed: ", e);
-    return respErr("get.dictionaries.failed");
+    return respErr(errMsg("get.dictionaries.failed"));
   }
 }

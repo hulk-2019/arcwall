@@ -1,45 +1,36 @@
-import { ImageGenerateParams } from "openai/resources/images.mjs";
-
-/**
- * 支持的模型类型（目前仅支持 doubao-seedream-4-0-250828）
- */
-export type ModelType = "doubao-seedream-4-0-250828";
-
-/**
- * 支持的图片尺寸类型
- */
-export type ImageSize =
-  | "1792x1024"
-  | "1024x1024"
-  | "1536x1024"
-  | "1024x1536"
-  | "1024x1792"
-  | "256x256"
-  | "512x512"
-  | "768x768";
-
-/**
- * 模型配置接口
- */
-export interface ModelConfig {
-  model: string;
-  defaultSize: ImageSize;
-  supportedSizes: ImageSize[];
-  responseFormat: "url" | "b64_json";
-  watermark?: boolean;
-  sequentialImageGeneration?: "disabled" | "auto";
-  quality?: "standard" | "hd";
-  n?: number; // 生成图片数量
-}
+import type { ModelConfig, ModelType, ImageSize, ImageGenerateParamsType } from "@/types/model-config";
 
 /**
  * 模型配置映射（目前仅支持 doubao-seedream-4-0-250828）
  */
 const MODEL_CONFIGS: Record<ModelType, ModelConfig> = {
-  "doubao-seedream-4-0-250828": {
-    model: "doubao-seedream-4-0-250828",
-    defaultSize: "1792x1024",
-    supportedSizes: ["1792x1024", "1024x1024", "1536x1024", "1024x1536"],
+  doubao: {
+    aspectRatioSizeMap: {
+      "1:1": "2048x2048",
+      "4:3": "2304x1728",
+      "3:4": "1728x2304",
+      "16:9": "2848x1600",
+      "9:16": "1600x2848",
+      "3:2": "2496x1664",
+      "2:3": "1664x2496",
+      "21:9": "3136x1344",
+    },
+    responseFormat: "url",
+    watermark: false,
+    sequentialImageGeneration: "disabled",
+  },
+  gemini: {
+    aspectRatioSizeMap: {
+      "1:1": "1024x1024",
+    },
+    responseFormat: "url",
+    watermark: false,
+    sequentialImageGeneration: "disabled",
+  },
+  gpt: {
+    aspectRatioSizeMap: {
+      "1:1": "1024x1024",
+    },
     responseFormat: "url",
     watermark: false,
     sequentialImageGeneration: "disabled",
@@ -47,46 +38,99 @@ const MODEL_CONFIGS: Record<ModelType, ModelConfig> = {
 };
 
 /**
- * 获取模型配置
- * @param modelType 模型类型（可选，默认使用 doubao-seedream-4-0-250828）
- * @returns 模型配置
- */
-export function getModelConfig(modelType: ModelType | string = "doubao-seedream-4-0-250828"): ModelConfig {
-  // 目前仅支持 doubao-seedream-4-0-250828，直接返回该配置
-  return MODEL_CONFIGS["doubao-seedream-4-0-250828"];
-}
-
-/**
  * 根据宽高比和模型配置获取合适的尺寸
  * @param aspectRatio 宽高比，如 "16:9", "4:3", "1:1", "9:16"
  * @param modelConfig 模型配置
+ * @param modelType 模型类型
  * @returns 图片尺寸
  */
 export function getSizeForAspectRatio(
   aspectRatio: string,
   modelConfig: ModelConfig
 ): ImageSize {
-  const ratioMap: Record<string, string> = {
-    "16:9": "1792x1024",
-    "4:3": "1536x1024",
-    "1:1": "1024x1024",
-    "9:16": "1024x1536",
-  };
+  const fallbackRatioMap = MODEL_CONFIGS.doubao?.aspectRatioSizeMap || {};
+  const ratioMap = modelConfig.aspectRatioSizeMap || fallbackRatioMap;
 
-  const preferredSize = ratioMap[aspectRatio] || modelConfig.defaultSize;
-
-  // 检查模型是否支持该尺寸，如果不支持则使用默认尺寸
-  if (modelConfig.supportedSizes.includes(preferredSize as any)) {
-    return preferredSize as any;
-  }
-
-  return modelConfig.defaultSize as any;
+  return ratioMap[aspectRatio] || fallbackRatioMap["1:1"] || "1024x1024";
 }
 
-type ImageGenerateParamsType = ImageGenerateParams & { watermark?: boolean; sequential_image_generation?: "disabled" | "auto"; image?: string | string[]; };
+/**
+ * 匹配模型
+ * @param modelType 
+ * @returns 
+ */
+function matchModelType(modelType: string): ModelType | null {
+  const normalized = modelType.toLowerCase();
+
+  if (normalized.startsWith("gemini")) {
+    return "gemini";
+  }
+
+  if (normalized.startsWith("gpt")) {
+    return "gpt";
+  }
+
+  if (normalized.startsWith("doubao")) {
+    return "doubao";
+  }
+
+  return null;
+}
+
+const MODEL_PARAM_RULES: Record<
+  ModelType,
+  {
+    withSize: boolean;
+    withResponseFormat: boolean;
+    withN: boolean;
+    withImage: boolean;
+    withWatermark: boolean;
+    withSequentialImageGeneration: boolean;
+    withQuality: boolean;
+  }
+> = {
+  doubao: {
+    withSize: true,
+    withResponseFormat: true,
+    withN: true,
+    withImage: true,
+    withWatermark: true,
+    withSequentialImageGeneration: true,
+    withQuality: true,
+  },
+  gemini: {
+    withSize: true,
+    withResponseFormat: false,
+    withN: true,
+    withImage: true,
+    withWatermark: false,
+    withSequentialImageGeneration: false,
+    withQuality: true,
+  },
+  gpt: {
+    withSize: true,
+    withResponseFormat: true,
+    withN: true,
+    withImage: true,
+    withWatermark: false,
+    withSequentialImageGeneration: false,
+    withQuality: true,
+  },
+};
+
+function isValidSizeForDoubao(size: string): boolean {
+  const [widthStr, heightStr] = size.split("x");
+  const width = Number(widthStr);
+  const height = Number(heightStr);
+
+  if (!Number.isFinite(width) || !Number.isFinite(height)) {
+    return false;
+  }
+
+  return width * height >= 3686400;
+}
 
 /**
- * 构建图片生成参数
  * @param modelType 模型类型
  * @param prompt 提示词
  * @param aspectRatio 宽高比
@@ -100,37 +144,55 @@ export function buildImageGenerateParams(
   options?: {
     quality?: "standard" | "hd";
     size?: string;
-    imgUrl?: string;
+    imgUrl?: string | string[];
   }
-): ImageGenerateParamsType {
-  const modelConfig = getModelConfig(modelType);
-  const size = options?.size || getSizeForAspectRatio(aspectRatio, modelConfig);
+): ImageGenerateParamsType | null  { 
+  const matchedModelType = matchModelType(modelType);
 
-  // 构建基础参数
+  if (!matchedModelType) {
+    return null;
+  }
+  const modelConfig = MODEL_CONFIGS[matchedModelType];
+  
+  const size = modelConfig.aspectRatioSizeMap[aspectRatio];
+
+  const rules = MODEL_PARAM_RULES[matchedModelType];
+
   const params: ImageGenerateParamsType = {
-    model: modelConfig.model,
-    prompt: prompt,
-    size: size as any,
-    response_format: modelConfig.responseFormat,
-    n: modelConfig.n || 1,
+    model: modelType,
+    prompt,
   };
 
-  // Add image_url if provided
-  if (options?.imgUrl) {
+  if (rules.withSize) {
+    params.size = size as any;
+  }
+
+  if (rules.withResponseFormat) {
+    params.response_format = modelConfig.responseFormat;
+  }
+
+  if (rules.withN) {
+    params.n = modelConfig.n || 1;
+  }
+
+  if (rules.withImage && options?.imgUrl) {
     params.image = options.imgUrl;
   }
 
-  // 添加模型特定的参数
-  if (modelConfig.watermark !== undefined) {
+  if (rules.withWatermark && modelConfig.watermark !== undefined) {
     params.watermark = modelConfig.watermark;
   }
 
-  if (modelConfig.sequentialImageGeneration !== undefined) {
+  if (rules.withSequentialImageGeneration && modelConfig.sequentialImageGeneration !== undefined) {
     params.sequential_image_generation = modelConfig.sequentialImageGeneration;
   }
 
-  if (modelConfig.quality !== undefined) {
-    params.quality = options?.quality || modelConfig.quality;
+  if (rules.withQuality) {
+    if (options?.quality) {
+      params.quality = options.quality;
+    } else if (modelConfig.quality !== undefined) {
+      params.quality = modelConfig.quality;
+    }
   }
 
   return params;
@@ -143,7 +205,7 @@ export function buildImageGenerateParams(
 export function getSupportedModels(): Array<{ type: ModelType; name: string; config: ModelConfig }> {
   return Object.entries(MODEL_CONFIGS).map(([type, config]) => ({
     type: type as ModelType,
-    name: config.model,
+    name: type,
     config,
   }));
 }

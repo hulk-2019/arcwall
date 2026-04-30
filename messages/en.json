@@ -71,7 +71,11 @@
     "languageLabel": "Language",
     "generationFailed": "Generation failed",
     "optimizePromptFailed": "Failed to optimize prompt",
-    "pleaseEnterPrompt": "Please enter a prompt"
+    "pleaseEnterPrompt": "Please enter a prompt",
+    "maxReferenceImages": "Maximum 5 reference images allowed",
+    "imageTooLarge": "Each image must be under 50MB",
+    "uploadFailed": "Upload failed, please try again",
+    "referenceImage": "Ref Image"
   },
   "trending": {
     "eyebrow": "Trending Wallpapers",
