@@ -121,18 +121,24 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
 
   const { data: myWorksData, isLoading: loading } = useQuery({
     queryKey,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       try {
-        return await getMyWorks({
-          page,
-          limit,
-          type: activeTab,
-          keyword: debouncedKeyword || undefined,
-          startDate: startDate || undefined,
-          endDate: endDate || undefined,
-          sortByLikes: sortByLikes || undefined,
-        });
+        return await getMyWorks(
+          {
+            page,
+            limit,
+            type: activeTab,
+            keyword: debouncedKeyword || undefined,
+            startDate: startDate || undefined,
+            endDate: endDate || undefined,
+            sortByLikes: sortByLikes || undefined,
+          },
+          signal,
+        );
       } catch (e: any) {
+        if (e?.name === "AbortError") {
+          throw e;
+        }
         if (e.message?.includes("401")) {
           router.push("/sign-in");
         } else {
@@ -141,6 +147,9 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
         throw e;
       }
     },
+    staleTime: 5000,
+    retry: 1,
+    retryDelay: 1000,
     refetchInterval: (query) => {
       const currentWallpapers = query.state.data?.data?.wallpapers || [];
       if (

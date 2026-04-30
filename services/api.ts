@@ -41,8 +41,8 @@ export const useRedeemCode = (code: string) => fetcher("/api/protected/redeem-co
 // Wallpapers & Favorites
 export const toggleFavorite = (data: { wallpaperId: number }) => fetcher("/api/protected/favorite", { method: "POST", body: JSON.stringify(data) });
 export const batchUnfavorite = (data: { wallpaperIds: number[] }) => fetcher("/api/protected/favorite/batch-unfavorite", { method: "POST", body: JSON.stringify(data) });
-export const getMyWorks = (params: any) => {
-  return fetcher("/api/protected/my-works", { method: "POST", body: JSON.stringify(params) });
+export const getMyWorks = (params: any, signal?: AbortSignal) => {
+  return fetcher("/api/protected/my-works", { method: "POST", body: JSON.stringify(params), signal });
 };
 export const genWallpaper = (data: any) => fetcher("/api/protected/gen-wallpaper", { method: "POST", body: JSON.stringify(data) });
 export const deleteMyWork = (id: number) => fetcher("/api/protected/my-works/delete", { method: "POST", body: JSON.stringify({ id }) });

@@ -70,7 +70,7 @@ model wallpapers {
   is_delete           Boolean   @default(false)
   user                users     @relation(fields: [user_id], references: [id])
   system_wallpapers   system_wallpapers[]
-  @@index([user_id])
+  @@index([user_id, is_delete, is_permanently_delete, created_at(sort: Desc)])
 }
 
 model favorites {
@@ -82,6 +82,7 @@ model favorites {
   system_wallpaper system_wallpapers?  @relation(fields: [system_wallpaper_id], references: [id], onDelete: Cascade)
   @@unique([user_id, system_wallpaper_id])
   @@index([user_id])
+  @@index([system_wallpaper_id])
 }
 
 model orders {
@@ -117,6 +118,8 @@ model system_wallpapers {
   user           users?    @relation(fields: [creator_id], references: [id])
   wallpaper      wallpapers? @relation(fields: [wallpaper_id], references: [id])
   favorites      favorites[]
+  @@index([is_active, created_at(sort: Desc)])
+  @@index([creator_id, is_active, created_at(sort: Desc)])
 }
 
 model user_balance {
