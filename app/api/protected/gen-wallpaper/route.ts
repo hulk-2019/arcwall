@@ -1,4 +1,5 @@
 import { respData, respErr } from "@/lib/resp";
+import { errMsg } from "@/messages/errors";
 
 import { Wallpaper } from "@/types/wallpaper";
 import { requireAuthOrResponse } from "@/lib/auth";
@@ -6,7 +7,8 @@ import { getUserBalanceByEmail, consumeCreditsAndSaveWallpaper } from "@/service
 import { findUserByEmail } from "@/models/user";
 import { addSignedUrlsToWallpaper } from "@/lib/wallpaper-utils";
 import { getSignedUrl, fetchImageAsBase64 } from "@/lib/oss";
-import { buildImageGenerateParams, getModelConfig, ModelType } from "@/services/model-config";
+import { buildImageGenerateParams } from "@/services/model-config";
+import type { ModelType } from "@/types/model-config";
 import { buildPrompt } from "@/lib/prompt-builder";
 import { redis } from "@/lib/redis";
 import { GenWallpaperSchema } from "@/lib/schemas";
@@ -21,13 +23,12 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = GenWallpaperSchema.safeParse(body);
     if (!parsed.success) {
-      return respErr("invalid.params");
+      return respErr(errMsg("invalid.params"));
     }
     const { description, aspectRatio, model, language, imgPath } = parsed.data;
 
-    // Default values
     const ratio = aspectRatio || "16:9";
-    const modelType: ModelType | string = model || "doubao-seedream-4-0-250828";
+    const modelType: ModelType | string = model;
     const lang = language === "zh" ? "zh" : "EN";
 
     const user_email = auth.email;
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
     ]);
 
     if (!user || !user.id) {
-      return respErr("user.not.found");
+      return respErr(errMsg("user.not.found"));
     }
 
     // Rate Limiting: Limit 10 requests per minute per user
@@ -49,22 +50,18 @@ export async function POST(req: Request) {
       await redis.expire(rateLimitKey, 60);
     }
     if (currentRequests > 10) {
-      return respErr("too.many.requests");
+      return respErr(errMsg("too.many.requests"));
     }
 
     const concurrencyKey = `lock:gen_wallpaper:${user.id}`;
     const acquired = await redis.set(concurrencyKey, "1", "EX", 5, "NX");
     if (!acquired) {
-      return respErr("request.pending");
+      return respErr(errMsg("request.pending"));
     }
 
     if (user_balance < 1) {
-      return respErr("credits.not.enough");
+      return respErr(errMsg("credits.not.enough"));
     }
-
-    // 获取模型配置
-    const modelConfig = getModelConfig(modelType);
-    const llm_name = modelConfig.model;
 
     // 构建提示词（支持中英文切换）
     const prompt = buildPrompt(description, lang);
@@ -81,8 +78,14 @@ export async function POST(req: Request) {
       resolvedImgUrl = base64List.length === 1 ? base64List[0] : base64List;
     }
 
-    // 使用模型配置服务构建参数
+    // 使用模型配置服务构建参数，从参数中动态获取模型名称
     const llm_params = buildImageGenerateParams(modelType, prompt, ratio, { imgUrl: resolvedImgUrl });
+
+    if (!llm_params) {
+      return respErr(errMsg("invalid.params"));
+
+    }
+    const llm_name = llm_params.model as string;
 
     // 从参数中获取图片尺寸（用于保存到数据库）
     const img_size = llm_params.size as string;
@@ -115,9 +118,9 @@ export async function POST(req: Request) {
     } catch (e) {
       console.log("consume credits and save wallpaper failed: ", e);
       if (e instanceof Error && e.message === "insufficient.credits") {
-        return respErr("credits.not.enough");
+        return respErr(errMsg("credits.not.enough"));
       }
-      return respErr("consume.credits.failed");
+      return respErr(errMsg("consume.credits.failed"));
     }
 
     // Add job to queue
@@ -136,7 +139,7 @@ export async function POST(req: Request) {
           where: { id: savedWallpaperId },
           data: { status: 2, failure_reason: "Failed to enqueue job" }
        }));
-       return respErr("generate.wallpaper.failed");
+       return respErr(errMsg("generate.wallpaper.failed"));
     }
 
     // Generate signed URLs for client (even if empty, to match type)
@@ -145,6 +148,6 @@ export async function POST(req: Request) {
     return respData(wallpaperWithUrls);
   } catch (e) {
     console.log("generate wallpaper failed: ", e);
-    return respErr("generate.wallpaper.failed");
+    return respErr(errMsg("generate.wallpaper.failed"));
   }
 }

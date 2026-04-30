@@ -30,6 +30,7 @@ import {
   uploadImage,
   getDictionaries,
 } from "@/services/api";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations, useLocale } from "next-intl";
 
 export default function Hero() {
@@ -102,7 +103,7 @@ export default function Hero() {
     signedUrlMutation.mutate({ paths: uploadedImagePath });
   }, [uploadedImagePath]);
 
-  const { data: dictionariesData } = useQuery({
+  const { data: dictionariesData, isLoading: isDictionariesLoading } = useQuery({
     queryKey: ["dictionaries", ["model", "aspect_ratio"]],
     queryFn: () => getDictionaries(["model", "aspect_ratio"]),
   });
@@ -452,6 +453,9 @@ export default function Hero() {
 
             <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
               <div className="flex items-center gap-2 flex-wrap">
+                {isDictionariesLoading ? (
+                  <Skeleton className="h-8 w-32 rounded-xl bg-gray-200 dark:bg-white/20" />
+                ) : (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-900 dark:bg-white/10 text-white border border-transparent dark:border-white/10 text-xs font-medium hover:bg-gray-800 dark:hover:bg-white/20 transition-colors shadow-sm outline-none">
@@ -467,7 +471,11 @@ export default function Hero() {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
+                )}
 
+                {isDictionariesLoading ? (
+                  <Skeleton className="h-8 w-24 rounded-xl bg-gray-200 dark:bg-white/20" />
+                ) : (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-900 dark:bg-white/10 text-white border border-transparent dark:border-white/10 text-xs font-medium hover:bg-gray-800 dark:hover:bg-white/20 transition-colors shadow-sm outline-none">
@@ -483,6 +491,7 @@ export default function Hero() {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
+                )}
 
                 <button
                   onClick={handleOptimizePrompt}

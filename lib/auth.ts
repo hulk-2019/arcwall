@@ -1,5 +1,6 @@
 import { currentUser, auth } from "@clerk/nextjs/server";
 import { respErr } from "./resp";
+import { errMsg } from "@/messages/errors";
 
 export interface AuthResult {
   email: string;
@@ -106,7 +107,7 @@ export async function requireAuth(): Promise<AuthResult | null> {
 export async function requireAuthOrResponse(): Promise<AuthResult | Response> {
   const auth = await requireAuth();
   if (!auth) {
-    return respErr("unauthorized", 401);
+    return respErr(errMsg("unauthorized"), 401);
   }
   return auth;
 }

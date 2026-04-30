@@ -1,4 +1,5 @@
 import { respData, respErr } from "@/lib/resp";
+import { errMsg } from "@/messages/errors";
 import { requireAuthOrResponse } from "@/lib/auth";
 import { clearAllTrash } from "@/models/wallpaper";
 import { findUserByEmail } from "@/models/user";
@@ -12,7 +13,7 @@ export async function POST(req: Request) {
   try {
     const user = await findUserByEmail(auth.email);
     if (!user?.id) {
-      return respErr("user.not.found");
+      return respErr(errMsg("user.not.found"));
     }
 
     const count = await clearAllTrash(user.id);
@@ -20,7 +21,7 @@ export async function POST(req: Request) {
     return respData({ count });
   } catch (e) {
     console.log("clear trash failed: ", e);
-    return respErr("clear.trash.failed");
+    return respErr(errMsg("clear.trash.failed"));
   }
 }
 

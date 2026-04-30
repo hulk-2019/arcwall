@@ -1,4 +1,5 @@
 import { respData, respErr } from "@/lib/resp";
+import { errMsg } from "@/messages/errors";
 import { requireAuthOrResponse } from "@/lib/auth";
 import { getUserTrash } from "@/models/wallpaper";
 import { addThumbnailUrlsToWallpapers } from "@/lib/wallpaper-utils";
@@ -13,7 +14,7 @@ export async function POST(req: Request) {
   try {
     const user = await findUserByEmail(auth.email);
     if (!user?.id) {
-      return respErr("user.not.found");
+      return respErr(errMsg("user.not.found"));
     }
 
     const trash = await getUserTrash(user.id);
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
     return respData(trashWithUrls);
   } catch (e) {
     console.log("get trash failed: ", e);
-    return respErr("get.trash.failed");
+    return respErr(errMsg("get.trash.failed"));
   }
 }
 

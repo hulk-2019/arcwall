@@ -6,11 +6,13 @@ export function respOk() {
   return respJson(0, "ok");
 }
 
-export function respErr(message: string, status: number = 200) {
+export type RespMessage = string | { zh: string; en: string };
+
+export function respErr(message: RespMessage, status: number = 200) {
   return respJson(-1, message, undefined, status);
 }
 
-export function respJson(code: number, message: string, data?: any, status: number = 200) {
+export function respJson(code: number, message: RespMessage, data?: any, status: number = 200) {
   let json: any = {
     code: code,
     message: message,

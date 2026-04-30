@@ -20,8 +20,8 @@ export const SignedUrlSchema = z.object({
 
 export const GenWallpaperSchema = z.object({
   description: z.string().min(1),
-  aspectRatio: z.string().optional(),
-  model: z.string().optional(),
+  aspectRatio: z.string().min(1),
+  model: z.string().min(1),
   language: z.enum(["en", "zh", "EN"]).optional(),
   imgUrl: z.string().url().optional(),
   imgPath: z.array(z.string()).optional(),

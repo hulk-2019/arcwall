@@ -1,4 +1,5 @@
 import { respData, respErr } from "@/lib/resp";
+import { errMsg } from "@/messages/errors";
 
 import { User } from "@/types/user";
 import { requireAuthOrResponse } from "@/lib/auth";
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
     }
 
     if (!dbUser?.id) {
-      return respErr("user.not.found");
+      return respErr(errMsg("user.not.found"));
     }
 
     const user_credits = await getUserCredits(dbUser.id);
@@ -38,6 +39,6 @@ export async function POST(req: Request) {
     return respData(userInfo);
   } catch (e) {
     console.log("get user info failed");
-    return respErr("get.user.info.failed");
+    return respErr(errMsg("get.user.info.failed"));
   }
 }
