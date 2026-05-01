@@ -34,17 +34,14 @@ export async function GET(req: Request) {
     return encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
   }
 
-  // Query pending wallpaper IDs before subscribing to know when we're done
-  const pendingRows = await prisma.wallpapers.findMany({
+  // Check if there are any pending tasks before subscribing
+  const initialPendingCount = await prisma.wallpapers.count({
     where: { user_id: dbUserId, status: 0, is_delete: false, is_permanently_delete: false },
-    select: { id: true },
   });
-
-  const pendingIds = new Set(pendingRows.map((r) => r.id));
 
   const stream = new ReadableStream({
     async start(controller) {
-      if (pendingIds.size === 0) {
+      if (initialPendingCount === 0) {
         controller.enqueue(encode("done", { message: "no pending tasks" }));
         controller.close();
         return;
@@ -70,8 +67,6 @@ export async function GET(req: Request) {
           const payload = JSON.parse(message);
           const { wallpaperId, status, img_thumbnail_path, failure_reason } = payload;
 
-          pendingIds.delete(wallpaperId);
-
           // Fetch the full row so formatWallpaper has all fields
           const row = await prisma.wallpapers.findUnique({
             where: { id: wallpaperId },
@@ -88,7 +83,11 @@ export async function GET(req: Request) {
             }));
           }
 
-          if (pendingIds.size === 0) {
+          const remainingCount = await prisma.wallpapers.count({
+            where: { user_id: dbUserId, status: 0, is_delete: false, is_permanently_delete: false },
+          });
+
+          if (remainingCount === 0) {
             controller.enqueue(encode("done", { message: "all tasks completed" }));
             cleanup();
             controller.close();
