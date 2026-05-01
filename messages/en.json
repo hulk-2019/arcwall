@@ -215,7 +215,7 @@
     "empty": "No deleted wallpapers",
     "emptyTitle": "Your trash is empty",
     "emptyDesc": "Deleted items will appear here and will be permanently removed after 30 days.",
-    "confirmClearPrompt": "This is a destructive action. Type '{confirmText}' to permanently clear trash:",
+    "confirmClearPrompt": "This is a destructive action. Type \"{confirmText}\" to permanently clear trash:",
     "confirmFailed": "Confirmation failed",
     "backToWorks": "Back to My Works",
     "clearAll": "Clear All",

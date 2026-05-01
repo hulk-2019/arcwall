@@ -215,7 +215,7 @@
     "empty": "没有已删除的作品",
     "emptyTitle": "你的世界非常整洁",
     "emptyDesc": "被删除的作品会暂存在这里，并在 30 天后自动物理销毁以节省空间。",
-    "confirmClearPrompt": "这是一个高危操作，壁纸配方将永久丢失。请输入 '{confirmText}' 确认清空：",
+    "confirmClearPrompt": "这是一个高危操作，壁纸配方将永久丢失。请输入 \"{confirmText}\" 确认清空：",
     "confirmFailed": "验证失败，未执行清空",
     "backToWorks": "返回我的作品",
     "clearAll": "一键清空",
