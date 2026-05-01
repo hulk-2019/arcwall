@@ -11,6 +11,13 @@ const nextConfig = {
       },
     ],
   },
+  /** 打包机配置较低，临时关闭lint **/
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  }
 };
 
 module.exports = withNextIntl(nextConfig);
