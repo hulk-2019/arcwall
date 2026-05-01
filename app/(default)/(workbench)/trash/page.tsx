@@ -77,7 +77,7 @@ export default function TrashPage() {
       </div>
 
       {loading ? (
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+        <div className="grid gap-4 sm:gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {Array.from({ length: 12 }).map((_, i) => (
             <article key={i} className="overflow-hidden rounded-[28px] border border-white/20 bg-card shadow-xl dark:border-white/10 dark:bg-slate-900">
               <Skeleton className="aspect-square w-full rounded-none" />
@@ -100,11 +100,11 @@ export default function TrashPage() {
           <p className="text-muted-foreground">{t("emptyDesc")}</p>
         </div>
       ) : (
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+        <div className="grid gap-4 sm:gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {trash.map((item) => (
             <article
               key={item.id}
-              className="group relative overflow-hidden rounded-xl border border-white/20 bg-card shadow-sm dark:border-white/10 dark:bg-slate-900 flex flex-col grayscale transition-all hover:grayscale-0 hover:shadow-md"
+              className="group relative overflow-hidden rounded-xl border border-white/20 bg-card shadow-sm dark:border-white/10 dark:bg-slate-900 flex flex-col transition-all hover:shadow-md"
             >
               <div className="relative aspect-square overflow-hidden">
                 <ImageWithPlaceholder
@@ -122,14 +122,14 @@ export default function TrashPage() {
                     <Badge variant="secondary" className="text-[10px] px-1.5 opacity-70">{item.model_name}</Badge>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 pt-2">
-                  <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => restoreMutation.mutate(item.id!)}>
-                    <RotateCcw className="mr-1 h-3 w-3" />
-                    {t("restore")}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2">
+                  <Button variant="outline" size="sm" className="flex-1 text-xs px-2 sm:px-3" onClick={() => restoreMutation.mutate(item.id!)}>
+                    <RotateCcw className="mr-1 h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">{t("restore")}</span>
                   </Button>
-                  <Button variant="destructive" size="sm" className="flex-1 text-xs" onClick={() => handleDelete(item.id!)}>
-                    <Trash2 className="mr-1 h-3 w-3" />
-                    {t("delete")}
+                  <Button variant="destructive" size="sm" className="flex-1 text-xs px-2 sm:px-3" onClick={() => handleDelete(item.id!)}>
+                    <Trash2 className="mr-1 h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">{t("delete")}</span>
                   </Button>
                 </div>
               </div>
