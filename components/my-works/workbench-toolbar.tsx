@@ -41,8 +41,8 @@ export function WorkbenchToolbar({
   const hasFilters = Boolean(keyword || startDate || endDate || sortByLikes);
 
   return (
-    <div className="flex items-center justify-between gap-4 px-2">
-      <div className="flex items-center gap-4 text-sm text-muted-foreground whitespace-nowrap">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
+      <div className="flex items-center justify-between sm:justify-start gap-4 text-sm text-muted-foreground whitespace-nowrap w-full sm:w-auto">
         <button
           type="button"
           onClick={onToggleSelectAll}
@@ -55,7 +55,7 @@ export function WorkbenchToolbar({
         {totalCount > 0 && <span>{tWorkbench("currentPage", { count: totalCount })}</span>}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
         {onOpenGenerate && (
           <Button 
             onClick={onOpenGenerate} 
@@ -93,7 +93,7 @@ export function WorkbenchToolbar({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80">
+        <PopoverContent className="w-[calc(100vw-2rem)] sm:w-80" align="end">
           <div className="flex flex-col gap-4">
             <p className="text-sm font-medium">{tWorkbench("filters")}</p>
 
