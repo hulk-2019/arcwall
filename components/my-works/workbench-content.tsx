@@ -670,15 +670,17 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
               ))}
             </div>
 
-            <WorkbenchPagination
-              page={page}
-              totalPages={totalPages}
-              previousText={copy.pagination.previous}
-              nextText={copy.pagination.next}
-              pageText={copy.pagination.page}
-              onPrev={() => setPage(page - 1)}
-              onNext={() => setPage(page + 1)}
-            />
+            <div className={selectedIds.length > 0 ? "pb-36 sm:pb-28" : ""}>
+              <WorkbenchPagination
+                page={page}
+                totalPages={totalPages}
+                previousText={copy.pagination.previous}
+                nextText={copy.pagination.next}
+                pageText={copy.pagination.page}
+                onPrev={() => setPage(page - 1)}
+                onNext={() => setPage(page + 1)}
+              />
+            </div>
           </>
         )}
       </div>

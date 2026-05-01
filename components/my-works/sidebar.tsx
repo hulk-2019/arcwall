@@ -15,43 +15,43 @@ export function Sidebar({ locale, pathname }: SidebarProps) {
   const t = useTranslations("myWorks.sidebar");
 
   return (
-    <div className="w-full md:w-64 border-r border-border p-4 space-y-4 flex-shrink-0">
-      <div className="space-y-1">
-        <h3 className="font-semibold text-lg px-2 mb-4">
+    <div className="w-full md:w-64 border-b md:border-b-0 md:border-r border-border p-2 md:p-4 flex-shrink-0">
+      <div className="flex flex-col h-full">
+        <h3 className="hidden md:block font-semibold text-lg px-2 mb-4">
           {t("title")}
         </h3>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-row md:flex-col overflow-x-auto md:overflow-visible gap-1 pb-1 md:pb-0 scrollbar-hide">
           <Button
             variant={pathname === "/my-works" ? "secondary" : "ghost"}
-            className="justify-start w-full"
+            className="justify-center md:justify-start flex-shrink-0"
             onClick={() => router.push("/my-works")}
           >
-            <ImageIcon className="w-4 h-4 mr-2" />
+            <ImageIcon className="w-4 h-4 mr-2 hidden md:inline-block" />
             {t("creations")}
           </Button>
           <Button
             variant={pathname === "/published" ? "secondary" : "ghost"}
-            className="justify-start w-full"
+            className="justify-center md:justify-start flex-shrink-0"
             onClick={() => router.push("/published")}
           >
-            <Globe className="w-4 h-4 mr-2" />
+            <Globe className="w-4 h-4 mr-2 hidden md:inline-block" />
             {t("published")}
           </Button>
           <Button
             variant={pathname === "/favorites" ? "secondary" : "ghost"}
-            className="justify-start w-full"
+            className="justify-center md:justify-start flex-shrink-0"
             onClick={() => router.push("/favorites")}
           >
-            <Heart className="w-4 h-4 mr-2" />
+            <Heart className="w-4 h-4 mr-2 hidden md:inline-block" />
             {t("favorites")}
           </Button>
           <Button
             variant={pathname === "/trash" ? "secondary" : "ghost"}
-            className="justify-start w-full text-muted-foreground"
+            className="justify-center md:justify-start flex-shrink-0 text-muted-foreground"
             onClick={() => router.push("/trash")}
           >
-            <Trash2 className="w-4 h-4 mr-2" />
+            <Trash2 className="w-4 h-4 mr-2 hidden md:inline-block" />
             {t("trash")}
           </Button>
         </div>
