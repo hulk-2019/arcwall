@@ -2,6 +2,7 @@
 import "./globals.css";
 
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { ClerkProvider } from "@clerk/nextjs";
 import { zhCN, enUS } from "@clerk/localizations";
 import { Toaster } from "sonner";
@@ -10,6 +11,8 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { ReactQueryProvider } from "@/components/providers/query-provider";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+
+const SakanaWidget = dynamic(() => import("@/components/ui/SakanaWidget"), { ssr: false });
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -71,6 +74,7 @@ export default async function RootLayout({
                     }}
                   />
                   {children}
+                  <SakanaWidget />
                 </DesignStoreProvider>
               </ReactQueryProvider>
             </NextIntlClientProvider>
