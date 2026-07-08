@@ -61,12 +61,6 @@
   }
 }
 
-/* Clerk modal overrides */
-.cl-card {
-  border: none !important;
-  box-shadow: none !important;
-}
-
 /* Global Sonner Toast adjustments */
 [data-sonner-toast] {
   width: fit-content !important;

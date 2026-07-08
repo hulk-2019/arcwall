@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useClerk } from "@clerk/nextjs";
 import {
   DropdownMenu,
   DropdownMenuItem,
@@ -25,8 +24,9 @@ import { useAppStore } from "@/store/useAppStore";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useMutation } from "@tanstack/react-query";
-import { generateRedeemCode, useRedeemCode } from "@/services/api";
+import { clearAuthToken, generateRedeemCode, useRedeemCode } from "@/services/api";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 
 interface Props {
   user: User;
@@ -34,8 +34,8 @@ interface Props {
 
 export default function ({ user }: Props) {
   const t = useTranslations("user");
-  const { fetchUserCredits } = useAppStore();
-  const { signOut } = useClerk();
+  const { fetchUserCredits, setUser } = useAppStore();
+  const router = useRouter();
 
   const [showGenerateDialog, setShowGenerateDialog] = React.useState(false);
   const [showRedeemDialog, setShowRedeemDialog] = React.useState(false);
@@ -147,7 +147,11 @@ export default function ({ user }: Props) {
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem className="cursor-pointer" onClick={() => signOut({ redirectUrl: "/" })}>
+          <DropdownMenuItem className="cursor-pointer" onClick={() => {
+            clearAuthToken();
+            setUser(null);
+            router.push("/");
+          }}>
             {t("signOut")}
           </DropdownMenuItem>
         </DropdownMenuContent>

@@ -3,8 +3,6 @@ import "./globals.css";
 
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
-import { ClerkProvider } from "@clerk/nextjs";
-import { zhCN, enUS } from "@clerk/localizations";
 import { Toaster } from "sonner";
 import { DesignStoreProvider } from "@/components/providers/DesignStoreProvider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -51,36 +49,34 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <ClerkProvider localization={(locale === "zh" ? zhCN : enUS) as any}>
-      <html lang={locale} suppressHydrationWarning>
-        <body>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-          >
-            <NextIntlClientProvider messages={messages}>
-              <ReactQueryProvider>
-                <DesignStoreProvider>
-                  <Toaster
-                    position="top-center"
-                    richColors
-                    toastOptions={{
-                      style: {
-                        minHeight: "40px",
-                        height: "auto",
-                        padding: "8px 16px",
-                      },
-                    }}
-                  />
-                  {children}
-                  <SakanaWidget />
-                </DesignStoreProvider>
-              </ReactQueryProvider>
-            </NextIntlClientProvider>
-          </ThemeProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang={locale} suppressHydrationWarning>
+      <body>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+        >
+          <NextIntlClientProvider messages={messages}>
+            <ReactQueryProvider>
+              <DesignStoreProvider>
+                <Toaster
+                  position="top-center"
+                  richColors
+                  toastOptions={{
+                    style: {
+                      minHeight: "40px",
+                      height: "auto",
+                      padding: "8px 16px",
+                    },
+                  }}
+                />
+                {children}
+                <SakanaWidget />
+              </DesignStoreProvider>
+            </ReactQueryProvider>
+          </NextIntlClientProvider>
+        </ThemeProvider>
+      </body>
+    </html>
   );
 }

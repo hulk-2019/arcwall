@@ -1,54 +1,44 @@
 "use client";
 
-import { SignIn } from "@clerk/nextjs";
-import { useSearchParams } from "next/navigation";
+import { FormEvent, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatedBackground } from "@/components/ui/animated-background";
 import ThemeToggle from "@/components/theme-toggle";
 import LanguageToggle from "@/components/language-toggle";
-import { useTheme } from "next-themes";
-
-const darkAppearance = {
-  variables: {
-    colorBackground: "#1e2235",
-    colorInputBackground: "#111827",
-    colorText: "#ffffff",
-    colorTextSecondary: "#9ca3af",
-    colorNeutral: "#374151",
-  },
-  elements: {
-    card: { backgroundColor: "#1e2235", border: "none", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)" },
-    footer: { backgroundColor: "#1e2235", borderTop: "none", boxShadow: "none" },
-    footerAction: { backgroundColor: "#1e2235" },
-    footerPages: { backgroundColor: "#1e2235" },
-    socialButtonsBlockButton: { backgroundColor: "#2d3748", borderColor: "#4a5568", color: "#ffffff" },
-    formFieldInput: { backgroundColor: "#111827", borderColor: "#374151", color: "#ffffff" },
-    footerActionText: { color: "#9ca3af" },
-    footerActionLink: { color: "#a78bfa" },
-  },
-};
-
-const lightAppearance = {
-  variables: {
-    colorBackground: "#ffffff",
-    colorInputBackground: "#f8fafc",
-    colorText: "#0f172a",
-    colorTextSecondary: "#64748b",
-    colorNeutral: "#e2e8f0",
-  },
-  elements: {
-    card: { backgroundColor: "#ffffff" },
-    footer: { backgroundColor: "#f8fafc", borderTop: "1px solid #e2e8f0", boxShadow: "none" },
-    footerAction: { backgroundColor: "#f8fafc" },
-    footerPages: { backgroundColor: "#f8fafc" },
-    socialButtonsBlockButton: { backgroundColor: "#ffffff", borderColor: "#e2e8f0", color: "#0f172a" },
-    formFieldInput: { backgroundColor: "#f8fafc", borderColor: "#e2e8f0", color: "#0f172a" },
-  },
-};
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { login, setAuthToken } from "@/services/api";
+import { useAppStore } from "@/store/useAppStore";
+import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 export default function Page() {
+  const t = useTranslations("auth");
+  const router = useRouter();
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get("redirect_url") || "/my-works";
-  const { resolvedTheme } = useTheme();
+  const { fetchUserInfo } = useAppStore();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res: any = await login({ email, password });
+      const token = res?.data?.accessToken;
+      if (!token) throw new Error(res?.message || t("signInFailed"));
+      setAuthToken(token);
+      await fetchUserInfo(true, true);
+      router.push(redirectUrl);
+    } catch (error: any) {
+      toast.error(error?.message || t("signInFailed"));
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <AnimatedBackground>
@@ -56,11 +46,45 @@ export default function Page() {
         <LanguageToggle />
         <ThemeToggle />
       </div>
-      <div className="flex justify-center">
-        <SignIn
-          fallbackRedirectUrl={redirectUrl}
-          appearance={resolvedTheme === "dark" ? darkAppearance : lightAppearance}
-        />
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <form
+          onSubmit={handleSubmit}
+          className="w-full max-w-sm rounded-lg border border-border bg-background/90 p-6 shadow-xl backdrop-blur"
+        >
+          <div className="mb-6 space-y-1 text-center">
+            <h1 className="text-2xl font-semibold">{t("signInTitle")}</h1>
+            <p className="text-sm text-muted-foreground">{t("signInSubtitle")}</p>
+          </div>
+          <div className="space-y-4">
+            <Input
+              type="email"
+              autoComplete="email"
+              placeholder={t("email")}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Input
+              type="password"
+              autoComplete="current-password"
+              placeholder={t("password")}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? t("signingIn") : t("signInAction")}
+            </Button>
+          </div>
+          <div className="mt-4 flex items-center justify-between text-sm">
+            <Link href="/forgot-password" className="text-primary hover:underline">
+              {t("forgotPasswordLink")}
+            </Link>
+            <Link href="/sign-up" className="text-primary hover:underline">
+              {t("createAccountLink")}
+            </Link>
+          </div>
+        </form>
       </div>
     </AnimatedBackground>
   );

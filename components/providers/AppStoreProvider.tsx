@@ -2,15 +2,14 @@
 
 import { useEffect } from "react";
 import { useAppStore } from "@/store/useAppStore";
-import { useUser } from "@clerk/nextjs";
+import { hasAuthToken } from "@/services/api";
 
 export const AppStoreProvider = ({ children }: { children: React.ReactNode }) => {
   const { fetchUserInfo } = useAppStore();
-  const { isSignedIn, isLoaded } = useUser();
 
   useEffect(() => {
-    fetchUserInfo(isSignedIn, isLoaded);
-  }, [fetchUserInfo, isSignedIn, isLoaded]);
+    fetchUserInfo(hasAuthToken(), true);
+  }, [fetchUserInfo]);
 
   return <>{children}</>;
 };

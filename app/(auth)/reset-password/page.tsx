@@ -2,23 +2,21 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatedBackground } from "@/components/ui/animated-background";
 import ThemeToggle from "@/components/theme-toggle";
 import LanguageToggle from "@/components/language-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { register, setAuthToken } from "@/services/api";
-import { useAppStore } from "@/store/useAppStore";
+import { resetPassword } from "@/services/api";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 export default function Page() {
   const t = useTranslations("auth");
   const router = useRouter();
-  const { fetchUserInfo } = useAppStore();
-  const [nickname, setNickname] = useState("");
-  const [email, setEmail] = useState("");
+  const searchParams = useSearchParams();
+  const [token, setToken] = useState(searchParams.get("token") || "");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -26,14 +24,11 @@ export default function Page() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res: any = await register({ email, password, nickname });
-      const token = res?.data?.accessToken;
-      if (!token) throw new Error(res?.message || t("registerFailed"));
-      setAuthToken(token);
-      await fetchUserInfo(true, true);
-      router.push("/my-works");
+      await resetPassword({ token, password });
+      toast.success(t("passwordUpdated"));
+      router.push("/sign-in");
     } catch (error: any) {
-      toast.error(error?.message || t("registerFailed"));
+      toast.error(error?.message || t("resetPasswordFailed"));
     } finally {
       setLoading(false);
     }
@@ -51,42 +46,32 @@ export default function Page() {
           className="w-full max-w-sm rounded-lg border border-border bg-background/90 p-6 shadow-xl backdrop-blur"
         >
           <div className="mb-6 space-y-1 text-center">
-            <h1 className="text-2xl font-semibold">{t("signUpTitle")}</h1>
-            <p className="text-sm text-muted-foreground">{t("signUpSubtitle")}</p>
+            <h1 className="text-2xl font-semibold">{t("resetPasswordTitle")}</h1>
+            <p className="text-sm text-muted-foreground">{t("resetPasswordSubtitle")}</p>
           </div>
           <div className="space-y-4">
             <Input
-              placeholder={t("nickname")}
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-            />
-            <Input
-              type="email"
-              autoComplete="email"
-              placeholder={t("email")}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t("resetToken")}
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
               required
             />
             <Input
               type="password"
               autoComplete="new-password"
-              placeholder={t("password")}
+              placeholder={t("newPassword")}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               minLength={6}
               required
             />
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? t("creating") : t("createAccountAction")}
+              {loading ? t("updating") : t("updatePassword")}
             </Button>
           </div>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            {t("alreadyHaveAccount")}{" "}
-            <Link href="/sign-in" className="text-primary hover:underline">
-              {t("signInAction")}
-            </Link>
-          </p>
+          <Link href="/sign-in" className="mt-4 block text-center text-sm text-primary hover:underline">
+            {t("backToSignIn")}
+          </Link>
         </form>
       </div>
     </AnimatedBackground>

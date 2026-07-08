@@ -13,12 +13,10 @@ export async function POST(req: Request) {
   }
   try {
     const email = auth.email;
-    const nickname = auth.user.firstName;
-    const avatarUrl = auth.user.imageUrl;
     const userInfo: User = {
       email: email,
-      nickname: nickname || "",
-      avatar_url: avatarUrl,
+      nickname: "",
+      avatar_url: "",
     };
 
     let dbUser = await findUserByEmail(email);
@@ -32,6 +30,8 @@ export async function POST(req: Request) {
     }
 
     userInfo.id = dbUser.id;
+    userInfo.nickname = dbUser.nickname || "";
+    userInfo.avatar_url = dbUser.avatar_url || "";
     userInfo.roles = dbUser.roles;
 
     return respData(userInfo);

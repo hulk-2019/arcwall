@@ -2,6 +2,7 @@
 
 import { useRef, useEffect } from "react";
 import { DesignStoreContext, createDesignStore, DesignStore } from "@/store/useDesignStore";
+import { getDictionaries } from "@/services/api";
 
 export const DesignStoreProvider = ({
   children,
@@ -15,12 +16,7 @@ export const DesignStoreProvider = ({
   }
 
   useEffect(() => {
-    fetch("/api/dictionaries", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ categories: ["model", "aspect_ratio"] }),
-    })
-      .then((res) => res.json())
+    getDictionaries(["model", "aspect_ratio"])
       .then((json) => {
         const dictionaries: Array<{ category: string; key: string }> = json?.data ?? [];
         const models = dictionaries.filter((item) => item.category === "model");

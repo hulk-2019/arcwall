@@ -13,8 +13,6 @@
     "worker": "npx tsx workers/start.ts"
   },
   "dependencies": {
-    "@clerk/localizations": "^4.5.5",
-    "@clerk/nextjs": "^5.7.6",
     "@heroicons/react": "^2.1.1",
     "@prisma/client": "^6.18.0",
     "@radix-ui/react-avatar": "^1.0.4",

@@ -61,7 +61,7 @@ ArcWall 是一个面向创作者的 AI 壁纸平台：你输入提示词，它�
 
 - **Frontend**: Next.js 14, React 18, Tailwind CSS, Radix UI
 - **State/Data**: Zustand, TanStack Query
-- **Auth**: Clerk
+- **Auth**: ArcWall JWT auth
 - **Database**: PostgreSQL + Prisma
 - **Queue & Cache**: RabbitMQ, Redis
 - **AI Service**: OpenAI SDK-compatible endpoint (`ARK_API_BASE_URL`)
@@ -97,13 +97,8 @@ npm install
 在项目根目录创建 `.env` 文件（按实际环境填写）。
 
 ```env
-# Clerk
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
-NEXT_PUBLIC_CLERK_SIGN_IN_URL="/sign-in"
-NEXT_PUBLIC_CLERK_SIGN_UP_URL="/sign-up"
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL="/"
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL="/"
+# Auth
+JWT_SECRET=
 
 # Your app url
 NEXT_PUBLIC_APP_URL=

@@ -1,4 +1,4 @@
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { requireAuth } from "@/lib/auth";
 import { findUserByEmail } from "@/models/user";
 import { prisma } from "@/lib/prisma";
 import { addThumbnailUrlToWallpaper } from "@/lib/wallpaper-utils";
@@ -8,21 +8,12 @@ import { createSubscriber, wallpaperStatusChannel } from "@/lib/redis-subscriber
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  // Use auth() only — avoids currentUser() which triggers Clerk session rotation
-  // and fails on long-lived GET (SSE) connections.
-  const { userId: clerkUserId } = auth();
-  if (!clerkUserId) {
+  const auth = await requireAuth(req);
+  if (!auth) {
     return new Response(JSON.stringify({ code: -2, message: "unauthorized" }), { status: 401 });
   }
 
-  const clerk = clerkClient();
-  const clerkUser = await clerk.users.getUser(clerkUserId);
-  const email = clerkUser.emailAddresses[0]?.emailAddress;
-  if (!email) {
-    return new Response("No email on account", { status: 400 });
-  }
-
-  const user = await findUserByEmail(email);
+  const user = await findUserByEmail(auth.email);
   if (!user?.id) {
     return new Response("User not found", { status: 404 });
   }

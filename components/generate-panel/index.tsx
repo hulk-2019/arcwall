@@ -20,7 +20,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -52,8 +51,7 @@ export function GeneratePanel({ onSuccess, className = "" }: GeneratePanelProps)
     setImgPath: setUploadedImagePath,
   } = useDesignStore();
   
-  const { isSignedIn } = useUser();
-  const { fetchUserCredits } = useAppStore();
+  const { user, fetchUserCredits } = useAppStore();
   const router = useRouter();
   const t = useTranslations("prompt");
   const tHero = useTranslations("hero");
@@ -150,7 +148,7 @@ export function GeneratePanel({ onSuccess, className = "" }: GeneratePanelProps)
   });
 
   const handleGenerate = () => {
-    if (!isSignedIn) { router.push("/sign-in"); return; }
+    if (!user) { router.push("/sign-in"); return; }
     if (!prompt.trim()) return;
     generateMutation.mutate({
       description: prompt,
@@ -178,7 +176,7 @@ export function GeneratePanel({ onSuccess, className = "" }: GeneratePanelProps)
   });
 
   const handleOptimizePrompt = () => {
-    if (!isSignedIn) { router.push("/sign-in"); return; }
+    if (!user) { router.push("/sign-in"); return; }
     if (!prompt.trim()) {
       toast.error(t("pleaseEnterPrompt"));
       return;
@@ -269,7 +267,7 @@ export function GeneratePanel({ onSuccess, className = "" }: GeneratePanelProps)
               return uploadedImageUrls.length === 0 ? (
                 <div 
                   className="relative shrink-0 w-[72px] h-[96px] z-20 cursor-pointer"
-                  onClick={() => { if (!isSignedIn) { router.push("/sign-in"); return; } fileInputRef.current?.click(); }}
+                  onClick={() => { if (!user) { router.push("/sign-in"); return; } fileInputRef.current?.click(); }}
                 >
                   <div className="w-full h-full bg-gray-100 dark:bg-white/5 border border-dashed border-gray-300 dark:border-white/10 rounded-xl flex flex-col items-center justify-center gap-1 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">
                     {isUploading ? (
@@ -294,7 +292,7 @@ export function GeneratePanel({ onSuccess, className = "" }: GeneratePanelProps)
                           className="shrink-0 w-[72px] h-[96px] snap-start relative cursor-pointer"
                           onClick={() => {
                             if (isAddBtn) {
-                              if (!isSignedIn) { router.push("/sign-in"); return; } 
+                              if (!user) { router.push("/sign-in"); return; } 
                               fileInputRef.current?.click();
                             }
                           }}
@@ -360,7 +358,7 @@ export function GeneratePanel({ onSuccess, className = "" }: GeneratePanelProps)
                           } as React.CSSProperties}
                           onClick={() => {
                             if (isAddBtn) {
-                              if (!isSignedIn) { router.push("/sign-in"); return; } 
+                              if (!user) { router.push("/sign-in"); return; } 
                               fileInputRef.current?.click();
                             }
                           }}
@@ -406,7 +404,7 @@ export function GeneratePanel({ onSuccess, className = "" }: GeneratePanelProps)
                         className="absolute -bottom-2 -right-3 z-[60] w-10 h-10 bg-[#2a2a2a] border-[2px] border-[#3a3a3a] rounded-full flex flex-col items-center justify-center cursor-pointer transition-all duration-300 opacity-100 group-hover:opacity-0 group-hover:scale-50 shadow-xl"
                         onClick={(e) => { 
                           e.stopPropagation();
-                          if (!isSignedIn) { router.push("/sign-in"); return; } 
+                          if (!user) { router.push("/sign-in"); return; } 
                           fileInputRef.current?.click(); 
                         }}
                       >

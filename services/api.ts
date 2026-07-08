@@ -1,14 +1,48 @@
 import Cookies from "js-cookie";
 
+const ARCWALL_SERVICE_URL =
+  process.env.NEXT_PUBLIC_ARCWALL_SERVICE_URL || "http://localhost:3001";
+
+function toServiceUrl(url: string): string {
+  if (/^https?:\/\//.test(url)) {
+    return url;
+  }
+
+  const servicePath = url.startsWith("/api/")
+    ? url.replace(/^\/api/, "")
+    : url;
+
+  return `${ARCWALL_SERVICE_URL}${servicePath}`;
+}
+
+function getAuthToken(): string | undefined {
+  return Cookies.get("arcwall-access-token") || Cookies.get("arcwall-token");
+}
+
+export function setAuthToken(token: string) {
+  Cookies.set("arcwall-access-token", token, { expires: 7, sameSite: "lax" });
+}
+
+export function clearAuthToken() {
+  Cookies.remove("arcwall-access-token");
+  Cookies.remove("arcwall-token");
+}
+
+export function hasAuthToken() {
+  return Boolean(getAuthToken());
+}
+
 export async function fetcher<T = any>(url: string, options?: RequestInit): Promise<T> {
   const isFormData = options?.body instanceof FormData;
+  const token = getAuthToken();
   const headers: HeadersInit = {
     ...(!isFormData && { "Content-Type": "application/json" }),
     "Arcwall-Language": Cookies.get("arcwall-language") ?? "zh",
+    ...(token && { Authorization: `Bearer ${token}` }),
     ...options?.headers,
   };
 
-  const response = await fetch(url, {
+  const response = await fetch(toServiceUrl(url), {
     ...options,
     headers,
   });
@@ -33,6 +67,16 @@ export async function fetcher<T = any>(url: string, options?: RequestInit): Prom
     return text as unknown as T;
   }
 }
+
+// Auth
+export const login = (data: { email: string; password: string }) =>
+  fetcher("/auth/login", { method: "POST", body: JSON.stringify(data) });
+export const register = (data: { email: string; password: string; nickname?: string }) =>
+  fetcher("/auth/register", { method: "POST", body: JSON.stringify(data) });
+export const forgotPassword = (data: { email: string }) =>
+  fetcher("/auth/forgot-password", { method: "POST", body: JSON.stringify(data) });
+export const resetPassword = (data: { token: string; password: string }) =>
+  fetcher("/auth/reset-password", { method: "POST", body: JSON.stringify(data) });
 
 // User & Redeem Codes
 export const generateRedeemCode = () => fetcher("/api/protected/redeem-code/generate", { method: "POST" });
@@ -61,7 +105,14 @@ export interface GenStatusCallbacks {
 
 export function subscribeGenStatus(callbacks: GenStatusCallbacks): () => void {
   const { onUpdate, onDone, onError } = callbacks;
-  const es = new EventSource("/api/protected/generating-tasks/stream");
+  const token = getAuthToken();
+  const streamUrl = new URL(
+    toServiceUrl("/api/protected/generating-tasks/stream"),
+  );
+  if (token) {
+    streamUrl.searchParams.set("token", token);
+  }
+  const es = new EventSource(streamUrl.toString());
 
   es.addEventListener("status_update", (e) => {
     try {

@@ -1,37 +1,43 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-const isPublicRoute = createRouteMatcher([
+const publicRoutes = [
   "/",
   "/billing",
-  "/sign-in(.*)",
-  "/sign-up(.*)",
+  "/sign-in",
+  "/sign-up",
+  "/forgot-password",
+  "/reset-password",
   "/api/get-wallpapers",
   "/api/worker/process-queue",
   "/api/dictionaries",
-]);
+];
 
-const isApiRoute = createRouteMatcher(["/(api|trpc)(.*)"]);
+function isPublicRoute(pathname: string) {
+  return publicRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+}
 
-export default clerkMiddleware(async (auth, req) => {
-  if (isPublicRoute(req)) {
+export default function middleware(req: NextRequest) {
+  if (isPublicRoute(req.nextUrl.pathname)) {
     return NextResponse.next();
   }
 
-  const { userId } = await auth();
+  const token = req.cookies.get("arcwall-access-token")?.value;
 
-  if (!userId) {
-    if (isApiRoute(req)) {
+  if (!token) {
+    if (req.nextUrl.pathname.startsWith("/api")) {
       return NextResponse.json(
         { code: -2, message: "unauthorized" },
         { status: 401 },
       );
     }
-    return NextResponse.redirect(new URL("/sign-in", req.url));
+    const signInUrl = new URL("/sign-in", req.url);
+    signInUrl.searchParams.set("redirect_url", req.nextUrl.pathname);
+    return NextResponse.redirect(signInUrl);
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [
