@@ -8,6 +8,7 @@ import { useCanvasStore } from "@/store/useCanvasStore";
 import type { CanvasSnapshot } from "@/types/canvas";
 import { CanvasStage } from "./CanvasStage";
 import { CanvasToolbar } from "./CanvasToolbar";
+import { MediaPreviewDialog } from "./MediaPreviewDialog";
 import { NodePalette } from "./NodePalette";
 import { PropertiesPanel } from "./PropertiesPanel";
 import { RunConfirmDialog } from "./RunConfirmDialog";
@@ -31,6 +32,7 @@ export function CanvasEditor({ projectName, initialSnapshot }: CanvasEditorProps
     estimate,
     confirmOpen,
     requestRun,
+    runNode,
     confirmRun,
     closeConfirm,
     cancelExecution,
@@ -58,7 +60,7 @@ export function CanvasEditor({ projectName, initialSnapshot }: CanvasEditorProps
 
   return (
     <div data-canvas className="relative h-dvh w-full overflow-hidden bg-background">
-      <CanvasStage />
+      <CanvasStage onRunNode={runNode} runDisabled={isRunning} />
       <div className="pointer-events-none absolute inset-0">
         <CanvasToolbar
           projectName={projectName}
@@ -84,6 +86,8 @@ export function CanvasEditor({ projectName, initialSnapshot }: CanvasEditorProps
         onConfirm={confirmRun}
         onCancel={closeConfirm}
       />
+
+      <MediaPreviewDialog />
     </div>
   );
 }

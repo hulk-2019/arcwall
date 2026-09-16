@@ -599,6 +599,27 @@
     "voice": "音色",
     "speed": "语速",
     "uploadTypeInvalid": "不支持的文件类型",
-    "uploadTooLarge": "文件大小超出限制"
+    "uploadTooLarge": "文件大小超出限制",
+    "runThisNode": "运行此节点",
+    "references": "引用",
+    "addReference": "添加引用",
+    "cancelPick": "取消",
+    "pickReferenceHint": "点击要引用的节点，按 Esc 取消",
+    "noReferences": "暂无引用，点击「添加引用」或从节点端口拖拽连线",
+    "removeReference": "移除引用",
+    "textContent": "文本内容",
+    "storyboardBrief": "创意简报",
+    "audioText": "朗读文本",
+    "promptPlaceholder": "输入内容…",
+    "textDockHint": "下游节点可引用此文本内容",
+    "polish": "AI 润色",
+    "polishing": "润色中…",
+    "polishSuccess": "润色完成",
+    "polishFailed": "润色失败",
+    "polishEmpty": "请先输入文本内容",
+    "preview": "预览",
+    "download": "下载",
+    "prevMedia": "上一个",
+    "nextMedia": "下一个"
   }
 }

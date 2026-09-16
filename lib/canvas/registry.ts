@@ -41,6 +41,9 @@ export const AUDIO_VOICE_DEFAULT =
 
 export const VIDEO_RESOLUTIONS = ["480p", "720p", "1080p"];
 
+/** 文本节点 AI 润色的单次计费（PRD-NOD-003，独立于画布执行） */
+export const POLISH_TEXT_COST = 1;
+
 export const NODE_TYPE_DEFS: Record<CanvasNodeType, NodeTypeDef> = {
   text: {
     type: "text",

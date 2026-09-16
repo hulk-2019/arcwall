@@ -56,7 +56,9 @@ export const ERROR_MESSAGES = {
   "canvas.execution.not.active": { zh: "任务已结束，无法取消", en: "Execution already finished" },
   "canvas.asset.upload.failed": { zh: "素材上传失败", en: "Failed to upload asset" },
   "canvas.asset.type.unsupported": { zh: "不支持的文件类型（仅支持图片/视频/音频）", en: "Unsupported file type (image/video/audio only)" },
-  "canvas.asset.too.large": { zh: "文件大小超出限制", en: "File size exceeds limit" }
+  "canvas.asset.too.large": { zh: "文件大小超出限制", en: "File size exceeds limit" },
+  "canvas.polish.failed": { zh: "AI 润色失败", en: "AI polish failed" },
+  "canvas.polish.too.long": { zh: "文本过长（最多 5000 字）", en: "Text too long (5000 chars max)" }
 } as const;
 
 export type ErrorMessageKey = keyof typeof ERROR_MESSAGES;

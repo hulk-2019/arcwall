@@ -599,6 +599,27 @@
     "voice": "Voice",
     "speed": "Speed",
     "uploadTypeInvalid": "Unsupported file type",
-    "uploadTooLarge": "File size exceeds limit"
+    "uploadTooLarge": "File size exceeds limit",
+    "runThisNode": "Run this node",
+    "references": "References",
+    "addReference": "Add reference",
+    "cancelPick": "Cancel",
+    "pickReferenceHint": "Click a node to reference, Esc to cancel",
+    "noReferences": "No references yet. Click \"Add reference\" or drag from a node port",
+    "removeReference": "Remove reference",
+    "textContent": "Text content",
+    "storyboardBrief": "Creative brief",
+    "audioText": "Script",
+    "promptPlaceholder": "Type here…",
+    "textDockHint": "Downstream nodes can reference this text",
+    "polish": "AI polish",
+    "polishing": "Polishing…",
+    "polishSuccess": "Polish complete",
+    "polishFailed": "Polish failed",
+    "polishEmpty": "Enter some text first",
+    "preview": "Preview",
+    "download": "Download",
+    "prevMedia": "Previous",
+    "nextMedia": "Next"
   }
 }

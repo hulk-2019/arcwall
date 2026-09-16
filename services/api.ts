@@ -150,3 +150,8 @@ export const estimateCanvasRun = (data: { canvasId: number; scope: string; rootN
   fetcher("/api/protected/canvas/executions/estimate", { method: "POST", body: JSON.stringify(data) });
 export const uploadCanvasAsset = (formData: FormData) =>
   fetcher("/api/protected/canvas/assets", { method: "POST", body: formData });
+export const polishCanvasText = (canvasId: number, text: string) =>
+  fetcher("/api/protected/canvas/polish-text", {
+    method: "POST",
+    body: JSON.stringify({ canvasId, text }),
+  });

@@ -1,10 +1,11 @@
 "use client";
 
 import { Fragment, type PointerEvent as ReactPointerEvent } from "react";
+import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NODE_TYPE_DEFS } from "@/lib/canvas/registry";
 import type { CanvasNodeDTO } from "@/types/canvas";
-import { NODE_HEIGHT, NODE_WIDTH } from "./node-size";
+import { NODE_WIDTH, nodeHeight } from "./node-size";
 
 const PORT_SIZE = 28;
 
@@ -33,7 +34,7 @@ export function NodePorts({
             <Port
               side="in"
               left={node.x}
-              top={node.y + NODE_HEIGHT / 2}
+              top={node.y + nodeHeight(node.type) / 2}
               active={targetId === node.id}
               onPointerDown={(event) => event.stopPropagation()}
             />
@@ -41,7 +42,7 @@ export function NodePorts({
           <Port
             side="out"
             left={node.x + NODE_WIDTH}
-            top={node.y + NODE_HEIGHT / 2}
+            top={node.y + nodeHeight(node.type) / 2}
             active={sourceId === node.id}
             onPointerDown={(event) => onBegin(node.id, event)}
             onPointerMove={onMove}
@@ -69,9 +70,9 @@ function Port({
   top: number;
   active?: boolean;
   onPointerDown: (event: ReactPointerEvent<HTMLElement>) => void;
-  onPointerMove?: (event: ReactPointerEvent<HTMLElement>) => void;
-  onPointerUp?: (event: ReactPointerEvent<HTMLElement>) => void;
-  onPointerCancel?: (event: ReactPointerEvent<HTMLElement>) => void;
+  onPointerMove?: (event: ReactPointerEvent) => void;
+  onPointerUp?: (event: ReactPointerEvent) => void;
+  onPointerCancel?: (event: ReactPointerEvent) => void;
 }) {
   return (
     <span
@@ -80,7 +81,7 @@ function Port({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerCancel}
-      className="absolute z-40 flex cursor-crosshair items-center justify-center"
+      className="group absolute z-40 flex cursor-crosshair items-center justify-center"
       style={{
         left: left - PORT_SIZE / 2,
         top: top - PORT_SIZE / 2,
@@ -91,11 +92,14 @@ function Port({
     >
       <span
         className={cn(
-          "h-3.5 w-3.5 rounded-full border-2 border-background transition-transform",
+          "flex h-4.5 w-4.5 items-center justify-center rounded-full border-2 border-background text-background transition-transform",
           side === "out" ? "bg-primary" : "bg-foreground/70",
           active && "scale-125 bg-primary"
         )}
-      />
+        style={{ width: 18, height: 18 }}
+      >
+        <Plus className="h-3 w-3" strokeWidth={3} aria-hidden />
+      </span>
     </span>
   );
 }

@@ -34,6 +34,14 @@ export interface LiveExecution {
   errors: Record<string, string>;
 }
 
+/** 媒体预览弹窗状态：urls 为已签名链接，多图时可切换。 */
+export interface MediaPreviewState {
+  kind: "image" | "video" | "audio";
+  urls: string[];
+  index: number;
+  title?: string;
+}
+
 interface CanvasState {
   canvasId: number | null;
   projectId: number | null;
@@ -46,6 +54,9 @@ interface CanvasState {
   lastSavedAt: number | null;
   lastRevision: number | null;
   liveExecution: LiveExecution | null;
+  /** 引用拾取模式：从某节点「添加引用」后，点击目标节点完成连线 */
+  connectFrom: string | null;
+  mediaPreview: MediaPreviewState | null;
 
   reset: () => void;
   loadSnapshot: (snapshot: CanvasSnapshot) => void;
@@ -64,6 +75,10 @@ interface CanvasState {
   flush: () => Promise<boolean>;
   applyExecution: (execution: ExecutionDTO) => void;
   clearLiveExecution: () => void;
+  setConnectFrom: (nodeId: string | null) => void;
+  openMediaPreview: (preview: Omit<MediaPreviewState, "index"> & { index?: number }) => void;
+  closeMediaPreview: () => void;
+  cycleMediaPreview: (delta: number) => void;
 }
 
 interface PendingState {
@@ -227,6 +242,8 @@ export const useCanvasStore = create<Store>((set, get) => {
     lastSavedAt: null,
     lastRevision: null,
     liveExecution: null,
+    connectFrom: null,
+    mediaPreview: null,
 
     pendingOps: [],
     persistedNodeIds: new Set<string>(),
@@ -248,6 +265,8 @@ export const useCanvasStore = create<Store>((set, get) => {
         lastSavedAt: null,
         lastRevision: null,
         liveExecution: null,
+        connectFrom: null,
+        mediaPreview: null,
         pendingOps: [],
         persistedNodeIds: new Set<string>(),
         persistedEdgeIds: new Set<string>(),
@@ -269,6 +288,7 @@ export const useCanvasStore = create<Store>((set, get) => {
         persistedEdgeIds: new Set<string>(snapshot.edges.map((e) => e.id)),
         undoStack: [],
         redoStack: [],
+        connectFrom: null,
       });
     },
 
@@ -313,6 +333,7 @@ export const useCanvasStore = create<Store>((set, get) => {
         nodes: get().nodes.filter((n) => n.id !== id),
         edges: get().edges.filter((e) => e.sourceNodeId !== id && e.targetNodeId !== id),
         selectedId: get().selectedId === id ? null : get().selectedId,
+        connectFrom: get().connectFrom === id ? null : get().connectFrom,
       });
       recordOp({ op: "node.delete", nodeId: id });
     },
@@ -370,6 +391,20 @@ export const useCanvasStore = create<Store>((set, get) => {
     },
 
     clearLiveExecution: () => set({ liveExecution: null }),
+
+    setConnectFrom: (nodeId) => set({ connectFrom: nodeId }),
+
+    openMediaPreview: (preview) =>
+      set({ mediaPreview: { index: preview.index ?? 0, ...preview } }),
+
+    closeMediaPreview: () => set({ mediaPreview: null }),
+
+    cycleMediaPreview: (delta) => {
+      const cur = get().mediaPreview;
+      if (!cur || cur.urls.length <= 1) return;
+      const index = (cur.index + delta + cur.urls.length) % cur.urls.length;
+      set({ mediaPreview: { ...cur, index } });
+    },
 
     undo: () => {
       const { undoStack, redoStack, nodes, edges } = get();

@@ -33,6 +33,12 @@ export function useCanvasKeyboard(onRun: (scope: ExecutionScope) => void) {
       }
 
       if (event.key === "Escape") {
+        // 引用拾取模式优先退出，其次取消选中
+        const { connectFrom, setConnectFrom } = useCanvasStore.getState();
+        if (connectFrom) {
+          setConnectFrom(null);
+          return;
+        }
         select(null);
         return;
       }

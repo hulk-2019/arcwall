@@ -119,16 +119,18 @@ export function useCanvasExecution() {
   }, [canvasId, execution, fetchUserCredits, loadSnapshot, clearLiveExecution, t]);
 
   // 第一步：估算并弹出确认（显示范围、节点与成本）
+  // rootNodeId 显式指定时优先于选中节点（节点内「运行此节点」按钮）
   const requestRun = useCallback(
-    async (scope: ExecutionScope) => {
+    async (scope: ExecutionScope, rootNodeId?: string) => {
       if (!canvasId) return;
-      if (scope !== "all" && selectedId == null) {
+      const targetId = rootNodeId ?? (scope !== "all" ? selectedId : null);
+      if (scope !== "all" && targetId == null) {
         toast.error(t("runFailed"));
         return;
       }
 
-      const selectedNode = nodes.find((n) => n.id === selectedId);
-      if (scope !== "all" && selectedNode && !NODE_TYPE_DEFS[selectedNode.type].executable) {
+      const targetNode = nodes.find((n) => n.id === targetId);
+      if (scope !== "all" && targetNode && !NODE_TYPE_DEFS[targetNode.type].executable) {
         return;
       }
 
@@ -137,12 +139,12 @@ export function useCanvasExecution() {
         const res: any = await estimateCanvasRun({
           canvasId,
           scope,
-          rootNodeId: scope !== "all" ? selectedId! : undefined,
+          rootNodeId: scope !== "all" ? targetId! : undefined,
         });
         if (res.code === 0 && res.data) {
           pendingScopeRef.current = {
             scope,
-            rootNodeId: scope !== "all" ? selectedId! : undefined,
+            rootNodeId: scope !== "all" ? targetId! : undefined,
           };
           setEstimate(res.data);
           setConfirmOpen(true);
@@ -154,6 +156,14 @@ export function useCanvasExecution() {
       }
     },
     [canvasId, flush, nodes, selectedId, t]
+  );
+
+  /** 节点内「运行此节点」入口：以该节点为根节点执行 */
+  const runNode = useCallback(
+    (nodeId: string) => {
+      void requestRun("node", nodeId);
+    },
+    [requestRun]
   );
 
   // 第二步：确认后提交（幂等键防重复）
@@ -212,6 +222,7 @@ export function useCanvasExecution() {
     estimate,
     confirmOpen,
     requestRun,
+    runNode,
     confirmRun,
     closeConfirm,
     cancelExecution,

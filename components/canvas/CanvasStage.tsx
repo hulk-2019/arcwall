@@ -2,14 +2,23 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
+import { X } from "lucide-react";
 import { useCanvasStore } from "@/store/useCanvasStore";
 import { EdgeLayer } from "./EdgeLayer";
 import { NodeCard } from "./NodeCard";
+import { NodeDock } from "./NodeDock";
 import { NodePorts } from "./NodePorts";
 import { fitNodesToView, outputPoint } from "./geometry";
 import { useCanvasConnect } from "./hooks/useCanvasConnect";
 
-export function CanvasStage() {
+interface CanvasStageProps {
+  /** 节点内「运行此节点」按钮回调 */
+  onRunNode: (nodeId: string) => void;
+  /** 全局有执行进行中时禁用各节点运行按钮 */
+  runDisabled: boolean;
+}
+
+export function CanvasStage({ onRunNode, runDisabled }: CanvasStageProps) {
   const nodes = useCanvasStore((s) => s.nodes);
   const edges = useCanvasStore((s) => s.edges);
   const viewport = useCanvasStore((s) => s.viewport);
@@ -18,6 +27,8 @@ export function CanvasStage() {
   const deleteEdge = useCanvasStore((s) => s.deleteEdge);
   const selectedId = useCanvasStore((s) => s.selectedId);
   const canvasId = useCanvasStore((s) => s.canvasId);
+  const connectFrom = useCanvasStore((s) => s.connectFrom);
+  const setConnectFrom = useCanvasStore((s) => s.setConnectFrom);
   const t = useTranslations("canvas");
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -63,7 +74,10 @@ export function CanvasStage() {
 
   const handlePointerDown = (event: React.PointerEvent) => {
     if (event.button !== 0 || isConnecting()) return;
-    if ((event.target as HTMLElement).closest?.("[data-node-id],[data-canvas-port]")) return;
+    if ((event.target as HTMLElement).closest?.("[data-node-id],[data-node-dock],[data-canvas-port]"))
+      return;
+    // 点击空白处退出引用拾取模式
+    if (useCanvasStore.getState().connectFrom) setConnectFrom(null);
     select(null);
     panRef.current = {
       startX: event.clientX,
@@ -132,6 +146,21 @@ export function CanvasStage() {
         deleteTitle={t("deleteEdge")}
       />
 
+      {connectFrom && (
+        <div className="absolute left-1/2 top-3 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border bg-card/95 px-3 py-1.5 text-xs shadow-lg backdrop-blur">
+          <span className="text-primary">{t("pickReferenceHint")}</span>
+          <button
+            type="button"
+            className="rounded-full p-0.5 text-muted-foreground hover:text-foreground"
+            title={t("cancelPick")}
+            aria-label={t("cancelPick")}
+            onClick={() => setConnectFrom(null)}
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
       <div
         className="absolute left-0 top-0 z-[2] origin-top-left"
         style={{
@@ -145,6 +174,10 @@ export function CanvasStage() {
             selected={node.id === selectedId}
             connectTarget={node.id === session?.targetId}
             scale={viewport.scale}
+            pickMode={!!connectFrom}
+            isPickSource={node.id === connectFrom}
+            runDisabled={runDisabled}
+            onRunNode={onRunNode}
           />
         ))}
         <NodePorts
@@ -155,6 +188,10 @@ export function CanvasStage() {
           onMove={onMove}
           onUp={onUp}
         />
+        {(() => {
+          const selected = nodes.find((n) => n.id === selectedId);
+          return selected ? <NodeDock node={selected} /> : null;
+        })()}
       </div>
     </div>
   );
