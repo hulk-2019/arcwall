@@ -562,7 +562,8 @@
       "image": "Image",
       "storyboard": "Storyboard",
       "video": "Video",
-      "upload": "Upload"
+      "upload": "Upload",
+      "audio": "Audio"
     },
     "status": {
       "idle": "Ready",
@@ -588,12 +589,16 @@
     "cancelling": "Cancelling",
     "executionResumed": "Resumed background task",
     "executionFinished": "Task finished",
-    "uploadFile": "Choose image",
+    "uploadFile": "Choose file (image/video/audio)",
     "uploading": "Uploading",
     "uploadSuccess": "Uploaded",
     "uploadFailed": "Upload failed",
     "uploadedFile": "Uploaded file",
     "noFile": "No file selected",
-    "creditsUnit": "credits"
+    "creditsUnit": "credits",
+    "voice": "Voice",
+    "speed": "Speed",
+    "uploadTypeInvalid": "Unsupported file type",
+    "uploadTooLarge": "File size exceeds limit"
   }
 }

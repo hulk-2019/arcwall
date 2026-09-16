@@ -1,4 +1,4 @@
-import { Film, Image as ImageIcon, Type, Upload, Video, type LucideIcon } from "lucide-react";
+import { Film, Image as ImageIcon, Type, Upload, Video, Volume2, type LucideIcon } from "lucide-react";
 import type { CanvasNodeType, StepStatus } from "@/types/canvas";
 
 export const NODE_TYPE_ICON: Record<CanvasNodeType, LucideIcon> = {
@@ -6,6 +6,7 @@ export const NODE_TYPE_ICON: Record<CanvasNodeType, LucideIcon> = {
   image: ImageIcon,
   storyboard: Film,
   video: Video,
+  audio: Volume2,
   upload: Upload,
 };
 
@@ -14,6 +15,7 @@ export const NODE_TYPE_TONE: Record<CanvasNodeType, string> = {
   image: "text-canvas-image bg-canvas-image/10",
   storyboard: "text-canvas-storyboard bg-canvas-storyboard/10",
   video: "text-canvas-video bg-canvas-video/10",
+  audio: "text-canvas-audio bg-canvas-audio/10",
   upload: "text-canvas-upload bg-canvas-upload/10",
 };
 
@@ -22,6 +24,7 @@ export const NODE_TYPE_ACCENT: Record<CanvasNodeType, string> = {
   image: "bg-canvas-image",
   storyboard: "bg-canvas-storyboard",
   video: "bg-canvas-video",
+  audio: "bg-canvas-audio",
   upload: "bg-canvas-upload",
 };
 

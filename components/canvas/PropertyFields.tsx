@@ -8,7 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { uploadCanvasAsset } from "@/services/api";
-import { ASPECT_RATIOS, VIDEO_RESOLUTIONS } from "@/lib/canvas/registry";
+import {
+  ASPECT_RATIOS,
+  VIDEO_RESOLUTIONS,
+  UPLOAD_ACCEPT,
+  UPLOAD_MIME_TYPES,
+  UPLOAD_SIZE_LIMITS,
+} from "@/lib/canvas/registry";
 import type { CanvasNodeConfig, CanvasNodeType } from "@/types/canvas";
 import { FieldLabel, FieldSelect } from "./Field";
 
@@ -35,10 +41,14 @@ interface PropertyFieldsProps {
     videoModeImage: string;
     duration: string;
     resolution: string;
+    voice: string;
+    speed: string;
     uploadFile: string;
     uploading: string;
     uploadSuccess: string;
     uploadFailed: string;
+    uploadTypeInvalid: string;
+    uploadTooLarge: string;
     noFile: string;
     layouts: Record<string, string>;
   };
@@ -74,6 +84,17 @@ export function PropertyFields({
   const [uploading, setUploading] = useState(false);
 
   const handleUpload = async (file: File) => {
+    // 客户端校验（与服务端共用 registry 中的白名单与限制）
+    const allowed = UPLOAD_MIME_TYPES[file.type];
+    if (!allowed) {
+      toast.error(t("uploadTypeInvalid"));
+      return;
+    }
+    if (file.size > UPLOAD_SIZE_LIMITS[allowed.kind]) {
+      toast.error(t("uploadTooLarge"));
+      return;
+    }
+
     setUploading(true);
     try {
       const formData = new FormData();
@@ -83,7 +104,7 @@ export function PropertyFields({
         onDiscrete({
           storageKey: res.data.storageKey,
           fileName: res.data.fileName || file.name,
-          mediaType: res.data.mediaType || "image",
+          mediaType: res.data.mediaType || allowed.kind,
         });
         toast.success(t("uploadSuccess"));
       } else {
@@ -123,7 +144,7 @@ export function PropertyFields({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept={UPLOAD_ACCEPT}
             className="hidden"
             onChange={(event) => {
               const file = event.target.files?.[0];
@@ -148,7 +169,15 @@ export function PropertyFields({
               {uploading ? labels.uploading : config.fileName || labels.uploadFile}
             </span>
           </Button>
-          {previewUrl ? (
+          {previewUrl && config.mediaType === "video" ? (
+            <video
+              src={previewUrl}
+              controls
+              className="mt-2 h-36 w-full rounded-md border border-border object-cover"
+            />
+          ) : previewUrl && config.mediaType === "audio" ? (
+            <audio src={previewUrl} controls className="mt-2 h-10 w-full" />
+          ) : previewUrl ? (
             <img
               src={previewUrl}
               alt=""
@@ -159,6 +188,39 @@ export function PropertyFields({
           ) : (
             <p className="mt-1.5 text-xs text-muted-foreground">{labels.noFile}</p>
           )}
+        </>
+      )}
+
+      {type === "audio" && (
+        <>
+          <FieldLabel>{labels.text}</FieldLabel>
+          <Textarea
+            className="mt-1.5 min-h-[120px] resize-none"
+            value={config.text || ""}
+            onFocus={onBeginEdit}
+            onChange={(event) => onPatch({ text: event.target.value })}
+          />
+          <FieldLabel>{labels.voice}</FieldLabel>
+          <Input
+            className="mt-1.5"
+            value={config.voice || ""}
+            onFocus={onBeginEdit}
+            onChange={(event) => onPatch({ voice: event.target.value })}
+          />
+          <FieldLabel>{labels.speed}</FieldLabel>
+          <Input
+            type="number"
+            min={0.5}
+            max={2}
+            step={0.1}
+            className="mt-1.5"
+            value={config.speed ?? 1}
+            onChange={(event) =>
+              onDiscrete({
+                speed: Math.max(0.5, Math.min(2, Number(event.target.value) || 1)),
+              })
+            }
+          />
         </>
       )}
 

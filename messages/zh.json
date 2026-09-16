@@ -562,7 +562,8 @@
       "image": "图像生成",
       "storyboard": "分镜规划",
       "video": "视频生成",
-      "upload": "上传素材"
+      "upload": "上传素材",
+      "audio": "音频生成"
     },
     "status": {
       "idle": "就绪",
@@ -588,12 +589,16 @@
     "cancelling": "取消中",
     "executionResumed": "已恢复后台运行的任务",
     "executionFinished": "任务已完成",
-    "uploadFile": "选择图片",
+    "uploadFile": "选择文件（图片/视频/音频）",
     "uploading": "上传中",
     "uploadSuccess": "上传成功",
     "uploadFailed": "上传失败",
     "uploadedFile": "已上传文件",
     "noFile": "未选择文件",
-    "creditsUnit": "积分"
+    "creditsUnit": "积分",
+    "voice": "音色",
+    "speed": "语速",
+    "uploadTypeInvalid": "不支持的文件类型",
+    "uploadTooLarge": "文件大小超出限制"
   }
 }

@@ -1,7 +1,7 @@
 // AI 画布素材生成平台 共享类型定义（前后端共用）
 // 节点与边的主键为客户端生成的 UUID（string），乐观创建无需服务端回传 id 映射。
 
-export type CanvasNodeType = "text" | "image" | "storyboard" | "video" | "upload";
+export type CanvasNodeType = "text" | "image" | "storyboard" | "video" | "audio" | "upload";
 
 export type OutputKind = "text" | "image" | "video" | "storyboard" | "audio";
 
@@ -62,6 +62,9 @@ export interface CanvasNodeConfig {
   videoMode?: "text" | "image";
   duration?: number;
   resolution?: string;
+  // audio 节点（TTS）
+  voice?: string;
+  speed?: number;
   // upload 节点
   storageKey?: string; // OSS 对象键
   fileName?: string;

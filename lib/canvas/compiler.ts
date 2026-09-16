@@ -14,6 +14,7 @@ import type {
 export interface CompiledInputs {
   textChunks: string[];
   referenceImages: string[];
+  referenceAudios: string[];
   firstFrame?: string;
   storyboard?: Storyboard;
   /** 有连线但解析不到输出的上游节点 id（用于 INPUT_NOT_READY 定位） */
@@ -36,6 +37,7 @@ export function compileInputs(
 ): CompiledInputs {
   const textChunks: string[] = [];
   const referenceImages: string[] = [];
+  const referenceAudios: string[] = [];
   const missingNodeIds: string[] = [];
   let firstFrame: string | undefined;
   let storyboard: Storyboard | undefined;
@@ -74,10 +76,16 @@ export function compileInputs(
           if (first && !firstFrame) firstFrame = first;
         }
         break;
+      case "reference_audio":
+        if (output.kind === "audio") {
+          const audios = output.storageKeys || output.urls || [];
+          referenceAudios.push(...audios);
+        }
+        break;
     }
   }
 
-  return { textChunks, referenceImages, firstFrame, storyboard, missingNodeIds };
+  return { textChunks, referenceImages, referenceAudios, firstFrame, storyboard, missingNodeIds };
 }
 
 /**

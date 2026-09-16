@@ -6,6 +6,7 @@ import {
   buildStoryboardMessages,
   buildVideoPrompt,
   compileInputs,
+  mergePrompt,
   parseStoryboardJson,
   storyboardToMotionText,
 } from "@/lib/canvas/compiler";
@@ -18,6 +19,8 @@ import {
   IMAGE_MODEL_DEFAULT,
   STORYBOARD_MODEL,
   VIDEO_MODEL_DEFAULT,
+  AUDIO_MODEL_DEFAULT,
+  AUDIO_VOICE_DEFAULT,
   estimateNodeCost,
 } from "@/lib/canvas/registry";
 import {
@@ -266,6 +269,50 @@ async function executeStoryboard(
 // 视频生成：两阶段（提交 + poller 轮询），不再阻塞 Worker（技术方案 §八点四）
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// 音频生成（TTS）：上游文本 + 自身文案 → 供应商语音合成 → 转存 OSS
+// ---------------------------------------------------------------------------
+
+async function executeAudio(
+  config: CanvasNodeConfig,
+  compiled: ReturnType<typeof compileInputs>
+): Promise<StepExecutionResult> {
+  const input = mergePrompt(compiled.textChunks, config.text);
+  if (!input.trim()) {
+    throw new NormalizedStepError("INPUT_NOT_READY", "缺少音频文案");
+  }
+
+  const model = config.model || AUDIO_MODEL_DEFAULT;
+  const voice = config.voice || AUDIO_VOICE_DEFAULT;
+  const speed = Math.max(0.5, Math.min(2, Number(config.speed) || 1));
+
+  const client = getDoubaoAIClient();
+  const response = await client.audio.speech.create({
+    model,
+    input,
+    voice,
+    speed,
+    response_format: "mp3",
+  });
+
+  const buffer = Buffer.from(await response.arrayBuffer());
+  if (buffer.length === 0) {
+    throw new NormalizedStepError("PROVIDER_REJECTED", "音频模型未返回结果");
+  }
+
+  const key = ossKey("mp3");
+  await uploadFile(buffer, key);
+
+  return {
+    output: { kind: "audio", storageKeys: [key], meta: { model, voice } },
+    cost: estimateNodeCost("audio", config),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// 视频生成：两阶段（提交 + poller 轮询），不再阻塞 Worker（技术方案 §八点四）
+// ---------------------------------------------------------------------------
+
 async function executeVideoSubmit(
   stepRunId: number,
   config: CanvasNodeConfig,
@@ -291,6 +338,12 @@ async function executeVideoSubmit(
     firstFrameUrl = await toHttpUrl(firstFrame);
   }
 
+  // 参考音频（PRD-VID-002）：上游音频连接后透传给供应商，模型不支持时按供应商错误归一
+  let referenceAudioUrl: string | undefined;
+  if (compiled.referenceAudios.length > 0) {
+    referenceAudioUrl = await toHttpUrl(compiled.referenceAudios[0]);
+  }
+
   // 先落 SUBMITTING 记录再提交供应商：崩溃后可由恢复任务收敛（技术方案 §七点三）
   const job = await prisma.provider_jobs.create({
     data: {
@@ -306,6 +359,7 @@ async function executeVideoSubmit(
       model,
       prompt,
       firstFrameUrl,
+      referenceAudioUrl,
       resolution,
       ratio,
       duration,
@@ -517,6 +571,8 @@ export async function executeNodeStep(stepRun: {
       return executeImage(config, compiled);
     case "storyboard":
       return executeStoryboard(config, compiled);
+    case "audio":
+      return executeAudio(config, compiled);
     case "video":
       return executeVideoSubmit(stepRun.id, config, compiled);
     case "text":

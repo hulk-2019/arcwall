@@ -5,7 +5,7 @@ import { findUserByEmail } from "@/models/user";
 import { prisma } from "@/lib/prisma";
 import { applyOperations, getCanvasSnapshot, getOwnedCanvas } from "@/models/canvas";
 import {
-  NODE_TYPE_DEFS,
+  nodeOutputKind,
   resolveTargetPort,
 } from "@/lib/canvas/registry";
 import type { CanvasNodeType } from "@/types/canvas";
@@ -18,7 +18,7 @@ const OperationSchema = z.discriminatedUnion("op", [
   z.object({
     op: z.literal("node.upsert"),
     nodeId: NodeId,
-    type: z.enum(["text", "image", "storyboard", "video", "upload"]),
+    type: z.enum(["text", "image", "storyboard", "video", "audio", "upload"]),
     x: z.number(),
     y: z.number(),
     config: z.record(z.any()),
@@ -93,35 +93,45 @@ export async function PATCH(req: Request, { params }: { params: { canvasId: stri
     if (!canvas) return respErr(errMsg("canvas.permission.denied"));
 
     // 服务端连线校验（类型兼容 + 禁止自环）
+    // upload 节点的输出类型随 mediaType 变化，需连同配置一起加载
     const nodeTypeById = new Map<string, CanvasNodeType>();
+    const nodeConfigById = new Map<string, Record<string, unknown>>();
     const nodes = await prisma.nodes.findMany({
       where: { canvas_id: canvasId },
-      select: { id: true, type: true },
+      select: { id: true, type: true, current_revision: { select: { config_json: true } } },
     });
-    for (const n of nodes) nodeTypeById.set(n.id, n.type as CanvasNodeType);
+    for (const n of nodes) {
+      nodeTypeById.set(n.id, n.type as CanvasNodeType);
+      nodeConfigById.set(n.id, (n.current_revision?.config_json ?? {}) as Record<string, unknown>);
+    }
+
+    // 同批次 node.upsert 的节点从批次内推断类型与配置
+    const batchUpsert = (nodeId: string) =>
+      parsed.data.operations.find((o) => o.op === "node.upsert" && o.nodeId === nodeId);
+    const typeOf = (nodeId: string): CanvasNodeType | undefined =>
+      nodeTypeById.get(nodeId) ??
+      (batchUpsert(nodeId)?.op === "node.upsert"
+        ? (batchUpsert(nodeId) as { type: CanvasNodeType }).type
+        : undefined);
+    const configOf = (nodeId: string): Record<string, unknown> =>
+      nodeConfigById.get(nodeId) ??
+      (batchUpsert(nodeId)?.op === "node.upsert"
+        ? ((batchUpsert(nodeId) as { config: Record<string, unknown> }).config ?? {})
+        : {});
 
     for (const op of parsed.data.operations) {
       if (op.op === "edge.add") {
         if (op.sourceNodeId === op.targetNodeId) {
           return respErr(errMsg("canvas.invalid.connection"));
         }
-        const sourceType = nodeTypeById.get(op.sourceNodeId);
-        const targetType = nodeTypeById.get(op.targetNodeId);
-        // 若节点是新创建的（本批次 node.upsert），从本批次推断类型
-        const createdType = parsed.data.operations.find(
-          (o) => o.op === "node.upsert" && o.nodeId === op.sourceNodeId
-        );
-        const source = sourceType ?? (createdType?.op === "node.upsert" ? (createdType.type as CanvasNodeType) : undefined);
-        const createdTarget = parsed.data.operations.find(
-          (o) => o.op === "node.upsert" && o.nodeId === op.targetNodeId
-        );
-        const target = targetType ?? (createdTarget?.op === "node.upsert" ? (createdTarget.type as CanvasNodeType) : undefined);
+        const source = typeOf(op.sourceNodeId);
+        const target = typeOf(op.targetNodeId);
 
         if (!source || !target) {
           return respErr(errMsg("canvas.invalid.connection"));
         }
-        const expectedPort = resolveTargetPort(NODE_TYPE_DEFS[source].outputs[0].kind, target);
-        if (!expectedPort) {
+        const sourceKind = nodeOutputKind(source, configOf(op.sourceNodeId) as any);
+        if (!resolveTargetPort(sourceKind, target)) {
           return respErr(errMsg("canvas.invalid.connection"));
         }
       }

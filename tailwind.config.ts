@@ -66,6 +66,7 @@ const config = {
           storyboard: "hsl(var(--canvas-node-storyboard))",
           video: "hsl(var(--canvas-node-video))",
           upload: "hsl(var(--canvas-node-upload))",
+          audio: "hsl(var(--canvas-node-audio))",
         },
       },
       borderRadius: {

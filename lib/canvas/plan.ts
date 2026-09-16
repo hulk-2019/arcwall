@@ -181,10 +181,12 @@ export function deriveTextOutput(
 }
 
 /**
- * upload 节点输出：config.storageKey 作为 image 输出（参考图 / 首帧来源）。
+ * upload 节点输出：config.storageKey 作为对应媒体类型的输出
+ * （image / video / audio，按 config.mediaType 决定，参考图 / 首帧 / 参考音频来源）。
  */
 export function deriveUploadOutput(snapshot: ExecutionSnapshot, nodeId: string): CanvasNodeOutput {
   const node = snapshot.nodes.find((n) => n.id === nodeId);
   const key = typeof node?.config.storageKey === "string" ? node.config.storageKey : "";
-  return { kind: "image", storageKeys: key ? [key] : [] };
+  const mediaType = node?.config.mediaType === "video" ? "video" : node?.config.mediaType === "audio" ? "audio" : "image";
+  return { kind: mediaType, storageKeys: key ? [key] : [] };
 }

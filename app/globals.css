@@ -33,6 +33,7 @@
     --canvas-node-storyboard: 262 65% 48%;
     --canvas-node-video: 173 70% 32%;
     --canvas-node-upload: 28 80% 46%;
+    --canvas-node-audio: 340 65% 48%;
   }
 
   .dark {
@@ -65,6 +66,7 @@
     --canvas-node-storyboard: 262 80% 74%;
     --canvas-node-video: 173 70% 48%;
     --canvas-node-upload: 32 90% 62%;
+    --canvas-node-audio: 340 75% 66%;
   }
 }
 

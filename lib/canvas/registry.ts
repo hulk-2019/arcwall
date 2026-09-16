@@ -32,6 +32,13 @@ export const STORYBOARD_MODEL =
 export const VIDEO_MODEL_DEFAULT =
   process.env.CANVAS_VIDEO_MODEL || "doubao-seedance-2-0-fast-260128";
 
+/** TTS 模型与音色依赖供应商开通情况，可通过环境变量覆盖 */
+export const AUDIO_MODEL_DEFAULT =
+  process.env.CANVAS_AUDIO_MODEL || "doubao-seed-tts-1-0";
+
+export const AUDIO_VOICE_DEFAULT =
+  process.env.CANVAS_AUDIO_VOICE || "zh_female_cancan_mars_bigtreenlm";
+
 export const VIDEO_RESOLUTIONS = ["480p", "720p", "1080p"];
 
 export const NODE_TYPE_DEFS: Record<CanvasNodeType, NodeTypeDef> = {
@@ -88,6 +95,7 @@ export const NODE_TYPE_DEFS: Record<CanvasNodeType, NodeTypeDef> = {
     inputs: [
       { port: "prompt", accepts: ["text", "storyboard"] },
       { port: "first_frame", accepts: ["image"] },
+      { port: "reference_audio", accepts: ["audio"] },
     ],
     outputs: [{ port: OUTPUT_PORT, kind: "video" }],
     baseCost: 3,
@@ -102,11 +110,28 @@ export const NODE_TYPE_DEFS: Record<CanvasNodeType, NodeTypeDef> = {
       model: VIDEO_MODEL_DEFAULT,
     },
   },
+  audio: {
+    type: "audio",
+    label: { zh: "音频生成", en: "Audio" },
+    icon: "audio",
+    inputs: [{ port: "prompt", accepts: ["text"] }],
+    outputs: [{ port: OUTPUT_PORT, kind: "audio" }],
+    baseCost: 1,
+    executable: true,
+    defaults: {
+      title: "音频生成",
+      text: "",
+      model: AUDIO_MODEL_DEFAULT,
+      voice: AUDIO_VOICE_DEFAULT,
+      speed: 1,
+    },
+  },
   upload: {
     type: "upload",
     label: { zh: "上传素材", en: "Upload" },
     icon: "upload",
     inputs: [],
+    // 输出类型随上传文件类型变化，见 nodeOutputKind
     outputs: [{ port: OUTPUT_PORT, kind: "image" }],
     baseCost: 0,
     executable: false,
@@ -121,6 +146,19 @@ export const NODE_TYPE_DEFS: Record<CanvasNodeType, NodeTypeDef> = {
 
 export function getNodeTypeDef(type: CanvasNodeType): NodeTypeDef {
   return NODE_TYPE_DEFS[type];
+}
+
+/**
+ * 节点的实际输出类型。upload 节点随上传文件的 mediaType 变化
+ * （image / video / audio），其余节点取静态定义。
+ */
+export function nodeOutputKind(type: CanvasNodeType, config?: CanvasNodeConfig): OutputKind {
+  if (type === "upload") {
+    if (config?.mediaType === "video") return "video";
+    if (config?.mediaType === "audio") return "audio";
+    return "image";
+  }
+  return NODE_TYPE_DEFS[type].outputs[0].kind;
 }
 
 /**
@@ -161,6 +199,51 @@ export function isConnectionAllowed(
   return resolveTargetPort(sourceKind, targetType) !== null;
 }
 
-export const NODE_TYPES: CanvasNodeType[] = ["text", "image", "storyboard", "video", "upload"];
+export const NODE_TYPES: CanvasNodeType[] = [
+  "text",
+  "image",
+  "storyboard",
+  "video",
+  "audio",
+  "upload",
+];
 
 export const ASPECT_RATIOS = ["16:9", "9:16", "1:1", "4:3", "3:4", "3:2", "2:3", "21:9"];
+
+// ---------------------------------------------------------------------------
+// 上传素材约束（客户端与服务端共用同一份定义，PRD-AST-001）
+// ---------------------------------------------------------------------------
+
+export type UploadMediaKind = "image" | "video" | "audio";
+
+/** 允许的 MIME 类型 → 媒体类型与存储扩展名 */
+export const UPLOAD_MIME_TYPES: Record<string, { kind: UploadMediaKind; ext: string }> = {
+  "image/png": { kind: "image", ext: "png" },
+  "image/jpeg": { kind: "image", ext: "jpg" },
+  "image/jpg": { kind: "image", ext: "jpg" },
+  "image/webp": { kind: "image", ext: "webp" },
+  "image/gif": { kind: "image", ext: "gif" },
+  "video/mp4": { kind: "video", ext: "mp4" },
+  "video/quicktime": { kind: "video", ext: "mov" },
+  "video/webm": { kind: "video", ext: "webm" },
+  "video/x-m4v": { kind: "video", ext: "m4v" },
+  "audio/mpeg": { kind: "audio", ext: "mp3" },
+  "audio/mp3": { kind: "audio", ext: "mp3" },
+  "audio/wav": { kind: "audio", ext: "wav" },
+  "audio/x-wav": { kind: "audio", ext: "wav" },
+  "audio/mp4": { kind: "audio", ext: "m4a" },
+  "audio/x-m4a": { kind: "audio", ext: "m4a" },
+  "audio/aac": { kind: "audio", ext: "aac" },
+  "audio/ogg": { kind: "audio", ext: "ogg" },
+  "audio/flac": { kind: "audio", ext: "flac" },
+  "audio/x-flac": { kind: "audio", ext: "flac" },
+};
+
+/** 分类型大小限制（字节） */
+export const UPLOAD_SIZE_LIMITS: Record<UploadMediaKind, number> = {
+  image: 20 * 1024 * 1024,
+  audio: 50 * 1024 * 1024,
+  video: 200 * 1024 * 1024,
+};
+
+export const UPLOAD_ACCEPT = "image/*,video/*,audio/*";

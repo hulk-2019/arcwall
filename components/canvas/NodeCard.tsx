@@ -161,16 +161,34 @@ function NodePreview({ node, output }: { node: CanvasNodeDTO; output?: CanvasNod
   }
 
   if (node.type === "upload") {
+    const mediaType = node.config.mediaType;
     return (
       <>
         <p className="line-clamp-2">{node.config.fileName || t("noFile")}</p>
-        {output?.urls?.[0] ? (
+        {output?.urls?.[0] && mediaType === "video" ? (
+          <video
+            src={output.urls[0]}
+            className="mt-1.5 h-16 w-full rounded-md object-cover"
+            muted
+          />
+        ) : output?.urls?.[0] && mediaType === "audio" ? (
+          <audio src={output.urls[0]} controls className="mt-1.5 h-8 w-full" />
+        ) : output?.urls?.[0] ? (
           <img
             src={output.urls[0]}
             alt=""
             className="mt-1.5 h-16 w-full rounded-md object-cover"
           />
         ) : null}
+      </>
+    );
+  }
+
+  if (node.type === "audio") {
+    return (
+      <>
+        <p className="line-clamp-2">{node.config.text || t("noPreview")}</p>
+        {output?.urls?.[0] ? <audio src={output.urls[0]} controls className="mt-1.5 h-8 w-full" /> : null}
       </>
     );
   }

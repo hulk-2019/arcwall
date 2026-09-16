@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { saveCanvas } from "@/services/api";
-import { resolveTargetPort, getNodeTypeDef, NODE_TYPE_DEFS } from "@/lib/canvas/registry";
+import { resolveTargetPort, getNodeTypeDef, nodeOutputKind } from "@/lib/canvas/registry";
 import type {
   CanvasEdgeDTO,
   CanvasNodeDTO,
@@ -323,7 +323,8 @@ export const useCanvasStore = create<Store>((set, get) => {
       const source = nodes.find((n) => n.id === sourceId);
       const target = nodes.find((n) => n.id === targetId);
       if (!source || !target) return false;
-      const targetPort = resolveTargetPort(NODE_TYPE_DEFS[source.type].outputs[0].kind, target.type);
+      // upload 节点的输出类型随 mediaType 变化（image/video/audio）
+      const targetPort = resolveTargetPort(nodeOutputKind(source.type, source.config), target.type);
       if (!targetPort) return false;
       if (edges.some((e) => e.sourceNodeId === sourceId && e.targetNodeId === targetId)) return true;
 

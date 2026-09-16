@@ -24,6 +24,8 @@ export interface CreateVideoTaskInput {
   model: string;
   prompt: string;
   firstFrameUrl?: string;
+  /** 参考音频（PRD-VID-002）：仅在上游连接音频时传入 */
+  referenceAudioUrl?: string;
   resolution?: string; // 480p | 720p | 1080p
   ratio?: string; // 16:9 | 9:16 | 1:1 ...
   duration?: number; // 秒
@@ -75,6 +77,13 @@ export async function createVideoTask(
       type: "image_url",
       image_url: { url: input.firstFrameUrl },
       role: "first_frame",
+    });
+  }
+  if (input.referenceAudioUrl) {
+    content.push({
+      type: "audio_url",
+      audio_url: { url: input.referenceAudioUrl },
+      role: "reference_audio",
     });
   }
 

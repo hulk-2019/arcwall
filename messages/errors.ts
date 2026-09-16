@@ -55,7 +55,7 @@ export const ERROR_MESSAGES = {
   "canvas.cancel.failed": { zh: "取消任务失败", en: "Failed to cancel execution" },
   "canvas.execution.not.active": { zh: "任务已结束，无法取消", en: "Execution already finished" },
   "canvas.asset.upload.failed": { zh: "素材上传失败", en: "Failed to upload asset" },
-  "canvas.asset.type.unsupported": { zh: "仅支持图片素材", en: "Only image assets are supported" },
+  "canvas.asset.type.unsupported": { zh: "不支持的文件类型（仅支持图片/视频/音频）", en: "Unsupported file type (image/video/audio only)" },
   "canvas.asset.too.large": { zh: "文件大小超出限制", en: "File size exceeds limit" }
 } as const;
 
