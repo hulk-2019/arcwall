@@ -2,7 +2,13 @@
   "header": {
     "brand": "ArcWall",
     "subhead": "壁纸生成器",
-    "nav": [],
+    "nav": [
+      {
+        "key": "canvas",
+        "title": "画布",
+        "url": "/canvas"
+      }
+    ],
     "creditsLabel": "积分",
     "login": "登录",
     "loading": "加载中…"
@@ -22,7 +28,12 @@
     "cardBadge": "热门风格",
     "cardTitle": "抽象极光",
     "cardCaption": "AI 生成 · 8K 高清",
-    "tags": ["赛博朋克城市", "动漫", "唯美关键词", "自然风光"],
+    "tags": [
+      "赛博朋克城市",
+      "动漫",
+      "唯美关键词",
+      "自然风光"
+    ],
     "joinCreators": "已有超过 10,000+ 创作者加入",
     "placeholders": [
       "赛博朋克霓虹城市，漂浮的植物花园...",
@@ -94,10 +105,22 @@
     "crafted": "为设计师与创作者而生。",
     "rights": "© 2026 ArcWall 版权所有。",
     "links": [
-      { "label": "关于", "href": "/#about" },
-      { "label": "条款", "href": "/#terms" },
-      { "label": "隐私", "href": "/#privacy" },
-      { "label": "支持", "href": "mailto:me@idoubi.cc" }
+      {
+        "label": "关于",
+        "href": "/#about"
+      },
+      {
+        "label": "条款",
+        "href": "/#terms"
+      },
+      {
+        "label": "隐私",
+        "href": "/#privacy"
+      },
+      {
+        "label": "支持",
+        "href": "mailto:me@idoubi.cc"
+      }
     ]
   },
   "myWorks": {
@@ -231,10 +254,26 @@
     "title": "探索风格",
     "tryStyle": "尝试此风格",
     "items": [
-      { "icon": "monitor", "label": "赛博朋克城市", "image": "/banner.png" },
-      { "icon": "cpu", "label": "日系动漫", "image": "/banner.png" },
-      { "icon": "leaf", "label": "自然风光", "image": "/banner.png" },
-      { "icon": "grid", "label": "3D 抽象", "image": "/banner.png" }
+      {
+        "icon": "monitor",
+        "label": "赛博朋克城市",
+        "image": "/banner.png"
+      },
+      {
+        "icon": "cpu",
+        "label": "日系动漫",
+        "image": "/banner.png"
+      },
+      {
+        "icon": "leaf",
+        "label": "自然风光",
+        "image": "/banner.png"
+      },
+      {
+        "icon": "grid",
+        "label": "3D 抽象",
+        "image": "/banner.png"
+      }
     ]
   },
   "features": {
@@ -281,36 +320,104 @@
     "title": "如何制作您自己的人工智能生成壁纸？",
     "subtitle": "只需四个步骤即可创建个性化的4K壁纸",
     "items": [
-      { "step": "1", "title": "输入您的想法", "desc": "描述您想要的墙纸场景" },
-      { "step": "2", "title": "设置比例", "desc": "指定长宽比（16:9、9:16、4:3或自定义），然后点击「生成」以创建您的AI壁纸" },
-      { "step": "3", "title": "选择墙纸风格", "desc": "选择风格 - 从15种以上的艺术风格中选择（如波普艺术、赛博朋克等）" },
-      { "step": "4", "title": "生成并下载", "desc": "浏览独特的数字艺术作品集，并立即下载您最喜欢的作品。将它们用作手机壁纸、桌面主题，甚至打印出来用于定制家居装饰——轻松将创意融入每个屏幕和空间" }
+      {
+        "step": "1",
+        "title": "输入您的想法",
+        "desc": "描述您想要的墙纸场景"
+      },
+      {
+        "step": "2",
+        "title": "设置比例",
+        "desc": "指定长宽比（16:9、9:16、4:3或自定义），然后点击「生成」以创建您的AI壁纸"
+      },
+      {
+        "step": "3",
+        "title": "选择墙纸风格",
+        "desc": "选择风格 - 从15种以上的艺术风格中选择（如波普艺术、赛博朋克等）"
+      },
+      {
+        "step": "4",
+        "title": "生成并下载",
+        "desc": "浏览独特的数字艺术作品集，并立即下载您最喜欢的作品。将它们用作手机壁纸、桌面主题，甚至打印出来用于定制家居装饰——轻松将创意融入每个屏幕和空间"
+      }
     ],
     "cta": "创建您的壁纸"
   },
   "testimonials": {
     "title": "Imgkits AI 壁纸生成器的真实用户评价",
     "items": [
-      { "initials": "EC", "name": "Emma Carter", "content": "AI 壁纸生成器真是个改变游戏规则的工具！短短几分钟我就为我的游戏设备创建了一幅惊艳的 4K 星云壁纸。喜欢赛博朋克霓虹风格让颜色更加鲜明的效果。完美的长宽比定制为我节省了数小时的编辑时间。是自定义壁纸的最佳工具！", "avatar": "https://randomuser.me/api/portraits/women/44.jpg" },
-      { "initials": "SJ", "name": "Sarah Johnson", "content": "终于找到了一个理解设备尺寸的AI艺术生成器。我的iPhone 15 Pro Max壁纸采用Anime Cel-Shading风格，在9:16的比例下看起来非常清晰。HD质量可与专业数字艺术作品相媲美。艺术风格的多样性得分10/10！", "avatar": "https://randomuser.me/api/portraits/women/68.jpg" },
-      { "initials": "SK", "name": "Sophia Kaur", "content": "使用印象派画笔风格为我的 iPad 和桌面创建了匹配的壁纸。4:3 的平板比例非常合适。只希望有更多的纹理选项，但 4K 的输出质量对于家庭装饰项目来说是卓越的" },
-      { "initials": "NJ", "name": "Noah Jensen", "content": "难以置信，这个深海蓝鲸壁纸在16:9格式下看起来是多么自然。人工智能保留的细节比我的 Photoshop 编辑还要好。未来派全息风格增添了神奇的深度。对于那些需要快速获取高清背景的用户来说，这是一个必不可少的工具！", "avatar": "https://randomuser.me/api/portraits/men/32.jpg" },
-      { "initials": "IR", "name": "Isabella Rossi", "content": "非常适合快速获取灵感！在确定最终设计之前生成了20多个波普艺术融合壁纸。自定义尺寸功能拯救了我的展览项目。希望能看到更多抽象风格的设计，但目前的艺术风格都非常出色", "avatar": "https://randomuser.me/api/portraits/women/12.jpg" },
-      { "initials": "RP", "name": "Raj Patel", "content": "完全改变了我的工作流程。为所有团队设备创建了极简几何壁纸，使用自定义比例。4K质量使文本/图标清晰突出。在美观和功能性之间达到完美平衡。SEO提示：这应该是「自定义AI壁纸」搜索的第一名！" }
+      {
+        "initials": "EC",
+        "name": "Emma Carter",
+        "content": "AI 壁纸生成器真是个改变游戏规则的工具！短短几分钟我就为我的游戏设备创建了一幅惊艳的 4K 星云壁纸。喜欢赛博朋克霓虹风格让颜色更加鲜明的效果。完美的长宽比定制为我节省了数小时的编辑时间。是自定义壁纸的最佳工具！",
+        "avatar": "https://randomuser.me/api/portraits/women/44.jpg"
+      },
+      {
+        "initials": "SJ",
+        "name": "Sarah Johnson",
+        "content": "终于找到了一个理解设备尺寸的AI艺术生成器。我的iPhone 15 Pro Max壁纸采用Anime Cel-Shading风格，在9:16的比例下看起来非常清晰。HD质量可与专业数字艺术作品相媲美。艺术风格的多样性得分10/10！",
+        "avatar": "https://randomuser.me/api/portraits/women/68.jpg"
+      },
+      {
+        "initials": "SK",
+        "name": "Sophia Kaur",
+        "content": "使用印象派画笔风格为我的 iPad 和桌面创建了匹配的壁纸。4:3 的平板比例非常合适。只希望有更多的纹理选项，但 4K 的输出质量对于家庭装饰项目来说是卓越的"
+      },
+      {
+        "initials": "NJ",
+        "name": "Noah Jensen",
+        "content": "难以置信，这个深海蓝鲸壁纸在16:9格式下看起来是多么自然。人工智能保留的细节比我的 Photoshop 编辑还要好。未来派全息风格增添了神奇的深度。对于那些需要快速获取高清背景的用户来说，这是一个必不可少的工具！",
+        "avatar": "https://randomuser.me/api/portraits/men/32.jpg"
+      },
+      {
+        "initials": "IR",
+        "name": "Isabella Rossi",
+        "content": "非常适合快速获取灵感！在确定最终设计之前生成了20多个波普艺术融合壁纸。自定义尺寸功能拯救了我的展览项目。希望能看到更多抽象风格的设计，但目前的艺术风格都非常出色",
+        "avatar": "https://randomuser.me/api/portraits/women/12.jpg"
+      },
+      {
+        "initials": "RP",
+        "name": "Raj Patel",
+        "content": "完全改变了我的工作流程。为所有团队设备创建了极简几何壁纸，使用自定义比例。4K质量使文本/图标清晰突出。在美观和功能性之间达到完美平衡。SEO提示：这应该是「自定义AI壁纸」搜索的第一名！"
+      }
     ]
   },
   "faq": {
     "title": "常见问题解答",
     "subtitle": "找不到您正在寻找的答案吗？ 联系您的支持团队",
     "items": [
-      { "q": "该工具支持哪些分辨率？", "a": "我们的人工智能引擎默认设置为 4K 超高清 (3840×2160)，针对所有设备进行了优化，包括 iOS/Android 智能手机、Windows/Mac 电脑和折叠显示器" },
-      { "q": "如何创建手机壁纸？", "a": "三个简单步骤：1）输入描述（例如「星空下的动漫女孩」） 2）从15种以上的艺术风格中选择 3）生成并下载。垂直布局会自动调整以适应相机切口和屏幕边缘" },
-      { "q": "是否提供免费试用？", "a": "新用户可获得3次免费生成。高级会员解锁无限导出、8K升级和20多种独家滤镜，提供按月或按年订阅选项" },
-      { "q": "我可以增强现有的图像吗？", "a": "使用我们的AI放大器将分辨率提升四倍（400%放大），同时修复细节 – 非常适合恢复复古照片或改善截图" },
-      { "q": "典型的生成时间？", "a": "4K 壁纸在使用 GPU 集群时渲染需时 12-25 秒。在高峰时段，95% 的请求通过智能排队优化在 30 秒内完成" },
-      { "q": "可用的艺术风格？", "a": "每周更新8个类别：赛博朋克、墨水画、平面插图等。新的动态光照模式创建完美的3D效果，非常适合AMOLED显示屏" },
-      { "q": "这与其他人工智能工具有什么不同？", "a": "我们与真实的艺术家合作来训练风格——就像口袋里有8位专业插画师一样" },
-      { "q": "桌面特定功能？", "a": "宽屏算法通过焦点区域检测来保留关键视觉元素。PSD 文件保留层以便于生成后的Photoshop编辑" }
+      {
+        "q": "该工具支持哪些分辨率？",
+        "a": "我们的人工智能引擎默认设置为 4K 超高清 (3840×2160)，针对所有设备进行了优化，包括 iOS/Android 智能手机、Windows/Mac 电脑和折叠显示器"
+      },
+      {
+        "q": "如何创建手机壁纸？",
+        "a": "三个简单步骤：1）输入描述（例如「星空下的动漫女孩」） 2）从15种以上的艺术风格中选择 3）生成并下载。垂直布局会自动调整以适应相机切口和屏幕边缘"
+      },
+      {
+        "q": "是否提供免费试用？",
+        "a": "新用户可获得3次免费生成。高级会员解锁无限导出、8K升级和20多种独家滤镜，提供按月或按年订阅选项"
+      },
+      {
+        "q": "我可以增强现有的图像吗？",
+        "a": "使用我们的AI放大器将分辨率提升四倍（400%放大），同时修复细节 – 非常适合恢复复古照片或改善截图"
+      },
+      {
+        "q": "典型的生成时间？",
+        "a": "4K 壁纸在使用 GPU 集群时渲染需时 12-25 秒。在高峰时段，95% 的请求通过智能排队优化在 30 秒内完成"
+      },
+      {
+        "q": "可用的艺术风格？",
+        "a": "每周更新8个类别：赛博朋克、墨水画、平面插图等。新的动态光照模式创建完美的3D效果，非常适合AMOLED显示屏"
+      },
+      {
+        "q": "这与其他人工智能工具有什么不同？",
+        "a": "我们与真实的艺术家合作来训练风格——就像口袋里有8位专业插画师一样"
+      },
+      {
+        "q": "桌面特定功能？",
+        "a": "宽屏算法通过焦点区域检测来保留关键视觉元素。PSD 文件保留层以便于生成后的Photoshop编辑"
+      }
     ]
   },
   "cta": {
@@ -377,5 +484,116 @@
       "redeeming": "兑换中...",
       "emptyError": "请输入兑换码"
     }
+  },
+  "canvas": {
+    "title": "画布",
+    "projectListTitle": "我的画布",
+    "projectListSubtitle": "在同一块画布上编排文本、图像、分镜和视频。",
+    "newProject": "新建画布",
+    "untitled": "未命名画布",
+    "back": "返回",
+    "home": "首页",
+    "saving": "保存中…",
+    "saved": "已保存",
+    "unsaved": "未保存",
+    "undo": "撤销",
+    "redo": "重做",
+    "runNode": "运行节点",
+    "runDownstream": "运行下游",
+    "runAll": "运行全部",
+    "fitView": "适应视图",
+    "zoomOut": "缩小",
+    "zoomIn": "放大",
+    "properties": "属性",
+    "propertiesEmpty": "选中一个节点后即可编辑参数。",
+    "titleLabel": "标题",
+    "prompt": "提示词",
+    "text": "文本内容",
+    "brief": "创意简报",
+    "model": "模型",
+    "aspectRatio": "比例",
+    "count": "生成数量",
+    "duration": "时长（秒）",
+    "resolution": "分辨率",
+    "videoMode": "生成方式",
+    "videoModeText": "文生视频",
+    "videoModeImage": "图生视频",
+    "layout": "分镜布局",
+    "visualLock": "视觉锁定项（每行一项，如 角色: 少年）",
+    "shots": "镜头列表",
+    "shotsPlaceholder": "运行分镜规划后在此显示镜头",
+    "delete": "删除",
+    "deleteNode": "删除节点",
+    "deleteEdge": "删除连线",
+    "deleteConfirm": "确定删除这个画布？此操作无法撤销。",
+    "deleteProjectTitle": "删除画布",
+    "cancel": "取消",
+    "create": "创建",
+    "createHint": "先给画布起个名字，再开始编排。",
+    "projectName": "画布名称",
+    "rename": "重命名",
+    "emptyProjects": "还没有画布项目",
+    "emptyDesc": "新建一块画布，从左侧面板添加节点，连线后即可生成。",
+    "emptyCanvasTitle": "从节点开始",
+    "emptyCanvasHint": "从左侧面板添加文本、图像、分镜或视频节点。",
+    "nodeCount": "{count} 个节点",
+    "connectHint": "从节点右侧锚点拖到另一节点左侧锚点即可连线。",
+    "connectFailed": "这两个节点无法连接。",
+    "runFailed": "执行失败",
+    "addNode": "添加节点",
+    "generating": "生成中",
+    "loadFailed": "无法打开这块画布。",
+    "retry": "重试",
+    "loadingProject": "正在打开画布…",
+    "openProperties": "打开属性",
+    "closeProperties": "关闭属性",
+    "noPreview": "暂无输出",
+    "costHint": "{count} 积分",
+    "updatedJustNow": "刚刚更新",
+    "updatedAt": "更新于 {time}",
+    "layouts": {
+      "grid3": "3 镜",
+      "grid6": "6 镜",
+      "grid9": "9 镜",
+      "grid12": "12 镜"
+    },
+    "nodeTypes": {
+      "text": "文本",
+      "image": "图像生成",
+      "storyboard": "分镜规划",
+      "video": "视频生成",
+      "upload": "上传素材"
+    },
+    "status": {
+      "idle": "就绪",
+      "pending": "等待",
+      "queued": "排队中",
+      "running": "运行中",
+      "succeeded": "成功",
+      "failed": "失败",
+      "cancelled": "已取消",
+      "skipped": "已跳过",
+      "cancel_requested": "取消中"
+    },
+    "runConfirmTitle": "确认运行",
+    "runConfirmScope": "执行范围",
+    "runConfirmNodes": "将执行 {count} 个节点",
+    "runConfirmTotal": "预计消耗",
+    "runConfirmBalance": "当前余额",
+    "runConfirmStart": "开始运行",
+    "scopeNode": "当前节点",
+    "scopeDownstream": "节点及下游",
+    "scopeAll": "整个画布",
+    "cancelExecution": "取消任务",
+    "cancelling": "取消中",
+    "executionResumed": "已恢复后台运行的任务",
+    "executionFinished": "任务已完成",
+    "uploadFile": "选择图片",
+    "uploading": "上传中",
+    "uploadSuccess": "上传成功",
+    "uploadFailed": "上传失败",
+    "uploadedFile": "已上传文件",
+    "noFile": "未选择文件",
+    "creditsUnit": "积分"
   }
 }

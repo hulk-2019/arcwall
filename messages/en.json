@@ -2,7 +2,13 @@
   "header": {
     "brand": "ArcWall",
     "subhead": "Wallpaper Generator",
-    "nav": [],
+    "nav": [
+      {
+        "key": "canvas",
+        "title": "Canvas",
+        "url": "/canvas"
+      }
+    ],
     "creditsLabel": "Credits",
     "login": "Login",
     "loading": "Loading…"
@@ -22,7 +28,12 @@
     "cardBadge": "Trending Style",
     "cardTitle": "Abstract Aurora",
     "cardCaption": "AI Generated · 8K Ready",
-    "tags": ["Cyberpunk City", "Anime", "Aesthetic Keywords", "Nature Landscape"],
+    "tags": [
+      "Cyberpunk City",
+      "Anime",
+      "Aesthetic Keywords",
+      "Nature Landscape"
+    ],
     "joinCreators": "Join 10,000+ creators",
     "placeholders": [
       "Neon cyberpunk skyline with floating gardens...",
@@ -94,10 +105,22 @@
     "crafted": "Crafted with ♡ for designers & creators.",
     "rights": "© 2026 ArcWall. All rights reserved.",
     "links": [
-      { "label": "About", "href": "/#about" },
-      { "label": "Terms", "href": "/#terms" },
-      { "label": "Privacy", "href": "/#privacy" },
-      { "label": "Support", "href": "mailto:me@idoubi.cc" }
+      {
+        "label": "About",
+        "href": "/#about"
+      },
+      {
+        "label": "Terms",
+        "href": "/#terms"
+      },
+      {
+        "label": "Privacy",
+        "href": "/#privacy"
+      },
+      {
+        "label": "Support",
+        "href": "mailto:me@idoubi.cc"
+      }
     ]
   },
   "myWorks": {
@@ -231,10 +254,26 @@
     "title": "Explore Styles",
     "tryStyle": "Try this style",
     "items": [
-      { "icon": "monitor", "label": "Cyberpunk City", "image": "/banner.png" },
-      { "icon": "cpu", "label": "Anime Style", "image": "/banner.png" },
-      { "icon": "leaf", "label": "Nature Landscape", "image": "/banner.png" },
-      { "icon": "grid", "label": "3D Abstract", "image": "/banner.png" }
+      {
+        "icon": "monitor",
+        "label": "Cyberpunk City",
+        "image": "/banner.png"
+      },
+      {
+        "icon": "cpu",
+        "label": "Anime Style",
+        "image": "/banner.png"
+      },
+      {
+        "icon": "leaf",
+        "label": "Nature Landscape",
+        "image": "/banner.png"
+      },
+      {
+        "icon": "grid",
+        "label": "3D Abstract",
+        "image": "/banner.png"
+      }
     ]
   },
   "features": {
@@ -281,36 +320,104 @@
     "title": "How to make your own AI generated wallpaper?",
     "subtitle": "Just four steps to create a personalized 4K wallpaper",
     "items": [
-      { "step": "1", "title": "Enter your ideas", "desc": "Describe the wallpaper scene you want" },
-      { "step": "2", "title": "Set ratio", "desc": "Specify aspect ratio (16:9, 9:16, 4:3 or custom), then click Generate to create your AI wallpaper" },
-      { "step": "3", "title": "Select style", "desc": "Choose a style - select from 15+ art styles (like Pop Art, Cyberpunk, etc.)" },
-      { "step": "4", "title": "Generate and Download", "desc": "Browse the unique digital art collection and instantly download your favorites. Use them as phone wallpapers, desktop themes, or even print them for custom home decor—easily infuse creativity into every screen and space" }
+      {
+        "step": "1",
+        "title": "Enter your ideas",
+        "desc": "Describe the wallpaper scene you want"
+      },
+      {
+        "step": "2",
+        "title": "Set ratio",
+        "desc": "Specify aspect ratio (16:9, 9:16, 4:3 or custom), then click Generate to create your AI wallpaper"
+      },
+      {
+        "step": "3",
+        "title": "Select style",
+        "desc": "Choose a style - select from 15+ art styles (like Pop Art, Cyberpunk, etc.)"
+      },
+      {
+        "step": "4",
+        "title": "Generate and Download",
+        "desc": "Browse the unique digital art collection and instantly download your favorites. Use them as phone wallpapers, desktop themes, or even print them for custom home decor—easily infuse creativity into every screen and space"
+      }
     ],
     "cta": "Create your wallpaper"
   },
   "testimonials": {
     "title": "Real User Reviews of AI Wallpaper Generator",
     "items": [
-      { "initials": "EC", "name": "Emma Carter", "content": "AI Wallpaper Generator is a game changer! In just minutes I created a stunning 4K nebula wallpaper for my gaming rig. Love the Cyberpunk Neon style that makes colors pop. Perfect aspect ratio customization saved me hours of editing time. Best tool for custom wallpapers!", "avatar": "https://randomuser.me/api/portraits/women/44.jpg" },
-      { "initials": "SJ", "name": "Sarah Johnson", "content": "Finally found an AI art generator that understands device sizes. My iPhone 15 Pro Max wallpaper in Anime Cel-Shading style looks crisp at 9:16 ratio. HD quality rivals professional digital artwork. Art style diversity gets a 10/10!", "avatar": "https://randomuser.me/api/portraits/women/68.jpg" },
-      { "initials": "SK", "name": "Sophia Kaur", "content": "Created matching wallpapers for my iPad and desktop using the Impressionist brush style. 4:3 tablet ratio is perfect. Just wish there were more texture options, but 4K output quality is exceptional for home decor projects" },
-      { "initials": "NJ", "name": "Noah Jensen", "content": "Unbelievable how natural this deep sea blue whale wallpaper looks in 16:9 format. AI preserves details better than my Photoshop edits. Futuristic hologram style adds magical depth. Essential tool for those needing quick high-def backgrounds!", "avatar": "https://randomuser.me/api/portraits/men/32.jpg" },
-      { "initials": "IR", "name": "Isabella Rossi", "content": "Perfect for quick inspiration! Generated over 20 Pop Art fusion wallpapers before finalizing a design. Custom size feature saved my exhibition project. Hope to see more abstract styles, but current art styles are all outstanding", "avatar": "https://randomuser.me/api/portraits/women/12.jpg" },
-      { "initials": "RP", "name": "Raj Patel", "content": "Completely changed my workflow. Created minimalist geometric wallpapers for all team devices using custom ratios. 4K quality makes text/icons stand out clearly. Perfect balance between aesthetics and functionality. SEO tip: This should be #1 for 'custom AI wallpaper' searches!" }
+      {
+        "initials": "EC",
+        "name": "Emma Carter",
+        "content": "AI Wallpaper Generator is a game changer! In just minutes I created a stunning 4K nebula wallpaper for my gaming rig. Love the Cyberpunk Neon style that makes colors pop. Perfect aspect ratio customization saved me hours of editing time. Best tool for custom wallpapers!",
+        "avatar": "https://randomuser.me/api/portraits/women/44.jpg"
+      },
+      {
+        "initials": "SJ",
+        "name": "Sarah Johnson",
+        "content": "Finally found an AI art generator that understands device sizes. My iPhone 15 Pro Max wallpaper in Anime Cel-Shading style looks crisp at 9:16 ratio. HD quality rivals professional digital artwork. Art style diversity gets a 10/10!",
+        "avatar": "https://randomuser.me/api/portraits/women/68.jpg"
+      },
+      {
+        "initials": "SK",
+        "name": "Sophia Kaur",
+        "content": "Created matching wallpapers for my iPad and desktop using the Impressionist brush style. 4:3 tablet ratio is perfect. Just wish there were more texture options, but 4K output quality is exceptional for home decor projects"
+      },
+      {
+        "initials": "NJ",
+        "name": "Noah Jensen",
+        "content": "Unbelievable how natural this deep sea blue whale wallpaper looks in 16:9 format. AI preserves details better than my Photoshop edits. Futuristic hologram style adds magical depth. Essential tool for those needing quick high-def backgrounds!",
+        "avatar": "https://randomuser.me/api/portraits/men/32.jpg"
+      },
+      {
+        "initials": "IR",
+        "name": "Isabella Rossi",
+        "content": "Perfect for quick inspiration! Generated over 20 Pop Art fusion wallpapers before finalizing a design. Custom size feature saved my exhibition project. Hope to see more abstract styles, but current art styles are all outstanding",
+        "avatar": "https://randomuser.me/api/portraits/women/12.jpg"
+      },
+      {
+        "initials": "RP",
+        "name": "Raj Patel",
+        "content": "Completely changed my workflow. Created minimalist geometric wallpapers for all team devices using custom ratios. 4K quality makes text/icons stand out clearly. Perfect balance between aesthetics and functionality. SEO tip: This should be #1 for 'custom AI wallpaper' searches!"
+      }
     ]
   },
   "faq": {
     "title": "Frequently Asked Questions",
     "subtitle": "Can't find the answer you're looking for? Contact our support team",
     "items": [
-      { "q": "What resolutions are supported?", "a": "Our AI engine defaults to 4K Ultra HD (3840×2160), optimized for all devices including iOS/Android smartphones, Windows/Mac computers, and foldable displays" },
-      { "q": "How to create a mobile wallpaper?", "a": "3 simple steps: 1) Enter description (e.g. 'anime girl under starry sky') 2) Choose from 15+ art styles 3) Generate & download. Vertical layout automatically adjusts to fit camera cutouts and screen edges" },
-      { "q": "Is there a free trial?", "a": "New users get 3 free generations. Premium members unlock unlimited exports, 8K upscaling, and 20+ exclusive filters, with monthly or annual subscription options" },
-      { "q": "Can I enhance existing images?", "a": "Use our AI upscaler to quadruple the resolution (400% upscale) while restoring details – perfect for restoring vintage photos or improving screenshots" },
-      { "q": "Typical generation time?", "a": "4K wallpapers take 12-25 seconds to render using our GPU cluster. During peak hours, 95% of requests are completed within 30 seconds via smart queue optimization" },
-      { "q": "Available art styles?", "a": "Updated weekly with 8 categories: Cyberpunk, Ink painting, Flat illustration, etc. New dynamic lighting mode creates perfect 3D effects, ideal for AMOLED displays" },
-      { "q": "How is this different from other AI tools?", "a": "We work with real artists to train styles – it's like having 8 professional illustrators in your pocket" },
-      { "q": "Desktop-specific features?", "a": "Widescreen algorithms detect focus areas to preserve key visual elements. PSD files retain layers for easy post-generation Photoshop editing" }
+      {
+        "q": "What resolutions are supported?",
+        "a": "Our AI engine defaults to 4K Ultra HD (3840×2160), optimized for all devices including iOS/Android smartphones, Windows/Mac computers, and foldable displays"
+      },
+      {
+        "q": "How to create a mobile wallpaper?",
+        "a": "3 simple steps: 1) Enter description (e.g. 'anime girl under starry sky') 2) Choose from 15+ art styles 3) Generate & download. Vertical layout automatically adjusts to fit camera cutouts and screen edges"
+      },
+      {
+        "q": "Is there a free trial?",
+        "a": "New users get 3 free generations. Premium members unlock unlimited exports, 8K upscaling, and 20+ exclusive filters, with monthly or annual subscription options"
+      },
+      {
+        "q": "Can I enhance existing images?",
+        "a": "Use our AI upscaler to quadruple the resolution (400% upscale) while restoring details – perfect for restoring vintage photos or improving screenshots"
+      },
+      {
+        "q": "Typical generation time?",
+        "a": "4K wallpapers take 12-25 seconds to render using our GPU cluster. During peak hours, 95% of requests are completed within 30 seconds via smart queue optimization"
+      },
+      {
+        "q": "Available art styles?",
+        "a": "Updated weekly with 8 categories: Cyberpunk, Ink painting, Flat illustration, etc. New dynamic lighting mode creates perfect 3D effects, ideal for AMOLED displays"
+      },
+      {
+        "q": "How is this different from other AI tools?",
+        "a": "We work with real artists to train styles – it's like having 8 professional illustrators in your pocket"
+      },
+      {
+        "q": "Desktop-specific features?",
+        "a": "Widescreen algorithms detect focus areas to preserve key visual elements. PSD files retain layers for easy post-generation Photoshop editing"
+      }
     ]
   },
   "cta": {
@@ -377,5 +484,116 @@
       "redeeming": "Redeeming...",
       "emptyError": "Please enter redeem code"
     }
+  },
+  "canvas": {
+    "title": "Canvas",
+    "projectListTitle": "My Canvases",
+    "projectListSubtitle": "Compose text, images, storyboards, and video on one board.",
+    "newProject": "New Canvas",
+    "untitled": "Untitled Canvas",
+    "back": "Back",
+    "home": "Home",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "unsaved": "Unsaved",
+    "undo": "Undo",
+    "redo": "Redo",
+    "runNode": "Run Node",
+    "runDownstream": "Run Downstream",
+    "runAll": "Run All",
+    "fitView": "Fit View",
+    "zoomOut": "Zoom Out",
+    "zoomIn": "Zoom In",
+    "properties": "Properties",
+    "propertiesEmpty": "Select a node to edit its settings.",
+    "titleLabel": "Title",
+    "prompt": "Prompt",
+    "text": "Text",
+    "brief": "Creative Brief",
+    "model": "Model",
+    "aspectRatio": "Aspect Ratio",
+    "count": "Number",
+    "duration": "Duration (s)",
+    "resolution": "Resolution",
+    "videoMode": "Mode",
+    "videoModeText": "Text to Video",
+    "videoModeImage": "Image to Video",
+    "layout": "Storyboard Layout",
+    "visualLock": "Visual locks (one per line, e.g. character: a boy)",
+    "shots": "Shots",
+    "shotsPlaceholder": "Run storyboard planning to see shots here",
+    "delete": "Delete",
+    "deleteNode": "Delete Node",
+    "deleteEdge": "Delete connection",
+    "deleteConfirm": "Delete this project? This cannot be undone.",
+    "deleteProjectTitle": "Delete canvas",
+    "cancel": "Cancel",
+    "create": "Create",
+    "createHint": "Give this canvas a name to get started.",
+    "projectName": "Canvas name",
+    "rename": "Rename",
+    "emptyProjects": "No canvas projects yet",
+    "emptyDesc": "Create a canvas, add nodes from the palette, then connect and generate.",
+    "emptyCanvasTitle": "Start from a node",
+    "emptyCanvasHint": "Add text, image, storyboard, or video from the left palette.",
+    "nodeCount": "{count} nodes",
+    "connectHint": "Drag from a node’s right handle to another node’s left handle.",
+    "connectFailed": "These nodes cannot be connected.",
+    "runFailed": "Run failed",
+    "addNode": "Add Node",
+    "generating": "Generating",
+    "loadFailed": "Could not load this canvas.",
+    "retry": "Retry",
+    "loadingProject": "Opening canvas…",
+    "openProperties": "Open properties",
+    "closeProperties": "Close properties",
+    "noPreview": "No output yet",
+    "costHint": "{count} credits",
+    "updatedJustNow": "Updated just now",
+    "updatedAt": "Updated {time}",
+    "layouts": {
+      "grid3": "3 shots",
+      "grid6": "6 shots",
+      "grid9": "9 shots",
+      "grid12": "12 shots"
+    },
+    "nodeTypes": {
+      "text": "Text",
+      "image": "Image",
+      "storyboard": "Storyboard",
+      "video": "Video",
+      "upload": "Upload"
+    },
+    "status": {
+      "idle": "Ready",
+      "pending": "Pending",
+      "queued": "Queued",
+      "running": "Running",
+      "succeeded": "Succeeded",
+      "failed": "Failed",
+      "cancelled": "Cancelled",
+      "skipped": "Skipped",
+      "cancel_requested": "Cancelling"
+    },
+    "runConfirmTitle": "Confirm Run",
+    "runConfirmScope": "Scope",
+    "runConfirmNodes": "{count} node(s) will run",
+    "runConfirmTotal": "Estimated cost",
+    "runConfirmBalance": "Balance",
+    "runConfirmStart": "Start Run",
+    "scopeNode": "Selected node",
+    "scopeDownstream": "Node and downstream",
+    "scopeAll": "Entire canvas",
+    "cancelExecution": "Cancel Task",
+    "cancelling": "Cancelling",
+    "executionResumed": "Resumed background task",
+    "executionFinished": "Task finished",
+    "uploadFile": "Choose image",
+    "uploading": "Uploading",
+    "uploadSuccess": "Uploaded",
+    "uploadFailed": "Upload failed",
+    "uploadedFile": "Uploaded file",
+    "noFile": "No file selected",
+    "creditsUnit": "credits"
   }
 }

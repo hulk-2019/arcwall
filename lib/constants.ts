@@ -1,5 +1,6 @@
 // RabbitMQ
 export const QUEUE_WALLPAPER_GENERATION = "wallpaper-generation";
+export const QUEUE_CANVAS_STEP = "canvas-step";
 
 // Redis keys
 export const redisKeys = {

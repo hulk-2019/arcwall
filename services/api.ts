@@ -114,3 +114,39 @@ export const uploadImage = (formData: FormData) => fetcher("/api/upload", {
   method: "POST", 
   body: formData,
 });
+
+// Canvas (AI 画布素材生成)
+export const getCanvasProjects = () => fetcher("/api/protected/canvas/projects");
+export const createCanvasProject = (name?: string) =>
+  fetcher("/api/protected/canvas/projects", { method: "POST", body: JSON.stringify({ name }) });
+export const getCanvasProject = (id: number) => fetcher(`/api/protected/canvas/projects/${id}`);
+export const renameCanvasProject = (id: number, name: string) =>
+  fetcher(`/api/protected/canvas/projects/${id}`, { method: "PATCH", body: JSON.stringify({ name }) });
+export const deleteCanvasProject = (id: number) =>
+  fetcher(`/api/protected/canvas/projects/${id}`, { method: "DELETE" });
+export const getCanvasSnapshot = (canvasId: number) => fetcher(`/api/protected/canvas/${canvasId}`);
+export const saveCanvas = (canvasId: number, operations: any[]) =>
+  fetcher(`/api/protected/canvas/${canvasId}`, { method: "PATCH", body: JSON.stringify({ operations }) });
+/** 页面卸载时的兜底保存：keepalive 保证导航/刷新后请求仍会送达。 */
+export function saveCanvasOnUnload(canvasId: number, operations: any[]) {
+  return fetch(`/api/protected/canvas/${canvasId}`, {
+    method: "PATCH",
+    keepalive: true,
+    headers: {
+      "Content-Type": "application/json",
+      "Arcwall-Language": Cookies.get("arcwall-language") ?? "zh",
+    },
+    body: JSON.stringify({ operations }),
+  }).catch(() => undefined);
+}
+export const runCanvas = (data: { canvasId: number; idempotencyKey: string; scope: string; rootNodeId?: string }) =>
+  fetcher("/api/protected/canvas/run", { method: "POST", body: JSON.stringify(data) });
+export const getCanvasExecution = (id: number) => fetcher(`/api/protected/canvas/executions/${id}`);
+export const listCanvasExecutions = (canvasId: number, onlyActive = true) =>
+  fetcher(`/api/protected/canvas/executions?canvasId=${canvasId}${onlyActive ? "&active=1" : ""}`);
+export const cancelCanvasExecution = (id: number) =>
+  fetcher(`/api/protected/canvas/executions/${id}/cancel`, { method: "POST" });
+export const estimateCanvasRun = (data: { canvasId: number; scope: string; rootNodeId?: string }) =>
+  fetcher("/api/protected/canvas/executions/estimate", { method: "POST", body: JSON.stringify(data) });
+export const uploadCanvasAsset = (formData: FormData) =>
+  fetcher("/api/protected/canvas/assets", { method: "POST", body: formData });

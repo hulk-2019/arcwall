@@ -1,8 +1,55 @@
 import { prisma } from "@/lib/prisma";
-import { TransactionType } from "@prisma/client";
+import { Prisma, TransactionType } from "@prisma/client";
 import { Wallpaper } from "@/types/wallpaper";
 import { UserCredits } from "@/types/user";
 import { getUserWallpapersCount } from "@/models/wallpaper";
+
+/**
+ * 在既有事务内调整余额并记录流水（画布执行预扣/释放复用，保证与业务写入同事务）。
+ * 余额不足时抛出 insufficient.credits，由调用方决定整体回滚。
+ */
+export async function adjustUserCreditsInTx(
+  tx: Prisma.TransactionClient,
+  user_id: number,
+  amount: number,
+  type: TransactionType,
+  remark?: string
+): Promise<number> {
+  const userId = Number(user_id);
+  const now = new Date();
+
+  const balance = await tx.user_balance.findUnique({
+    where: { user_id: userId },
+    select: { total_credits: true },
+  });
+
+  const currentBalance = balance?.total_credits ?? 0;
+  const newBalance = currentBalance + amount;
+
+  if (newBalance < 0) {
+    throw new Error("insufficient.credits");
+  }
+
+  await Promise.all([
+    tx.user_balance.upsert({
+      where: { user_id: userId },
+      update: { total_credits: newBalance, updated_at: now },
+      create: { user_id: userId, total_credits: newBalance, updated_at: now },
+    }),
+    tx.credit_transactions.create({
+      data: {
+        user_id: userId,
+        amount: amount,
+        type: type,
+        remark: remark || null,
+        balance_after: newBalance,
+        created_at: now,
+      },
+    }),
+  ]);
+
+  return newBalance;
+}
 
 /**
  * 使用事务更新用户余额和记录交易流水
@@ -18,66 +65,13 @@ export async function updateUserCredits(
   type: TransactionType,
   remark?: string
 ): Promise<number> {
-  const userId = Number(user_id);
-  const now = new Date();
-
-  // 增加事务超时时间到 30 秒
-  const newBalance = await prisma.$transaction(
-    async (tx) => {
-      // 先获取当前余额（使用 select 只查询需要的字段，提高性能）
-      const balance = await tx.user_balance.findUnique({
-        where: { user_id: userId },
-        select: { total_credits: true },
-      });
-
-      const currentBalance = balance?.total_credits ?? 0;
-
-      // 计算新余额
-      const newBalance = currentBalance + amount;
-
-      // 如果余额不足（扣减时），抛出错误
-      if (newBalance < 0) {
-        throw new Error("insufficient.credits");
-      }
-
-      // 并发执行两个操作，提高性能
-      // 这两个操作之间没有数据依赖关系，可以并发执行
-      await Promise.all([
-        // 使用 upsert 来更新或创建余额记录
-        tx.user_balance.upsert({
-          where: { user_id: userId },
-          update: {
-            total_credits: newBalance,
-            updated_at: now,
-          },
-          create: {
-            user_id: userId,
-            total_credits: newBalance,
-            updated_at: now,
-          },
-        }),
-        // 记录交易流水
-        tx.credit_transactions.create({
-          data: {
-            user_id: userId,
-            amount: amount,
-            type: type,
-            remark: remark || null,
-            balance_after: newBalance,
-            created_at: now,
-          },
-        }),
-      ]);
-
-      return newBalance;
-    },
+  return prisma.$transaction(
+    (tx) => adjustUserCreditsInTx(tx, user_id, amount, type, remark),
     {
       maxWait: 10000, // 等待锁的最大时间：10秒
       timeout: 30000, // 事务超时时间：30秒
     }
   );
-
-  return newBalance;
 }
 
 /**

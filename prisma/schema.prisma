@@ -29,6 +29,9 @@ model users {
   prompt_optimizations prompt_optimizations[]
   favorites  favorites[]
   system_wallpapers    system_wallpapers[]
+  projects   projects[]
+  canvas_assets canvas_assets[]
+  executions executions[]
 }
 
 model roles {
@@ -182,4 +185,156 @@ model prompt_optimizations {
   created_at       DateTime? @default(now()) @db.Timestamptz()
   user             users     @relation(fields: [user_id], references: [id])
   @@index([user_id])
+}
+
+// ---------------------------------------------------------------------------
+// AI 画布素材生成平台 (Canvas) domain models
+// ---------------------------------------------------------------------------
+
+model projects {
+  id             Int       @id @default(autoincrement())
+  user_id        Int
+  name           String    @db.VarChar(255)
+  cover_asset_id Int?
+  visibility     String    @default("private") @db.VarChar(20)
+  is_deleted     Boolean   @default(false)
+  created_at     DateTime? @default(now()) @db.Timestamptz()
+  updated_at     DateTime? @default(now()) @db.Timestamptz()
+  deleted_at     DateTime? @db.Timestamptz()
+  user           users     @relation(fields: [user_id], references: [id])
+  canvases       canvases[]
+  @@index([user_id, is_deleted, updated_at(sort: Desc)])
+}
+
+model canvases {
+  id            Int         @id @default(autoincrement())
+  project_id    Int
+  revision      Int         @default(1)
+  viewport_json Json?
+  created_at    DateTime?   @default(now()) @db.Timestamptz()
+  updated_at    DateTime?   @default(now()) @db.Timestamptz()
+  project       projects    @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  nodes         nodes[]
+  edges         edges[]
+  executions    executions[]
+  @@index([project_id])
+}
+
+// 节点/边使用客户端生成的 UUID 主键：乐观创建无需服务端回传 id 映射，
+// 保存操作天然幂等（upsert by id），多端也不会冲突。
+model nodes {
+  id                  String          @id @default(uuid()) @db.VarChar(36)
+  canvas_id           Int
+  type                String          @db.VarChar(50)
+  x                   Int
+  y                   Int
+  current_revision_id Int?            @unique
+  created_at          DateTime?       @default(now()) @db.Timestamptz()
+  updated_at          DateTime?       @default(now()) @db.Timestamptz()
+  canvas              canvases        @relation(fields: [canvas_id], references: [id], onDelete: Cascade)
+  revisions           node_revisions[]
+  current_revision    node_revisions? @relation("current_node_revision", fields: [current_revision_id], references: [id])
+  step_runs           step_runs[]
+  @@index([canvas_id])
+}
+
+model node_revisions {
+  id           Int             @id @default(autoincrement())
+  node_id      String          @db.VarChar(36)
+  config_json  Json
+  content_hash String?         @db.VarChar(64)
+  created_at   DateTime?       @default(now()) @db.Timestamptz()
+  node         nodes           @relation(fields: [node_id], references: [id], onDelete: Cascade)
+  current_of   nodes?          @relation("current_node_revision")
+  step_runs    step_runs[]
+  @@index([node_id])
+}
+
+model edges {
+  id             String   @id @default(uuid()) @db.VarChar(36)
+  canvas_id      Int
+  source_node_id String   @db.VarChar(36)
+  source_port    String   @db.VarChar(50)
+  target_node_id String   @db.VarChar(36)
+  target_port    String   @db.VarChar(50)
+  created_at     DateTime? @default(now()) @db.Timestamptz()
+  canvas         canvases @relation(fields: [canvas_id], references: [id], onDelete: Cascade)
+  @@index([canvas_id])
+  @@index([source_node_id])
+  @@index([target_node_id])
+}
+
+model canvas_assets {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  media_type  String   @db.VarChar(20)
+  storage_key String   @db.Text
+  sha256      String?  @db.VarChar(64)
+  status      String   @default("ready") @db.VarChar(20)
+  created_at  DateTime? @default(now()) @db.Timestamptz()
+  user        users    @relation(fields: [user_id], references: [id])
+  @@index([user_id, media_type, created_at(sort: Desc)])
+}
+
+model executions {
+  id               Int            @id @default(autoincrement())
+  canvas_id        Int
+  user_id          Int
+  idempotency_key  String         @db.VarChar(255)
+  scope            String         @db.VarChar(20)
+  root_node_id     String?        @db.VarChar(36)
+  snapshot_json    Json?
+  status           String         @default("queued") @db.VarChar(30)
+  reserved_credits Int            @default(0)
+  captured_credits Int            @default(0)
+  error_code       String?        @db.VarChar(50)
+  created_at       DateTime?      @default(now()) @db.Timestamptz()
+  updated_at       DateTime?      @default(now()) @db.Timestamptz()
+  canvas           canvases       @relation(fields: [canvas_id], references: [id], onDelete: Cascade)
+  user             users          @relation(fields: [user_id], references: [id])
+  step_runs        step_runs[]
+  @@unique([user_id, idempotency_key])
+  @@index([canvas_id, created_at(sort: Desc)])
+  @@index([status, updated_at])
+}
+
+model step_runs {
+  id               Int             @id @default(autoincrement())
+  execution_id     Int
+  node_id          String          @db.VarChar(36)
+  node_revision_id Int
+  status           String          @default("pending") @db.VarChar(30)
+  input_hash       String?         @db.VarChar(64)
+  output_json      Json?
+  error_code       String?         @db.VarChar(50)
+  error_message    String?         @db.Text
+  credits_consumed Int             @default(0)
+  created_at       DateTime?       @default(now()) @db.Timestamptz()
+  updated_at       DateTime?       @default(now()) @db.Timestamptz()
+  execution        executions      @relation(fields: [execution_id], references: [id], onDelete: Cascade)
+  node             nodes           @relation(fields: [node_id], references: [id], onDelete: Cascade)
+  node_revision    node_revisions  @relation(fields: [node_revision_id], references: [id])
+  provider_jobs    provider_jobs[]
+  @@unique([execution_id, node_id])
+  @@index([execution_id])
+  @@index([node_id])
+}
+
+// 供应商异步任务（视频等长任务）：submit 落库 external_id 后由 poller 扫描器驱动轮询。
+// 技术方案 §八点四 / §十四点三。
+model provider_jobs {
+  id             Int        @id @default(autoincrement())
+  step_run_id    Int
+  provider       String     @default("ark") @db.VarChar(50)
+  external_id    String?    @db.VarChar(255)
+  status         String     @default("submitting") @db.VarChar(30)
+  raw_status     String?    @db.VarChar(100)
+  poll_count     Int        @default(0)
+  next_poll_at   DateTime?  @default(now()) @db.Timestamptz()
+  created_at     DateTime?  @default(now()) @db.Timestamptz()
+  updated_at     DateTime?  @default(now()) @db.Timestamptz()
+  step_run       step_runs  @relation(fields: [step_run_id], references: [id], onDelete: Cascade)
+  @@unique([provider, external_id])
+  @@index([status, next_poll_at])
+  @@index([step_run_id])
 }

@@ -24,6 +24,15 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.75rem;
+    --success: 160 84% 32%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 40%;
+    --warning-foreground: 24 10% 10%;
+    --canvas-node-text: 215 16% 40%;
+    --canvas-node-image: 210 100% 46%;
+    --canvas-node-storyboard: 262 65% 48%;
+    --canvas-node-video: 173 70% 32%;
+    --canvas-node-upload: 28 80% 46%;
   }
 
   .dark {
@@ -47,6 +56,42 @@
     --border: 240 4% 16%;
     --input: 240 4% 16%;
     --ring: 221.2 83.2% 53.3%;
+    --success: 160 72% 48%;
+    --success-foreground: 160 10% 8%;
+    --warning: 38 92% 56%;
+    --warning-foreground: 24 20% 10%;
+    --canvas-node-text: 215 16% 72%;
+    --canvas-node-image: 210 100% 58%;
+    --canvas-node-storyboard: 262 80% 74%;
+    --canvas-node-video: 173 70% 48%;
+    --canvas-node-upload: 32 90% 62%;
+  }
+}
+
+@layer components {
+  .canvas-dot-grid {
+    background-color: hsl(var(--background));
+    background-image: radial-gradient(circle, hsl(var(--border)) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  /* 画布连线：虚线沿 source → target 方向流动，表达数据流向 */
+  .canvas-edge-flow {
+    stroke-dasharray: 8 6;
+    animation: canvas-edge-dash-flow 0.9s linear infinite;
+  }
+
+  @keyframes canvas-edge-dash-flow {
+    to {
+      /* 位移为一个虚线周期（8 + 6 = 14），保证无缝循环 */
+      stroke-dashoffset: -14;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .canvas-edge-flow {
+      animation: none;
+    }
   }
 }
 

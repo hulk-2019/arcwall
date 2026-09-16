@@ -74,7 +74,7 @@ export default async function RootLayout({
                     }}
                   />
                   {children}
-                  <SakanaWidget />
+                  {/* <SakanaWidget /> */}
                 </DesignStoreProvider>
               </ReactQueryProvider>
             </NextIntlClientProvider>

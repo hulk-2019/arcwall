@@ -52,6 +52,21 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
+        canvas: {
+          text: "hsl(var(--canvas-node-text))",
+          image: "hsl(var(--canvas-node-image))",
+          storyboard: "hsl(var(--canvas-node-storyboard))",
+          video: "hsl(var(--canvas-node-video))",
+          upload: "hsl(var(--canvas-node-upload))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

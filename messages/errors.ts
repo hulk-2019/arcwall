@@ -41,7 +41,22 @@ export const ERROR_MESSAGES = {
   "invalid.params.wallpaper.id.required": { zh: "wallpaperId 为必填项", en: "wallpaperId is required" },
   "invalid.params.wallpaper.ids.required": { zh: "wallpaperIds 为必填项", en: "wallpaperIds is required" },
   "invalid.params.prompt.required": { zh: "prompt 为必填项", en: "prompt is required" },
-  "optimize.prompt.failed": { zh: "优化提示词失败", en: "Failed to optimize prompt" }
+  "optimize.prompt.failed": { zh: "优化提示词失败", en: "Failed to optimize prompt" },
+  "canvas.project.not.found": { zh: "项目不存在", en: "Project not found" },
+  "canvas.permission.denied": { zh: "没有权限访问该画布", en: "Permission denied" },
+  "canvas.invalid.graph": { zh: "画布存在循环或非法连接", en: "Canvas contains a cycle or invalid connection" },
+  "canvas.invalid.connection": { zh: "非法连线", en: "Invalid connection" },
+  "canvas.no.executable.nodes": { zh: "没有可执行的节点", en: "No executable nodes" },
+  "canvas.execution.not.found": { zh: "执行不存在", en: "Execution not found" },
+  "canvas.save.failed": { zh: "画布保存失败", en: "Failed to save canvas" },
+  "canvas.run.failed": { zh: "执行失败", en: "Failed to run canvas" },
+  "canvas.create.project.failed": { zh: "创建项目失败", en: "Failed to create project" },
+  "canvas.estimate.failed": { zh: "成本估算失败", en: "Failed to estimate run" },
+  "canvas.cancel.failed": { zh: "取消任务失败", en: "Failed to cancel execution" },
+  "canvas.execution.not.active": { zh: "任务已结束，无法取消", en: "Execution already finished" },
+  "canvas.asset.upload.failed": { zh: "素材上传失败", en: "Failed to upload asset" },
+  "canvas.asset.type.unsupported": { zh: "仅支持图片素材", en: "Only image assets are supported" },
+  "canvas.asset.too.large": { zh: "文件大小超出限制", en: "File size exceeds limit" }
 } as const;
 
 export type ErrorMessageKey = keyof typeof ERROR_MESSAGES;
