@@ -182,7 +182,13 @@ async function latestStepRuns(canvasId: number) {
     select: { id: true },
   });
   const ids = nodeIds.map((n) => n.id);
-  if (ids.length === 0) return new Map<string, { status: string; output: CanvasNodeOutput | null; error?: string }>();
+  if (ids.length === 0)
+    return new Map<string, {
+      status: string;
+      output: CanvasNodeOutput | null;
+      error?: string;
+      revisionId: number | null;
+    }>();
 
   const runs = await prisma.step_runs.findMany({
     where: { node_id: { in: ids } },
@@ -193,12 +199,18 @@ async function latestStepRuns(canvasId: number) {
     if (!latestByNode.has(r.node_id)) latestByNode.set(r.node_id, r);
   }
 
-  const map = new Map<string, { status: string; output: CanvasNodeOutput | null; error?: string }>();
+  const map = new Map<string, {
+    status: string;
+    output: CanvasNodeOutput | null;
+    error?: string;
+    revisionId: number | null;
+  }>();
   for (const [nodeId, r] of latestByNode) {
     map.set(nodeId, {
       status: r.status,
       output: (r.output_json ?? null) as CanvasNodeOutput | null,
       error: r.error_message ?? undefined,
+      revisionId: r.node_revision_id,
     });
   }
   return map;
@@ -249,6 +261,13 @@ export async function getCanvasSnapshot(canvasId: number) {
       }
       if (output) output = await signOutputUrls(output);
 
+      // 产物过期：最近一次执行后配置又被修改（revision 不一致）。
+      // text/upload 为运行时推导，不存在过期概念。
+      const outputStale =
+        n.type !== "text" && n.type !== "upload"
+          ? run != null && run.revisionId !== n.current_revision_id
+          : false;
+
       return {
         id: n.id,
         type: n.type as CanvasNodeType,
@@ -258,6 +277,7 @@ export async function getCanvasSnapshot(canvasId: number) {
         config,
         status,
         output,
+        outputStale,
         error: run?.error,
       } satisfies CanvasNodeDTO;
     })

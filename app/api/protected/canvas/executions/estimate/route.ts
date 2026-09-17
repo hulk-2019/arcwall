@@ -3,7 +3,7 @@ import { errMsg } from "@/messages/errors";
 import { requireAuthOrResponse } from "@/lib/auth";
 import { findUserByEmail } from "@/models/user";
 import { getOwnedCanvas } from "@/models/canvas";
-import { buildCanvasPlan, planToEstimateDTO, PlanError } from "@/lib/canvas/plan";
+import { buildCanvasPlan, planToEstimateDTO, PlanError, findUnreadyUpstreamRefs } from "@/lib/canvas/plan";
 import type { ExecutionScope } from "@/types/canvas";
 import { z } from "zod";
 
@@ -44,6 +44,16 @@ export async function POST(req: Request) {
 
     if (plan.executableIds.length === 0) {
       return respErr(errMsg("canvas.no.executable.nodes"));
+    }
+
+    // 预检：范围外上游缺少与快照 revision 匹配的成功输出时提前拒绝（不产生扣费）
+    const unready = await findUnreadyUpstreamRefs(plan);
+    if (unready.length > 0) {
+      const names = unready.map((u) => u.title).join("、");
+      return respErr({
+        zh: `上游节点「${names}」尚未运行或配置已变更，请先运行上游，或改用「运行下游」`,
+        en: `Upstream node(s) "${unready.map((u) => u.title).join(", ")}" have no up-to-date output. Run them first, or use "Run downstream" instead`,
+      });
     }
 
     return respData(planToEstimateDTO(plan));

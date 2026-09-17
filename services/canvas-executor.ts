@@ -628,9 +628,13 @@ export async function executeNodeStep(stepRun: {
   const { edges, outputs } = await resolveUpstreamInputs(stepRun.node_id, snapshot, stepRun.execution_id);
   const compiled = compileInputs(edges, outputs);
   if (compiled.missingNodeIds.length > 0) {
+    const labelOf = (id: string) => {
+      const n = snapshot.nodes.find((x) => x.id === id);
+      return typeof n?.config?.title === "string" && n.config.title ? n.config.title : id;
+    };
     throw new NormalizedStepError(
       "INPUT_NOT_READY",
-      `上游输出未就绪 (节点 ${compiled.missingNodeIds.join(", ")})`
+      `上游输出未就绪：${compiled.missingNodeIds.map(labelOf).join("、")}（请先运行上游节点）`
     );
   }
 

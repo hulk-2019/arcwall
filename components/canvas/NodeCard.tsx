@@ -136,6 +136,14 @@ export function NodeCard({
         <h3 className="min-w-0 flex-1 truncate text-sm font-medium">
           {node.config.title || t(`nodeTypes.${node.type}`)}
         </h3>
+        {node.outputStale && !isRunning && (
+          <span
+            className="inline-flex shrink-0 cursor-help items-center rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning"
+            title={t("staleOutputHint")}
+          >
+            {t("staleOutput")}
+          </span>
+        )}
         <span
           className={cn(
             "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-medium",
@@ -222,12 +230,27 @@ function NodePreview({ node, output }: { node: CanvasNodeDTO; output?: CanvasNod
     }
     // 单图：媒体区比例即画幅，铺满无留白；多图（历史数据）：网格铺满
     if (urls.length === 1) {
-      return <img src={urls[0]} alt="" className="h-full w-full object-cover" loading="lazy" />;
+      return (
+        <img
+          src={urls[0]}
+          alt=""
+          draggable={false}
+          className="h-full w-full select-none object-cover"
+          loading="lazy"
+        />
+      );
     }
     return (
       <div className="grid h-full grid-cols-2 grid-rows-2 gap-1 overflow-hidden">
         {urls.slice(0, 4).map((url) => (
-          <img key={url} src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
+          <img
+            key={url}
+            src={url}
+            alt=""
+            draggable={false}
+            className="h-full w-full select-none object-cover"
+            loading="lazy"
+          />
         ))}
       </div>
     );
@@ -286,7 +309,13 @@ function UploadMedia({
   }
   return (
     <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-md bg-muted">
-      <img src={url} alt="" className="max-h-full max-w-full object-contain" loading="lazy" />
+      <img
+        src={url}
+        alt=""
+        draggable={false}
+        className="max-h-full max-w-full select-none object-contain"
+        loading="lazy"
+      />
     </div>
   );
 }

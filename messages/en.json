@@ -629,6 +629,8 @@
     "vocalMale": "Male",
     "vocalFemale": "Female",
     "runDownstreamNode": "Run downstream",
-    "duplicateNode": "Duplicate node"
+    "duplicateNode": "Duplicate node",
+    "staleOutput": "Output stale",
+    "staleOutputHint": "Config changed after the last run; showing an outdated output. Re-run this node so downstream nodes can reference the latest result"
   }
 }

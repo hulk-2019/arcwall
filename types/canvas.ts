@@ -95,6 +95,8 @@ export interface CanvasNodeDTO {
   revisionId?: number;
   config: CanvasNodeConfig;
   status: StepStatus;
+  /** 最近一次执行后配置又被修改：展示的产物已过期，下游引用会被预检拦截 */
+  outputStale?: boolean;
   output?: CanvasNodeOutput;
   error?: string;
 }

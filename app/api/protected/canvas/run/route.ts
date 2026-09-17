@@ -9,7 +9,7 @@ import {
   getExecution,
   getOwnedCanvas,
 } from "@/models/canvas";
-import { buildCanvasPlan, PlanError } from "@/lib/canvas/plan";
+import { buildCanvasPlan, PlanError, findUnreadyUpstreamRefs } from "@/lib/canvas/plan";
 import { enqueueReadySteps } from "@/lib/canvas/orchestrator";
 import type { ExecutionScope } from "@/types/canvas";
 import { z } from "zod";
@@ -68,6 +68,16 @@ export async function POST(req: Request) {
 
     if (plan.executableIds.length === 0) {
       return respErr(errMsg("canvas.no.executable.nodes"));
+    }
+
+    // 预检：范围外上游缺少与快照 revision 匹配的成功输出时提前拒绝（不预扣）
+    const unready = await findUnreadyUpstreamRefs(plan);
+    if (unready.length > 0) {
+      const names = unready.map((u) => u.title).join("、");
+      return respErr({
+        zh: `上游节点「${names}」尚未运行或配置已变更，请先运行上游，或改用「运行下游」`,
+        en: `Upstream node(s) "${unready.map((u) => u.title).join(", ")}" have no up-to-date output. Run them first, or use "Run downstream" instead`,
+      });
     }
 
     // 余额预检（事务内预扣仍会兜底，这里给出更友好的提前报错）

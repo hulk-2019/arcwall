@@ -629,6 +629,8 @@
     "vocalMale": "男声",
     "vocalFemale": "女声",
     "runDownstreamNode": "运行下游",
-    "duplicateNode": "复制节点"
+    "duplicateNode": "复制节点",
+    "staleOutput": "产物过期",
+    "staleOutputHint": "配置在最近一次生成后有修改，当前展示的是旧产物；重新运行本节点后，下游才可引用最新结果"
   }
 }

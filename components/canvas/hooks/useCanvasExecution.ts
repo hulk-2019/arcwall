@@ -107,6 +107,7 @@ export function useCanvasExecution() {
       }
       fetchUserCredits();
       setIsRunning(false);
+      setIsSubmitting(false);
 
       if (execution.status === "failed") {
         toast.error(t("status.failed"));
@@ -190,6 +191,7 @@ export function useCanvasExecution() {
       if (res.code === 0 && res.data) {
         setExecution(res.data);
         setIsRunning(true);
+        setIsSubmitting(false); // 运行中状态由 isRunning 承接，避免终态后仍被置灰
         return;
       }
       toast.error(res.message || t("runFailed"));

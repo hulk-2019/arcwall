@@ -135,6 +135,41 @@ export async function buildCanvasPlan(
   };
 }
 
+/**
+ * 提交前预检：范围内节点引用了「范围外可执行上游」，但该上游在快照 revision 下
+ * 没有成功输出（从未运行，或运行后配置被修改产生新 revision）。
+ * 这类执行必然在 worker 阶段以 INPUT_NOT_READY 失败，提前拒绝以免先扣费再退款。
+ */
+export async function findUnreadyUpstreamRefs(
+  plan: CanvasPlan
+): Promise<{ id: string; title: string }[]> {
+  const inScope = new Set(plan.targetNodeIds);
+  const snapNodeById = new Map(plan.snapshot.nodes.map((n) => [n.id, n]));
+
+  const upstreamIds = new Set<string>();
+  for (const edge of plan.snapshot.edges) {
+    if (!inScope.has(edge.targetNodeId) || inScope.has(edge.sourceNodeId)) continue;
+    const source = snapNodeById.get(edge.sourceNodeId);
+    if (source && NODE_TYPE_DEFS[source.type].executable) upstreamIds.add(source.id);
+  }
+  if (upstreamIds.size === 0) return [];
+
+  const unready: { id: string; title: string }[] = [];
+  for (const id of upstreamIds) {
+    const source = snapNodeById.get(id)!;
+    const ok = await prisma.step_runs.findFirst({
+      where: { node_id: id, node_revision_id: source.revisionId ?? -1, status: "succeeded" },
+      select: { id: true },
+    });
+    if (!ok) {
+      const title =
+        typeof source.config?.title === "string" && source.config.title ? source.config.title : id;
+      unready.push({ id, title });
+    }
+  }
+  return unready;
+}
+
 export function planToEstimateDTO(plan: CanvasPlan): EstimateDTO {
   return {
     canvasId: plan.canvasId,
