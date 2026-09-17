@@ -184,6 +184,25 @@ export async function uploadFile(buffer: Buffer, path: string): Promise<string> 
  * @param expires Expiration time in seconds (default: 24 hours = 86400)
  * @returns Signed URL
  */
+/**
+ * 服务端内部下载专用签名 URL：使用 OSS 原生 endpoint 域名，
+ * 不改写为 OSS_HOST 自定义域名——自定义域名证书过期/配置异常时，
+ * worker 内部下载（参考图转 http、Gemini inline_data 等）不受影响。
+ */
+/**
+ * 服务端内部下载 OSS 对象所需的请求头：桶开启了 Referer 白名单，
+ * 无 Referer 的服务端/供应商回源请求会被拒（403 denied by referer policy）。
+ * 以自定义域名自身作为 Referer 可通过校验。
+ */
+export function internalDownloadHeaders(): Record<string, string> {
+  const host = (process.env.OSS_HOST || "").replace(/^https?:\/\//, "").replace(/\/+$/, "");
+  return host ? { Referer: `https://${host}/` } : {};
+}
+
+export function getSignedInternalUrl(path: string, expires: number = 3600): string {
+  return client.signatureUrl(path, { expires });
+}
+
 export async function getSignedUrl(path: string, expires: number = 86400): Promise<string> {
   try {
     const url = client.signatureUrl(path, {

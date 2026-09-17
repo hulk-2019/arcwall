@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getDoubaoAIClient } from "@/services/openai";
-import { getSignedUrl, uploadFile } from "@/lib/oss";
+import { getSignedInternalUrl, uploadFile } from "@/lib/oss";
 import {
   buildImagePrompt,
   buildStoryboardMessages,
@@ -127,13 +127,10 @@ async function resolveUpstreamInputs(
     } else if (snapNode.type === "upload") {
       outputs.set(edge.sourceNodeId, deriveUploadOutput(snapshot, snapNode.id));
     } else {
-      // 范围外可执行节点：必须命中与快照相同 revision 的历史成功输出，保证可复现
+      // 范围外可执行节点：取最近一次成功输出（与节点界面展示的产物一致，所见即所用）。
+      // 配置变更导致的过期由节点上的「产物过期」标记提示，不再阻塞下游执行。
       const run = await prisma.step_runs.findFirst({
-        where: {
-          node_id: snapNode.id,
-          node_revision_id: snapNode.revisionId ?? -1,
-          status: "succeeded",
-        },
+        where: { node_id: snapNode.id, status: "succeeded" },
         orderBy: { id: "desc" },
       });
       if (run?.output_json) {
@@ -146,7 +143,7 @@ async function resolveUpstreamInputs(
 }
 
 async function toHttpUrl(keyOrUrl: string): Promise<string> {
-  return keyOrUrl.startsWith("http") ? keyOrUrl : getSignedUrl(keyOrUrl, 3600);
+  return keyOrUrl.startsWith("http") ? keyOrUrl : getSignedInternalUrl(keyOrUrl, 3600);
 }
 
 // ---------------------------------------------------------------------------
@@ -213,9 +210,14 @@ async function executeImage(
         );
       }
       if (provider === "gpt-image") {
+        // 局部调整模式（有参考图）：显式要求保持未提及部分不变，提升保真度
+        const editPrompt =
+          referenceUrls.length > 0
+            ? `请对参考图进行局部编辑：严格保持未提及部分的构图、内容、风格与文字完全不变，仅应用以下修改要求。\n${prompt}`
+            : prompt;
         rawImages = await generateGptImage({
           model,
-          prompt,
+          prompt: editPrompt,
           size: gptImageSize(aspectRatio, config.resolution === "2k" ? "2k" : "1k"),
           referenceUrls,
         });

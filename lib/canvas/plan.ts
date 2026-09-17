@@ -136,9 +136,11 @@ export async function buildCanvasPlan(
 }
 
 /**
- * 提交前预检：范围内节点引用了「范围外可执行上游」，但该上游在快照 revision 下
- * 没有成功输出（从未运行，或运行后配置被修改产生新 revision）。
- * 这类执行必然在 worker 阶段以 INPUT_NOT_READY 失败，提前拒绝以免先扣费再退款。
+ * 提交前预检：范围内节点引用了「范围外可执行上游」，但该上游从未成功运行过
+ * （没有任何成功输出可引用）。这类执行必然在 worker 阶段以 INPUT_NOT_READY
+ * 失败，提前拒绝以免先扣费再退款。
+ * 注意：配置变更导致的产物过期不在此拦截——执行时回退取最近一次成功输出，
+ * 与节点界面展示一致；过期状态由节点上的「产物过期」标记提示。
  */
 export async function findUnreadyUpstreamRefs(
   plan: CanvasPlan
@@ -158,7 +160,7 @@ export async function findUnreadyUpstreamRefs(
   for (const id of upstreamIds) {
     const source = snapNodeById.get(id)!;
     const ok = await prisma.step_runs.findFirst({
-      where: { node_id: id, node_revision_id: source.revisionId ?? -1, status: "succeeded" },
+      where: { node_id: id, status: "succeeded" },
       select: { id: true },
     });
     if (!ok) {
@@ -168,6 +170,18 @@ export async function findUnreadyUpstreamRefs(
     }
   }
   return unready;
+}
+
+/** 预检报错文案：节点名 + 短 ID（同名节点可区分），提示先运行上游或改用运行下游 */
+export function unreadyUpstreamMessage(
+  unready: { id: string; title: string }[]
+): { zh: string; en: string } {
+  const zhNames = unready.map((u) => `${u.title}(${u.id.slice(0, 6)})`).join("、");
+  const enNames = unready.map((u) => `${u.title}(${u.id.slice(0, 6)})`).join(", ");
+  return {
+    zh: `上游节点「${zhNames}」还没有成功生成过内容，请先运行该上游节点，或改用「运行下游」`,
+    en: `Upstream node(s) "${enNames}" have never generated output successfully. Run them first, or use "Run downstream" instead`,
+  };
 }
 
 export function planToEstimateDTO(plan: CanvasPlan): EstimateDTO {
