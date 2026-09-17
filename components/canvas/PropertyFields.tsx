@@ -31,6 +31,7 @@ interface PropertyFieldsProps {
   type: CanvasNodeType;
   config: CanvasNodeConfig;
   previewUrl?: string;
+  hasVideoFirstFrame?: boolean;
   onPatch: (patch: Partial<CanvasNodeConfig>) => void;
   onDiscrete: (patch: Partial<CanvasNodeConfig>) => void;
   onBeginEdit: () => void;
@@ -84,17 +85,23 @@ function ParamEnumField({
   options,
   onChange,
   className,
+  disabled,
 }: {
   label: string;
   value: string;
   options: { value: string; label: string }[];
   onChange: (value: string) => void;
   className?: string;
+  disabled?: boolean;
 }) {
   return (
     <div className={cn("min-w-0", className)}>
       <ParamLabel>{label}</ParamLabel>
-      <ParamSelect value={value} onChange={(event) => onChange(event.target.value)}>
+      <ParamSelect
+        value={value}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+      >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -113,6 +120,7 @@ export function PropertyFields({
   type,
   config,
   previewUrl,
+  hasVideoFirstFrame = false,
   onPatch,
   onDiscrete,
   onBeginEdit,
@@ -216,11 +224,12 @@ export function PropertyFields({
           <ParamEnumField
             label={labels.videoMode}
             className="w-[72px]"
-            value={config.videoMode || "text"}
+            value={hasVideoFirstFrame ? "image" : config.videoMode || "text"}
             options={[
               { value: "text", label: labels.videoModeText },
               { value: "image", label: labels.videoModeImage },
             ]}
+            disabled={hasVideoFirstFrame}
             onChange={(v) => onDiscrete({ videoMode: v as "text" | "image" })}
           />
           <ParamEnumField

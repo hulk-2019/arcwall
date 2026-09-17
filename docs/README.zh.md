@@ -129,6 +129,10 @@ OSS_HOST=
 ARK_API_BASE_URL=
 ARK_API_KEY=
 
+# 302.ai 代理（图片与 Seedance 视频）
+PROXY_302AI_BASE_URL=https://api.302.ai
+PROXY_302AI_API_KEY=
+
 # 豆包语音 TTS（与 ARK_API_KEY 分开配置）
 DOUBAO_SPEECH_API_KEY=
 # 可选，默认 seed-tts-1.0

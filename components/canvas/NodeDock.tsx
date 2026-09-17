@@ -255,6 +255,10 @@ export function NodeDock({ node, onRunNode, onRunDownstream, runDisabled }: Node
           type={node.type}
           config={node.config}
           previewUrl={node.output?.urls?.[0]}
+          hasVideoFirstFrame={
+            node.type === "video" &&
+            references.some(({ edge }) => edge.targetPort === "first_frame")
+          }
           labels={labels}
           onBeginEdit={beginEdit}
           onPatch={(patch: Partial<CanvasNodeConfig>) =>

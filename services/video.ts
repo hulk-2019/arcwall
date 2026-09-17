@@ -1,14 +1,14 @@
 import axios from "axios";
 
 /**
- * 豆包 Seedance 视频生成适配器（火山引擎 Ark 异步任务协议）。
+ * 豆包 Seedance 视频生成适配器（302.ai 转发火山方舟异步任务协议）。
  * 遵循技术方案 §八点四：把供应商任务收敛为 submit / status / cancel 三个动作。
  * 轮询节奏由平台 poller 控制（分层退避），不在此处阻塞等待。
  *
- * 原生 Ark 任务 API：
- *   创建：POST {ARK_API_BASE_URL}/contents/generations/tasks
- *   查询：GET  {ARK_API_BASE_URL}/contents/generations/tasks/{task_id}
- *   取消：DELETE {ARK_API_BASE_URL}/contents/generations/tasks/{task_id}
+ * 302.ai Seedance API：
+ *   创建：POST {PROXY_302AI_BASE_URL}/volcengine/api/v3/contents/generations/tasks
+ *   查询：GET  {PROXY_302AI_BASE_URL}/volcengine/api/v3/contents/generations/tasks/{task_id}
+ *   取消：DELETE 同一任务地址（供应商未公开文档，best-effort）
  */
 
 export type VideoTaskStatus =
@@ -43,14 +43,22 @@ export interface VideoTaskResult {
 }
 
 function apiBase(): string {
-  const base = (process.env.ARK_API_BASE_URL || "").replace(/\/+$/, "");
-  return `${base}/contents/generations/tasks`;
+  const base = (process.env.PROXY_302AI_BASE_URL || "https://api.302.ai")
+    .trim()
+    .replace(/^["']+/, "")
+    .replace(/["';\s]+$/, "")
+    .replace(/\/+$/, "");
+  return `${base}/volcengine/api/v3/contents/generations/tasks`;
 }
 
 function authHeaders() {
+  const key = (process.env.PROXY_302AI_API_KEY || "").trim();
+  if (!key) {
+    throw new Error("未配置 302.ai 代理（PROXY_302AI_API_KEY）");
+  }
   return {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${process.env.ARK_API_KEY || ""}`,
+    Authorization: `Bearer ${key}`,
   };
 }
 
@@ -108,7 +116,7 @@ export async function createVideoTask(
       const detail =
         typeof response.data === "string" ? response.data : JSON.stringify(response.data);
       throw new Error(
-        `Ark 视频任务创建失败（HTTP ${response.status}）：${detail || "无响应详情"}`
+        `302.ai 视频任务创建失败（HTTP ${response.status}）：${detail || "无响应详情"}`
       );
     }
     throw error;

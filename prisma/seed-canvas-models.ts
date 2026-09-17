@@ -20,7 +20,7 @@ const MODELS: {
   { key: "gpt-image-2", type: "image", label_zh: "GPT-Image-2", label_en: "GPT-Image-2" },
   { key: "gemini-3.1-flash-image-preview", type: "image", label_zh: "Nano Banana 2", label_en: "Nano Banana 2" },
   { key: "gemini-3-pro-image-preview", type: "image", label_zh: "Nano Banana Pro", label_en: "Nano Banana Pro" },
-  // 视频：Ark Seedance 系列
+  // 视频：302.ai 代理 Seedance 系列
   { key: "doubao-seedance-2-0-fast-260128", type: "video", label_zh: "Seedance 2.0 Fast", label_en: "Seedance 2.0 Fast" },
   { key: "doubao-seedance-2-0-260128", type: "video", label_zh: "Seedance 2.0", label_en: "Seedance 2.0" },
   { key: "doubao-seedance-1-0-pro-250528", type: "video", label_zh: "Seedance 1.0 Pro", label_en: "Seedance 1.0 Pro" },

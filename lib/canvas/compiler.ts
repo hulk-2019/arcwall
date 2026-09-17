@@ -67,19 +67,22 @@ export function compileInputs(
       case "reference_images":
         if (output.kind === "image") {
           const images = output.storageKeys || output.urls || [];
-          referenceImages.push(...images);
+          if (images.length > 0) referenceImages.push(...images);
+          else missingNodeIds.push(edge.sourceNodeId);
         }
         break;
       case "first_frame":
         if (output.kind === "image") {
           const first = (output.storageKeys || output.urls || [])[0];
           if (first && !firstFrame) firstFrame = first;
+          else if (!first) missingNodeIds.push(edge.sourceNodeId);
         }
         break;
       case "reference_audio":
         if (output.kind === "audio") {
           const audios = output.storageKeys || output.urls || [];
-          referenceAudios.push(...audios);
+          if (audios.length > 0) referenceAudios.push(...audios);
+          else missingNodeIds.push(edge.sourceNodeId);
         }
         break;
     }
@@ -175,13 +178,7 @@ export function buildVideoPrompt(
   config: CanvasNodeConfig,
   compiled: CompiledInputs
 ): string {
-  const storyboardText = compiled.storyboard
-    ? storyboardToMotionText(compiled.storyboard)
-    : "";
-  return mergePrompt(
-    [...compiled.textChunks, storyboardText],
-    config.prompt
-  );
+  return mergePrompt(compiled.textChunks, config.prompt);
 }
 
 /**

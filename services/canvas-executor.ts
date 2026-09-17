@@ -293,7 +293,7 @@ async function executeStoryboard(
   config: CanvasNodeConfig,
   compiled: ReturnType<typeof compileInputs>
 ): Promise<StepExecutionResult> {
-  const brief = config.brief?.trim() || compiled.textChunks.join("\n").trim();
+  const brief = mergePrompt(compiled.textChunks, config.brief).trim();
   if (!brief) {
     throw new NormalizedStepError("INPUT_NOT_READY", "缺少创意简报");
   }
@@ -409,7 +409,8 @@ async function executeVideoSubmit(
   const ratio = config.aspectRatio || "16:9";
 
   const firstFrame = compiled.firstFrame;
-  const mode = config.videoMode || (firstFrame ? "image" : "text");
+  // 首帧连线代表图生视频：图片与 prompt 必须一起提交，不能被历史/default text 配置覆盖。
+  const mode = firstFrame ? "image" : config.videoMode || "text";
   let firstFrameUrl: string | undefined;
   if (mode === "image") {
     if (!firstFrame) {
@@ -429,7 +430,7 @@ async function executeVideoSubmit(
   const job = await prisma.provider_jobs.create({
     data: {
       step_run_id: stepRunId,
-      provider: "ark",
+      provider: "302ai",
       status: "submitting",
       next_poll_at: new Date(Date.now() + 60_000),
     },
@@ -461,7 +462,7 @@ async function executeVideoSubmit(
     return {
       output: { kind: "video", storageKeys: [], meta: { prompt, model, duration, resolution } },
       cost: 0,
-      asyncJob: { provider: "ark", externalId: task.providerTaskId },
+      asyncJob: { provider: "302ai", externalId: task.providerTaskId },
     };
   } catch (e) {
     await prisma.provider_jobs.update({

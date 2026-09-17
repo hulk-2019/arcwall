@@ -12,7 +12,7 @@ VALUES
   ('canvas_model', 'gpt-image-2',                    'image', 'GPT-Image-2',         'GPT-Image-2',         4,  true, NOW(), NOW()),
   ('canvas_model', 'gemini-3.1-flash-image-preview', 'image', 'Nano Banana 2',       'Nano Banana 2',       5,  true, NOW(), NOW()),
   ('canvas_model', 'gemini-3-pro-image-preview',     'image', 'Nano Banana Pro',     'Nano Banana Pro',     6,  true, NOW(), NOW()),
-  -- 视频：Ark Seedance 系列
+  -- 视频：302.ai 代理 Seedance 系列
   ('canvas_model', 'doubao-seedance-2-0-fast-260128',  'video', 'Seedance 2.0 Fast', 'Seedance 2.0 Fast', 7,  true, NOW(), NOW()),
   ('canvas_model', 'doubao-seedance-2-0-260128',       'video', 'Seedance 2.0',      'Seedance 2.0',      8,  true, NOW(), NOW()),
   ('canvas_model', 'doubao-seedance-1-0-pro-250528',   'video', 'Seedance 1.0 Pro',  'Seedance 1.0 Pro',  9,  true, NOW(), NOW()),

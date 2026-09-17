@@ -188,6 +188,8 @@ config_json 使用 JSON Schema 版本化。历史节点版本保留原 schema_ve
 
 3.  校验端口类型、必填输入、模型能力、素材权限、循环依赖和预算。
 
+    当前实现按目标端口编译引用：文本与分镜进入 `prompt`/`brief`，图片进入 `reference_images` 或 `first_frame`，音频进入 `reference_audio`。引用文本与节点自身提示词按“上游在前、自身配置在后”的顺序合并；分镜转为运动描述后只注入一次。已建立媒体引用连线但上游没有有效 `storageKey` 或 URL 时，按 `INPUT_NOT_READY` 拒绝执行，不允许静默退化为无引用生成。
+
 4.  对目标子图执行拓扑排序，并计算每个步骤的 input_hash 与缓存状态。
 
 5.  创建 execution、step_runs、成本报价和预扣流水，在同一事务内提交。
@@ -219,6 +221,8 @@ config_json 使用 JSON Schema 版本化。历史节点版本保留原 schema_ve
 
 - 取消和完成采用比较并交换。若供应商已成功，平台保留结果并按供应商真实账单结算。
 
+- 用户请求取消时，execution 先进入 `CANCEL_REQUESTED`，仍在运行的 step_run 收敛为 `CANCELLED`；后到达的供应商完成或失败回调不得覆盖已取消状态。存在 external_id 的异步任务同时执行供应商侧 best-effort 取消。
+
 ## 八 模型能力注册表与适配器
 
 ### 八点一 能力注册表
@@ -234,6 +238,8 @@ config_json 使用 JSON Schema 版本化。历史节点版本保留原 schema_ve
 | price_rule | 固定、按秒、按分辨率或令牌 | 报价与结算 |
 | region_policy | 允许区域和数据路径 | 地域路由与合规 |
 | lifecycle | preview、active、deprecated、disabled | 灰度、下线和历史兼容 |
+
+画布属性面板通过 `canvas_model` 字典加载模型，并在 API 查询与客户端会话缓存中都以节点类型 `image`、`video`、`audio` 隔离。视频节点不得展示 Seedream，图像节点不得展示 Seedance，避免把不兼容模型写入节点版本。
 
 ### 八点二 统一适配器接口
 
@@ -256,13 +262,17 @@ OpenAI 官方文档区分从提示词生成图片的 generations 能力、基于
 
 - 使用参考图时按注册表顺序构造输入，保留 asset_id 到供应商字段的映射，便于问题追踪。
 
+- OSS 开启 Referer 白名单时，由 Worker 使用内部签名地址下载参考图，再以内联 Data URL 交给 Seedream，避免供应商直接回源触发 403。
+
+- GPT Image 编辑请求只有一张参考图时使用单文件 `image` 字段；多张参考图才使用数组形式，避免 multipart 参数形态不兼容。
+
 - 局部编辑先验证原图和遮罩尺寸、格式与透明通道；不在浏览器端静默修正。
 
 - 供应商返回修订后的提示词时单独存储，不覆盖用户原始提示词。
 
 ### 八点四 视频适配
 
-火山引擎的公开视频生成文档提供创建、查询、列表以及取消或删除任务等异步接口类别；Seedance 2.0 提示词指南强调多模态输入和镜头描述。平台应把供应商任务收敛为 submit、status、cancel 三个核心动作，并把回调作为加速通道而不是唯一事实来源。[4][5]
+火山引擎的公开视频生成文档提供创建、查询、列表以及取消或删除任务等异步接口类别；Seedance 2.0 提示词指南强调多模态输入和镜头描述。当前实现通过 302.ai 转发 Seedance 异步任务，使用 `PROXY_302AI_BASE_URL` 与独立的 `PROXY_302AI_API_KEY`，并把供应商任务收敛为 submit、status、cancel 三个核心动作。[4][5]
 
 - 创建任务后立即保存 external_id，再开始轮询；轮询频率按运行时长逐步降低。
 
@@ -271,6 +281,16 @@ OpenAI 官方文档区分从提示词生成图片的 generations 能力、基于
 - 供应商成功状态只表示可取结果。平台必须完成下载、校验、转存和输出审核后才标记 SUCCEEDED。
 
 - 首尾帧、多图、参考视频和参考音频仅由能力注册表开放，避免无效字段透传。
+
+- 视频节点连接 `first_frame` 后，无论历史 `videoMode` 是否仍为 `text`，均按图生视频执行：请求同时携带文本 prompt 与 `role=first_frame` 的图片。属性面板同步显示并锁定“图生视”，断开首帧引用后恢复使用节点配置。
+
+- 首帧来自私有 OSS 时，Worker 先下载并转为 Data URL，再提交 302.ai，避免 OSS 防盗链阻止供应商回源。Seedance 2.0 Fast 配置为 1080p 时在适配层降为其支持的 720p。
+
+- `provider_jobs.provider` 记录为 `302ai`；供应商状态规范化为 queued、running、succeeded、failed、cancelled、expired。查询失败或结果转存失败时按退避时间重试，超过平台期限后归一为 `PROVIDER_TIMEOUT`。
+
+### 八点五 音频适配
+
+Doubao Seed TTS 使用火山语音原生单向流式接口，不复用 Ark/OpenAI 兼容密钥。Worker 使用 `DOUBAO_SPEECH_API_KEY` 与 `DOUBAO_SPEECH_RESOURCE_ID`，解析 NDJSON 音频分片、拼接后转存 OSS；上游文本与节点自身文案按顺序合并后送入 TTS。
 
 ## 九 API 设计
 
@@ -357,6 +377,8 @@ workspaces/{workspace_id}/assets/{asset_id}/variants/preview-720p.mp4
 - 数据库和消息中只保存 storage_key，不保存永久公开 URL。
 
 - 下载通过短期签名 URL 或鉴权代理；分享链接绑定项目权限和有效期。
+
+- 画布快照与执行结果查询根据 `storage_key` 即时生成签名 URL；客户端读取快照时使用 `cache: no-store`，避免浏览器或框架复用已经过期的签名地址。持久化输出不得写入临时签名 URL。
 
 - 删除采用软删除、引用检查和延迟清理。对象清理任务必须确认无活动引用。
 

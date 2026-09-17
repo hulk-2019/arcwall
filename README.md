@@ -129,6 +129,10 @@ OSS_HOST=
 ARK_API_BASE_URL=
 ARK_API_KEY=
 
+# 302.ai proxy (image and Seedance video)
+PROXY_302AI_BASE_URL=https://api.302.ai
+PROXY_302AI_API_KEY=
+
 # Doubao Speech TTS (separate from ARK_API_KEY)
 DOUBAO_SPEECH_API_KEY=
 # Optional; defaults to seed-tts-1.0

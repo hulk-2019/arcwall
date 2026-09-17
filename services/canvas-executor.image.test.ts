@@ -140,8 +140,8 @@ describe("Seedream image editing", () => {
 });
 
 describe("Seedance image-to-video", () => {
-  it("inlines the first frame and limits the Fast model to 720p", async () => {
-    await executeNodeStep({
+  it("combines a connected first frame with the prompt even when the saved mode is text", async () => {
+    const result = await executeNodeStep({
       id: 89,
       node_id: "video-node",
       execution_id: 22,
@@ -164,7 +164,7 @@ describe("Seedance image-to-video", () => {
               config: {
                 model: "doubao-seedance-2-0-fast-260128",
                 prompt: "animate the scene",
-                videoMode: "image",
+                videoMode: "text",
                 resolution: "1080p",
                 aspectRatio: "16:9",
                 duration: 5,
@@ -192,5 +192,9 @@ describe("Seedance image-to-video", () => {
         resolution: "720p",
       })
     );
+    expect(mocks.providerJobCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({ provider: "302ai" }),
+    });
+    expect(result.asyncJob?.provider).toBe("302ai");
   });
 });
