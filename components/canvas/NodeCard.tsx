@@ -1,9 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { Expand, Loader2, Trash2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useCanvasStore } from "@/store/useCanvasStore";
 import type { CanvasNodeDTO, CanvasNodeOutput } from "@/types/canvas";
@@ -39,7 +38,6 @@ export function NodeCard({
 }: NodeCardProps) {
   const moveNode = useCanvasStore((s) => s.moveNode);
   const select = useCanvasStore((s) => s.select);
-  const deleteNode = useCanvasStore((s) => s.deleteNode);
   const connectNodes = useCanvasStore((s) => s.connectNodes);
   const live = useCanvasStore((s) => s.liveExecution);
   const t = useTranslations("canvas");
@@ -125,6 +123,7 @@ export function NodeCard({
     >
       <span className={cn("absolute inset-y-0 left-0 w-1", NODE_TYPE_ACCENT[node.type])} />
 
+      {/* 头部：左侧名称，右侧状态（生成中显示 loading） */}
       <div className="flex items-center gap-2 px-3 pb-1 pt-2.5 pl-4">
         <span
           className={cn(
@@ -134,31 +133,12 @@ export function NodeCard({
         >
           <NodeTypeIcon type={node.type} className="h-3.5 w-3.5" />
         </span>
-        <h3 className="flex-1 truncate text-sm font-medium">
+        <h3 className="min-w-0 flex-1 truncate text-sm font-medium">
           {node.config.title || t(`nodeTypes.${node.type}`)}
         </h3>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          data-node-action="delete"
-          className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-          title={t("deleteNode")}
-          aria-label={t("deleteNode")}
-          onPointerDown={(event) => {
-            event.stopPropagation();
-            event.preventDefault();
-            deleteNode(node.id);
-          }}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-
-      <div className="flex items-center gap-1 px-4">
         <span
           className={cn(
-            "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium",
+            "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-medium",
             STATUS_BADGE[status] || STATUS_BADGE.idle
           )}
         >
@@ -190,7 +170,6 @@ export function NodeCard({
 
 function NodePreview({ node, output }: { node: CanvasNodeDTO; output?: CanvasNodeOutput }) {
   const t = useTranslations("canvas");
-  const openMediaPreview = useCanvasStore((s) => s.openMediaPreview);
 
   if (node.type === "text") {
     return (
@@ -209,9 +188,6 @@ function NodePreview({ node, output }: { node: CanvasNodeDTO; output?: CanvasNod
         <UploadMedia
           kind={mediaType === "video" ? "video" : mediaType === "audio" ? "audio" : "image"}
           url={url}
-          urls={output?.urls ?? [url]}
-          title={node.config.fileName}
-          openMediaPreview={openMediaPreview}
         />
         <p className="absolute inset-x-0 bottom-0 truncate bg-background/80 px-2 py-1 text-[10px] text-foreground/80">
           {node.config.fileName}
@@ -246,36 +222,12 @@ function NodePreview({ node, output }: { node: CanvasNodeDTO; output?: CanvasNod
     }
     // 单图：媒体区比例即画幅，铺满无留白；多图（历史数据）：网格铺满
     if (urls.length === 1) {
-      return (
-        <button
-          type="button"
-          className="block h-full w-full"
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.stopPropagation();
-            openMediaPreview({ kind: "image", urls, title: node.config.title });
-          }}
-        >
-          <img src={urls[0]} alt="" className="h-full w-full object-cover" loading="lazy" />
-        </button>
-      );
+      return <img src={urls[0]} alt="" className="h-full w-full object-cover" loading="lazy" />;
     }
     return (
       <div className="grid h-full grid-cols-2 grid-rows-2 gap-1 overflow-hidden">
-        {urls.slice(0, 4).map((url, index) => (
-          <button
-            key={url}
-            type="button"
-            className="group relative overflow-hidden bg-muted"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              openMediaPreview({ kind: "image", urls: urls.slice(0, 4), index, title: node.config.title });
-            }}
-          >
-            <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
-            <Expand className="absolute right-1 top-1 h-3.5 w-3.5 rounded bg-background/70 p-0.5 text-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-          </button>
+        {urls.slice(0, 4).map((url) => (
+          <img key={url} src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
         ))}
       </div>
     );
@@ -299,60 +251,26 @@ function NodePreview({ node, output }: { node: CanvasNodeDTO; output?: CanvasNod
     return <RatioPlaceholder>{node.config.prompt || t("noPreview")}</RatioPlaceholder>;
   }
   return (
-    <div className="relative h-full">
-      <video
-        src={url}
-        controls
-        preload="metadata"
-        className="h-full w-full bg-black object-cover"
-        onPointerDown={(e) => e.stopPropagation()}
-      />
-      <button
-        type="button"
-        data-node-action="expand"
-        className="absolute right-1.5 top-1.5 rounded bg-background/80 p-1 text-foreground/80 opacity-80 hover:opacity-100"
-        title={t("preview")}
-        aria-label={t("preview")}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => {
-          e.stopPropagation();
-          openMediaPreview({ kind: "video", urls: [url], title: node.config.title });
-        }}
-      >
-        <Expand className="h-3.5 w-3.5" />
-      </button>
-    </div>
+    <video
+      src={url}
+      controls
+      preload="metadata"
+      className="h-full w-full bg-black object-cover"
+    />
   );
 }
 
 function UploadMedia({
   kind,
   url,
-  urls,
-  title,
-  openMediaPreview,
 }: {
   kind: "image" | "video" | "audio";
   url: string;
-  urls: string[];
-  title?: string;
-  openMediaPreview: (preview: {
-    kind: "image" | "video" | "audio";
-    urls: string[];
-    index?: number;
-    title?: string;
-  }) => void;
 }) {
   if (kind === "audio") {
     return (
       <div className="flex h-full items-end pb-4">
-        <audio
-          src={url}
-          controls
-          preload="none"
-          className="w-full"
-          onPointerDown={(e) => e.stopPropagation()}
-        />
+        <audio src={url} controls preload="none" className="w-full" />
       </div>
     );
   }
@@ -363,21 +281,12 @@ function UploadMedia({
         controls
         preload="metadata"
         className="max-h-full max-w-full rounded-md bg-black object-contain"
-        onPointerDown={(e) => e.stopPropagation()}
       />
     );
   }
   return (
-    <button
-      type="button"
-      className="group relative block h-full w-full overflow-hidden rounded-md bg-muted"
-      onPointerDown={(e) => e.stopPropagation()}
-      onClick={(e) => {
-        e.stopPropagation();
-        openMediaPreview({ kind: "image", urls, title });
-      }}
-    >
+    <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-md bg-muted">
       <img src={url} alt="" className="max-h-full max-w-full object-contain" loading="lazy" />
-    </button>
+    </div>
   );
 }

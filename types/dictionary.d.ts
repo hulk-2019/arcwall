@@ -2,6 +2,7 @@ export interface Dictionary {
   id?: number;
   category: string;
   key: string;
+  type?: string;
   label_en?: string;
   label_zh?: string;
   sort_order: number;
@@ -10,4 +11,4 @@ export interface Dictionary {
   updated_at?: string;
 }
 
-export type DictionaryCategory = 'model' | 'aspect_ratio';
+export type DictionaryCategory = 'model' | 'aspect_ratio' | 'canvas_model';

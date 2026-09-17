@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
 import { useCanvasStore } from "@/store/useCanvasStore";
 import { EdgeLayer } from "./EdgeLayer";
+import { NodeActionToolbar } from "./NodeActionToolbar";
 import { NodeCard } from "./NodeCard";
 import { NodeDock } from "./NodeDock";
 import { NodePorts } from "./NodePorts";
@@ -76,7 +77,11 @@ export function CanvasStage({ onRunNode, onRunDownstream, runDisabled }: CanvasS
 
   const handlePointerDown = (event: React.PointerEvent) => {
     if (event.button !== 0 || isConnecting()) return;
-    if ((event.target as HTMLElement).closest?.("[data-node-id],[data-node-dock],[data-canvas-port]"))
+    if (
+      (event.target as HTMLElement).closest?.(
+        "[data-node-id],[data-node-dock],[data-node-toolbar],[data-canvas-port]"
+      )
+    )
       return;
     // 点击空白处退出引用拾取模式
     if (useCanvasStore.getState().connectFrom) setConnectFrom(null);
@@ -188,6 +193,10 @@ export function CanvasStage({ onRunNode, onRunDownstream, runDisabled }: CanvasS
           onMove={onMove}
           onUp={onUp}
         />
+        {(() => {
+          const selected = nodes.find((n) => n.id === selectedId);
+          return selected ? <NodeActionToolbar node={selected} /> : null;
+        })()}
         {(() => {
           const selected = nodes.find((n) => n.id === selectedId);
           return selected ? (

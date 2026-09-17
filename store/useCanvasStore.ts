@@ -66,6 +66,7 @@ interface CanvasState {
   editNodeConfig: (id: string, config: CanvasNodeConfig) => void;
   beginEdit: () => void;
   deleteNode: (id: string) => void;
+  duplicateNode: (id: string) => void;
   connectNodes: (sourceId: string, targetId: string) => boolean;
   deleteEdge: (id: string) => void;
   select: (id: string | null) => void;
@@ -336,6 +337,23 @@ export const useCanvasStore = create<Store>((set, get) => {
         connectFrom: get().connectFrom === id ? null : get().connectFrom,
       });
       recordOp({ op: "node.delete", nodeId: id });
+    },
+
+    duplicateNode: (id) => {
+      const src = get().nodes.find((n) => n.id === id);
+      if (!src) return;
+      pushUndo();
+      const copy: CanvasNodeDTO = {
+        ...JSON.parse(JSON.stringify(src)),
+        id: crypto.randomUUID(),
+        x: src.x + 32,
+        y: src.y + 32,
+        status: "idle",
+        output: undefined,
+        error: undefined,
+      };
+      set({ nodes: [...get().nodes, copy], selectedId: copy.id });
+      recordOp({ op: "node.upsert", nodeId: copy.id, type: copy.type, x: copy.x, y: copy.y, config: copy.config });
     },
 
     connectNodes: (sourceId, targetId) => {

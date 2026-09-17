@@ -134,7 +134,8 @@ model user_balance {
 model dictionaries {
   id          Int       @id @default(autoincrement())
   category    String    @db.VarChar(50)
-  key         String    @db.VarChar(50)
+  key         String    @db.VarChar(100)
+  type        String    @default("") @db.VarChar(20)
   label_en    String?   @db.VarChar(100)
   label_zh    String?   @db.VarChar(100)
   sort_order  Int       @default(0)

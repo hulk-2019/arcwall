@@ -25,7 +25,15 @@ import {
   AUDIO_VOICE_MALE_DEFAULT,
   AUDIO_VOICE_FEMALE_DEFAULT,
   estimateNodeCost,
+  imageModelProvider,
 } from "@/lib/canvas/registry";
+import {
+  generateGptImage,
+  generateGeminiNativeImage,
+  generateGeminiChatImage,
+  gptImageSize,
+  isProxyConfigured,
+} from "@/services/image-proxy";
 import {
   PROVIDER_JOB_TIMEOUT_MS,
   enqueueReadySteps,
@@ -166,33 +174,74 @@ async function executeImage(
   }
 
   const model = config.model || IMAGE_MODEL_DEFAULT;
-  const client = getDoubaoAIClient();
   const aspectRatio = config.aspectRatio || "16:9";
-
-  const params: any = {
-    model,
-    prompt,
-    size: ASPECT_SIZE_MAP[aspectRatio] || "2048x2048",
-    response_format: "url",
-    watermark: false,
-    sequential_image_generation: "disabled",
-  };
 
   const referenceKeys = [
     ...compiled.referenceImages,
     ...(Array.isArray(config.referenceImages) ? config.referenceImages : []),
   ];
-  if (referenceKeys.length > 0) {
-    const urls = await Promise.all(referenceKeys.map(toHttpUrl));
-    params.image = urls.length === 1 ? urls[0] : urls;
+  const referenceUrls =
+    referenceKeys.length > 0 ? await Promise.all(referenceKeys.map(toHttpUrl)) : [];
+
+  // 按模型分发供应商：Ark Seedream / 302.ai 代理（GPT-Image、Nano Banana 2/Pro）
+  let rawImages: string[];
+  try {
+    const provider = imageModelProvider(model);
+    if (provider === "ark") {
+      const client = getDoubaoAIClient();
+      const params: any = {
+        model,
+        prompt,
+        size: ASPECT_SIZE_MAP[aspectRatio] || "2048x2048",
+        response_format: "url",
+        watermark: false,
+        sequential_image_generation: "disabled",
+        n: 1,
+      };
+      if (referenceUrls.length > 0) {
+        params.image = referenceUrls.length === 1 ? referenceUrls[0] : referenceUrls;
+      }
+      const res = await client.images.generate(params);
+      rawImages = (res?.data || [])
+        .map((d: any) => d?.url || (d?.b64_json ? `data:image/png;base64,${d.b64_json}` : null))
+        .filter(Boolean);
+    } else {
+      if (!isProxyConfigured()) {
+        throw new NormalizedStepError(
+          "PROVIDER_REJECTED",
+          "未配置 302.ai 代理（PROXY_302AI_API_KEY），无法使用该模型"
+        );
+      }
+      if (provider === "gpt-image") {
+        rawImages = await generateGptImage({
+          model,
+          prompt,
+          size: gptImageSize(aspectRatio, config.resolution === "2k" ? "2k" : "1k"),
+          referenceUrls,
+        });
+      } else if (provider === "gemini-native") {
+        rawImages = await generateGeminiNativeImage({
+          model,
+          prompt,
+          aspectRatio,
+          referenceUrls,
+        });
+      } else {
+        // Nano Banana Pro 无画幅参数，比例写入提示词
+        rawImages = await generateGeminiChatImage({
+          model,
+          prompt: `${prompt}\n\n（请生成 ${aspectRatio} 画幅的图片）`,
+          referenceUrls,
+        });
+      }
+    }
+  } catch (e) {
+    if (e instanceof NormalizedStepError) throw e;
+    throw new NormalizedStepError(
+      "PROVIDER_REJECTED",
+      e instanceof Error ? e.message : "图片生成失败"
+    );
   }
-
-  // 每个图片节点固定生成 1 张素材（节点即素材的一对一产出）
-  const res = await client.images.generate({ ...params, n: 1 });
-
-  const rawImages: string[] = (res?.data || [])
-    .map((d: any) => d?.url || (d?.b64_json ? `data:image/png;base64,${d.b64_json}` : null))
-    .filter(Boolean);
 
   if (rawImages.length === 0) {
     throw new NormalizedStepError("PROVIDER_REJECTED", "图像模型未返回结果");

@@ -61,6 +61,7 @@ export interface CanvasNodeConfig {
   // video 节点
   videoMode?: "text" | "image";
   duration?: number;
+  // video: 480p/720p/1080p；image（GPT-Image 系列）: 1k/2k
   resolution?: string;
   // audio 节点（TTS / 音乐生成）
   voice?: string;

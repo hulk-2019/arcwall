@@ -628,6 +628,7 @@
     "vocalAuto": "Auto",
     "vocalMale": "Male",
     "vocalFemale": "Female",
-    "runDownstreamNode": "Run downstream"
+    "runDownstreamNode": "Run downstream",
+    "duplicateNode": "Duplicate node"
   }
 }

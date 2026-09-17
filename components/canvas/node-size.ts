@@ -6,7 +6,7 @@ export const NODE_WIDTH = 248;
  * 节点头部（标题行 + 状态徽标行 + 间距 + 边框）占用的固定高度。
  * NodeCard 头部布局变化时需同步此常量。
  */
-const NODE_CHROME_HEIGHT = 72;
+const NODE_CHROME_HEIGHT = 52;
 
 const COMPACT_HEIGHTS: Partial<Record<CanvasNodeType, number>> = {
   text: 168,

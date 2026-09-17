@@ -5,16 +5,18 @@ import { prisma } from "@/lib/prisma";
  * Get dictionaries by category or multiple categories
  */
 export async function getDictionariesByCategory(
-  category: DictionaryCategory | DictionaryCategory[]
+  category: DictionaryCategory | DictionaryCategory[],
+  type?: string
 ): Promise<Dictionary[]> {
   const categories = Array.isArray(category) ? category : [category];
-  
+
   const dictionaries = await prisma.dictionaries.findMany({
     where: {
       category: {
         in: categories
       },
       is_active: true,
+      ...(type ? { type } : {}),
     },
     orderBy: {
       sort_order: 'asc',
@@ -55,6 +57,7 @@ export function formatDictionary(row: any): Dictionary {
     id: row.id,
     category: row.category,
     key: row.key,
+    type: row.type || undefined,
     label_en: row.label_en || undefined,
     label_zh: row.label_zh || undefined,
     sort_order: row.sort_order,
@@ -78,6 +81,7 @@ export async function upsertDictionary(dictionary: Dictionary): Promise<Dictiona
       },
     },
     update: {
+      type: dictionary.type,
       label_en: dictionary.label_en,
       label_zh: dictionary.label_zh,
       sort_order: dictionary.sort_order,
@@ -87,6 +91,7 @@ export async function upsertDictionary(dictionary: Dictionary): Promise<Dictiona
     create: {
       category: dictionary.category,
       key: dictionary.key,
+      type: dictionary.type,
       label_en: dictionary.label_en,
       label_zh: dictionary.label_zh,
       sort_order: dictionary.sort_order,

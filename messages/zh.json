@@ -628,6 +628,7 @@
     "vocalAuto": "自动",
     "vocalMale": "男声",
     "vocalFemale": "女声",
-    "runDownstreamNode": "运行下游"
+    "runDownstreamNode": "运行下游",
+    "duplicateNode": "复制节点"
   }
 }

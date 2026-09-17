@@ -59,9 +59,41 @@ function parseModelList(env: string | undefined, fallback: string[]): string[] {
   return parsed.length > 0 ? parsed : fallback;
 }
 
+// ---------------------------------------------------------------------------
+// 302.ai 代理模型（OpenAI 兼容 / Gemini 原生两种协议）
+// ---------------------------------------------------------------------------
+
+/** GPT-Image 系列：OpenAI 兼容 /v1/images/generations，支持 1K/2K（16 倍数尺寸） */
+export const GPT_IMAGE_MODEL = "gpt-image-2";
+/** Nano Banana 2：Gemini 原生 contents 格式，aspectRatio 控制画幅 */
+export const GEMINI_NATIVE_IMAGE_MODEL = "gemini-3.1-flash-image-preview";
+/** Nano Banana Pro：OpenAI 兼容 chat/completions，图片以 markdown 链接返回 */
+export const GEMINI_CHAT_IMAGE_MODEL = "gemini-3-pro-image-preview";
+
+export type ImageModelProvider = "ark" | "gpt-image" | "gemini-native" | "gemini-chat";
+
+export function imageModelProvider(model: string): ImageModelProvider {
+  if (model === GPT_IMAGE_MODEL) return "gpt-image";
+  if (model === GEMINI_NATIVE_IMAGE_MODEL) return "gemini-native";
+  if (model === GEMINI_CHAT_IMAGE_MODEL) return "gemini-chat";
+  return "ark";
+}
+
+/** 是否支持分辨率（1K/2K）选择 —— 当前仅 GPT-Image 系列 */
+export function modelSupportsResolution(model: string): boolean {
+  return imageModelProvider(model) === "gpt-image";
+}
+
 export const IMAGE_MODEL_OPTIONS: string[] = parseModelList(
   process.env.CANVAS_IMAGE_MODELS,
-  [IMAGE_MODEL_DEFAULT, "doubao-seedream-4-0-250828", "doubao-seedream-3-0-t2i-250415"]
+  [
+    IMAGE_MODEL_DEFAULT,
+    "doubao-seedream-4-0-250828",
+    "doubao-seedream-3-0-t2i-250415",
+    GPT_IMAGE_MODEL,
+    GEMINI_NATIVE_IMAGE_MODEL,
+    GEMINI_CHAT_IMAGE_MODEL,
+  ]
 );
 
 export const VIDEO_MODEL_OPTIONS: string[] = parseModelList(process.env.CANVAS_VIDEO_MODELS, [
@@ -83,7 +115,7 @@ export const AUDIO_MODEL_OPTIONS: string[] = parseModelList(process.env.CANVAS_A
 const MODEL_POOL: string[] = parseModelList(process.env.CANVAS_MODELS, []);
 
 const MODEL_FILTER_RULES: Partial<Record<CanvasNodeType, RegExp[]>> = {
-  image: [/seedream/i, /t2i/i],
+  image: [/seedream/i, /t2i/i, /gpt-image/i, /gemini-\d.*image/i],
   video: [/seedance/i],
   audio: [/tts/i, /music/i, /seed-audio/i],
 };

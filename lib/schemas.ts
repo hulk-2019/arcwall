@@ -4,8 +4,9 @@ import { z } from "zod";
 
 export const DictionariesSchema = z.object({
   categories: z
-    .array(z.enum(["model", "aspect_ratio"]))
+    .array(z.enum(["model", "aspect_ratio", "canvas_model"]))
     .min(1),
+  type: z.string().optional(),
 });
 
 export const GetWallpapersSchema = z.object({

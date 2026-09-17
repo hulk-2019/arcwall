@@ -16,7 +16,7 @@ import { PropertyFields } from "./PropertyFields";
 import { NODE_WIDTH, nodeHeight } from "./node-size";
 
 const DOCK_GAP = 22;
-const DOCK_WIDTH = 448;
+const DOCK_WIDTH = 520;
 
 interface NodeDockProps {
   node: CanvasNodeDTO;

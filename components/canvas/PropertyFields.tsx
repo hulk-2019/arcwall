@@ -17,7 +17,9 @@ import {
   UPLOAD_SIZE_LIMITS,
   VIDEO_RESOLUTIONS,
   modelOptionsForType,
+  modelSupportsResolution,
 } from "@/lib/canvas/registry";
+import { useModelOptions } from "./hooks/useModelOptions";
 import type { CanvasNodeConfig, CanvasNodeType } from "@/types/canvas";
 import { cn } from "@/lib/utils";
 import { FieldLabel, ParamLabel, ParamSelect } from "./Field";
@@ -75,34 +77,6 @@ function parseVisualLock(value: string) {
   return lock;
 }
 
-/** 横向网格中的单个参数：小标签 + 紧凑下拉 */
-function ParamSelectField({
-  label,
-  value,
-  options,
-  onChange,
-  className,
-}: {
-  label: string;
-  value: string;
-  options: readonly string[];
-  onChange: (value: string) => void;
-  className?: string;
-}) {
-  return (
-    <div className={cn("min-w-0", className)}>
-      <ParamLabel>{label}</ParamLabel>
-      <ParamSelect value={value} onChange={(event) => onChange(event.target.value)}>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </ParamSelect>
-    </div>
-  );
-}
-
 /** 横向网格中的枚举参数：value → 文案映射 */
 function ParamEnumField({
   label,
@@ -147,6 +121,14 @@ export function PropertyFields({
   const t = useTranslations("canvas");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  // 模型选项：字典表优先（canvas_model 分类 + type 列），未加载时回退 registry 内置列表
+  const modelType = type === "video" ? "video" : type === "audio" ? "audio" : "image";
+  const dictModels = useModelOptions(modelType);
+  const modelOptions =
+    dictModels.length > 0
+      ? dictModels
+      : modelOptionsForType(modelType).map((v) => ({ value: v, label: v }));
 
   const handleUpload = async (file: File) => {
     // 客户端校验（与服务端共用 registry 中的白名单与限制）
@@ -193,11 +175,11 @@ export function PropertyFields({
 
       {type === "image" && (
         <div className="mt-2 flex items-end gap-2">
-          <ParamSelectField
+          <ParamEnumField
             label={labels.model}
             className="min-w-0 flex-1"
-            value={config.model || modelOptionsForType("image")[0] || ""}
-            options={modelOptionsForType("image")}
+            value={config.model || modelOptions[0]?.value || ""}
+            options={modelOptions}
             onChange={(v) => onDiscrete({ model: v })}
           />
           <ParamEnumField
@@ -207,16 +189,28 @@ export function PropertyFields({
             options={ASPECT_RATIOS.map((r) => ({ value: r, label: r }))}
             onChange={(v) => onDiscrete({ aspectRatio: v })}
           />
+          {modelSupportsResolution(config.model || modelOptions[0]?.value || "") && (
+            <ParamEnumField
+              label={labels.resolution}
+              className="w-16"
+              value={config.resolution === "2k" ? "2k" : "1k"}
+              options={[
+                { value: "1k", label: "1K" },
+                { value: "2k", label: "2K" },
+              ]}
+              onChange={(v) => onDiscrete({ resolution: v })}
+            />
+          )}
         </div>
       )}
 
       {type === "video" && (
         <div className="mt-2 flex items-end gap-2">
-          <ParamSelectField
+          <ParamEnumField
             label={labels.model}
             className="min-w-0 flex-1"
-            value={config.model || modelOptionsForType("video")[0] || ""}
-            options={modelOptionsForType("video")}
+            value={config.model || modelOptions[0]?.value || ""}
+            options={modelOptions}
             onChange={(v) => onDiscrete({ model: v })}
           />
           <ParamEnumField
@@ -255,11 +249,11 @@ export function PropertyFields({
 
       {type === "audio" && (
         <div className="mt-2 flex items-end gap-2">
-          <ParamSelectField
+          <ParamEnumField
             label={labels.model}
             className="min-w-0 flex-1"
-            value={config.model || modelOptionsForType("audio")[0] || ""}
-            options={modelOptionsForType("audio")}
+            value={config.model || modelOptions[0]?.value || ""}
+            options={modelOptions}
             onChange={(v) => onDiscrete({ model: v })}
           />
           <ParamEnumField
