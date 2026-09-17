@@ -620,6 +620,14 @@
     "preview": "预览",
     "download": "下载",
     "prevMedia": "上一个",
-    "nextMedia": "下一个"
+    "nextMedia": "下一个",
+    "mode": "模式",
+    "vocal": "人声",
+    "modeSong": "歌曲",
+    "modeMusic": "纯音乐",
+    "vocalAuto": "自动",
+    "vocalMale": "男声",
+    "vocalFemale": "女声",
+    "runDownstreamNode": "运行下游"
   }
 }

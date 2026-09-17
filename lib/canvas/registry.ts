@@ -39,7 +39,72 @@ export const AUDIO_MODEL_DEFAULT =
 export const AUDIO_VOICE_DEFAULT =
   process.env.CANVAS_AUDIO_VOICE || "zh_female_cancan_mars_bigtreenlm";
 
+/** 人声偏好 → 音色映射（可通过环境变量覆盖实际音色 ID） */
+export const AUDIO_VOICE_MALE_DEFAULT =
+  process.env.CANVAS_AUDIO_VOICE_MALE || "zh_male_jyunjun_terra_mars_bigtreenlm";
+export const AUDIO_VOICE_FEMALE_DEFAULT =
+  process.env.CANVAS_AUDIO_VOICE_FEMALE || "zh_female_cancan_mars_bigtreenlm";
+
+export const AUDIO_MODES = ["song", "music"] as const;
+export const AUDIO_VOCALS = ["auto", "male", "female"] as const;
+
 export const VIDEO_RESOLUTIONS = ["480p", "720p", "1080p"];
+
+/** 可选模型列表：逗号分隔环境变量可覆盖（依赖账号开通情况，默认含当前默认模型） */
+function parseModelList(env: string | undefined, fallback: string[]): string[] {
+  const parsed = (env || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return parsed.length > 0 ? parsed : fallback;
+}
+
+export const IMAGE_MODEL_OPTIONS: string[] = parseModelList(
+  process.env.CANVAS_IMAGE_MODELS,
+  [IMAGE_MODEL_DEFAULT, "doubao-seedream-4-0-250828", "doubao-seedream-3-0-t2i-250415"]
+);
+
+export const VIDEO_MODEL_OPTIONS: string[] = parseModelList(process.env.CANVAS_VIDEO_MODELS, [
+  VIDEO_MODEL_DEFAULT,
+  "doubao-seedance-2-0-260128",
+  "doubao-seedance-1-0-pro-250528",
+  "doubao-seedance-1-0-lite-t2v-250428",
+]);
+
+export const AUDIO_MODEL_OPTIONS: string[] = parseModelList(process.env.CANVAS_AUDIO_MODELS, [
+  AUDIO_MODEL_DEFAULT,
+  "doubao-seed-tts-1-0-mini",
+]);
+
+/**
+ * 全局模型池（可选）：设置 CANVAS_MODELS 后，各节点类型的可选模型
+ * 从该池中按类型规则过滤（见 MODEL_FILTER_RULES），替代分类型环境变量。
+ */
+const MODEL_POOL: string[] = parseModelList(process.env.CANVAS_MODELS, []);
+
+const MODEL_FILTER_RULES: Partial<Record<CanvasNodeType, RegExp[]>> = {
+  image: [/seedream/i, /t2i/i],
+  video: [/seedance/i],
+  audio: [/tts/i, /music/i, /seed-audio/i],
+};
+
+/** 节点可选模型：全局池按类型过滤；未配置全局池时回退各类型默认列表 */
+export function modelOptionsForType(type: CanvasNodeType): string[] {
+  const defaults: Record<string, string[]> = {
+    image: IMAGE_MODEL_OPTIONS,
+    video: VIDEO_MODEL_OPTIONS,
+    audio: AUDIO_MODEL_OPTIONS,
+  };
+  if (MODEL_POOL.length === 0) return defaults[type] ?? [];
+  const rules = MODEL_FILTER_RULES[type];
+  if (!rules) return [];
+  const filtered = MODEL_POOL.filter((m) => rules.some((r) => r.test(m)));
+  return filtered.length > 0 ? filtered : (defaults[type] ?? []);
+}
+
+/** 音乐生成模型（纯音乐/人声歌曲，需供应商开通；未配置时纯音乐模式会明确失败） */
+export const AUDIO_MUSIC_MODEL =
+  process.env.CANVAS_AUDIO_MUSIC_MODEL || "";
 
 /** 文本节点 AI 润色的单次计费（PRD-NOD-003，独立于画布执行） */
 export const POLISH_TEXT_COST = 1;
@@ -71,7 +136,6 @@ export const NODE_TYPE_DEFS: Record<CanvasNodeType, NodeTypeDef> = {
       prompt: "",
       model: IMAGE_MODEL_DEFAULT,
       aspectRatio: "16:9",
-      count: 1,
       referenceImages: [],
     },
   },
@@ -127,6 +191,8 @@ export const NODE_TYPE_DEFS: Record<CanvasNodeType, NodeTypeDef> = {
       model: AUDIO_MODEL_DEFAULT,
       voice: AUDIO_VOICE_DEFAULT,
       speed: 1,
+      mode: "song",
+      vocal: "auto",
     },
   },
   upload: {
@@ -171,10 +237,6 @@ export function nodeOutputKind(type: CanvasNodeType, config?: CanvasNodeConfig):
 export function estimateNodeCost(type: CanvasNodeType, config?: CanvasNodeConfig): number {
   const def = NODE_TYPE_DEFS[type];
   if (!def.executable) return 0;
-  if (type === "image") {
-    const count = Math.max(1, Math.min(4, Number(config?.count) || 1));
-    return def.baseCost * count;
-  }
   return def.baseCost;
 }
 

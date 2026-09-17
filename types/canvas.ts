@@ -62,9 +62,11 @@ export interface CanvasNodeConfig {
   videoMode?: "text" | "image";
   duration?: number;
   resolution?: string;
-  // audio 节点（TTS）
+  // audio 节点（TTS / 音乐生成）
   voice?: string;
   speed?: number;
+  mode?: "song" | "music"; // 歌曲（人声）/ 纯音乐
+  vocal?: "auto" | "male" | "female"; // 人声偏好（映射到音色）
   // upload 节点
   storageKey?: string; // OSS 对象键
   fileName?: string;

@@ -1,15 +1,23 @@
 "use client";
 
 import { useRef } from "react";
-import { Expand, Loader2, Play, Trash2 } from "lucide-react";
+import { Expand, Loader2, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { NODE_TYPE_DEFS } from "@/lib/canvas/registry";
 import { useCanvasStore } from "@/store/useCanvasStore";
 import type { CanvasNodeDTO, CanvasNodeOutput } from "@/types/canvas";
 import { NODE_TYPE_ACCENT, NODE_TYPE_TONE, NodeTypeIcon, STATUS_BADGE } from "./node-meta";
 import { NODE_WIDTH, nodeHeight } from "./node-size";
+
+/** 未生成时的占位：铺满媒体区（区域高度已按画幅计算），展示提示词 */
+function RatioPlaceholder({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-full w-full items-center justify-center overflow-hidden bg-muted/30 px-3 text-center text-xs text-muted-foreground/70">
+      <span className="line-clamp-3 leading-relaxed">{children}</span>
+    </div>
+  );
+}
 
 interface NodeCardProps {
   node: CanvasNodeDTO;
@@ -19,8 +27,6 @@ interface NodeCardProps {
   /** 引用拾取模式：非空时点击节点 = 建立引用连线 */
   pickMode: boolean;
   isPickSource: boolean;
-  runDisabled: boolean;
-  onRunNode: (nodeId: string) => void;
 }
 
 export function NodeCard({
@@ -30,8 +36,6 @@ export function NodeCard({
   connectTarget,
   pickMode,
   isPickSource,
-  runDisabled,
-  onRunNode,
 }: NodeCardProps) {
   const moveNode = useCanvasStore((s) => s.moveNode);
   const select = useCanvasStore((s) => s.select);
@@ -47,7 +51,6 @@ export function NodeCard({
   const status = live?.statusByNode?.[node.id] ?? node.status;
   const output = live?.outputs?.[node.id] ?? node.output;
   const error = live?.errors?.[node.id] ?? node.error;
-  const executable = NODE_TYPE_DEFS[node.type].executable;
 
   const handlePointerDown = (event: React.PointerEvent) => {
     if (event.button !== 0) return;
@@ -116,7 +119,7 @@ export function NodeCard({
         left: node.x,
         top: node.y,
         width: NODE_WIDTH,
-        height: nodeHeight(node.type),
+        height: nodeHeight(node),
         zIndex: selected ? 10 : 1,
       }}
     >
@@ -134,29 +137,6 @@ export function NodeCard({
         <h3 className="flex-1 truncate text-sm font-medium">
           {node.config.title || t(`nodeTypes.${node.type}`)}
         </h3>
-        {executable && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            data-node-action="run"
-            disabled={runDisabled}
-            className="h-8 w-8 shrink-0 rounded-full bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
-            title={t("runThisNode")}
-            aria-label={t("runThisNode")}
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => {
-              event.stopPropagation();
-              onRunNode(node.id);
-            }}
-          >
-            {isRunning ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Play className="h-3.5 w-3.5" fill="currentColor" />
-            )}
-          </Button>
-        )}
         <Button
           type="button"
           variant="ghost"
@@ -187,7 +167,15 @@ export function NodeCard({
         </span>
       </div>
 
-      <div className="relative mt-2 min-h-0 flex-1 overflow-hidden px-4 pb-3 text-xs text-muted-foreground">
+      {/* 媒体类节点（图片/视频）内容区无内边距，按画幅撑满避免留白 */}
+      <div
+        className={cn(
+          "relative mt-2 min-h-0 flex-1 overflow-hidden",
+          node.type === "image" || node.type === "video"
+            ? ""
+            : "px-4 pb-3 text-xs text-muted-foreground"
+        )}
+      >
         <NodePreview node={node} output={output} />
       </div>
 
@@ -254,20 +242,31 @@ function NodePreview({ node, output }: { node: CanvasNodeDTO; output?: CanvasNod
   if (node.type === "image") {
     const urls = output?.urls ?? [];
     if (urls.length === 0) {
-      return <p className="line-clamp-4 leading-relaxed">{node.config.prompt || t("noPreview")}</p>;
+      return <RatioPlaceholder>{node.config.prompt || t("noPreview")}</RatioPlaceholder>;
+    }
+    // 单图：媒体区比例即画幅，铺满无留白；多图（历史数据）：网格铺满
+    if (urls.length === 1) {
+      return (
+        <button
+          type="button"
+          className="block h-full w-full"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            openMediaPreview({ kind: "image", urls, title: node.config.title });
+          }}
+        >
+          <img src={urls[0]} alt="" className="h-full w-full object-cover" loading="lazy" />
+        </button>
+      );
     }
     return (
-      <div
-        className={cn(
-          "grid h-full gap-1.5",
-          urls.length === 1 ? "grid-cols-1" : "grid-cols-2"
-        )}
-      >
+      <div className="grid h-full grid-cols-2 grid-rows-2 gap-1 overflow-hidden">
         {urls.slice(0, 4).map((url, index) => (
           <button
             key={url}
             type="button"
-            className="group relative min-h-0 overflow-hidden rounded-md bg-muted"
+            className="group relative overflow-hidden bg-muted"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
@@ -275,9 +274,7 @@ function NodePreview({ node, output }: { node: CanvasNodeDTO; output?: CanvasNod
             }}
           >
             <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
-            {urls.length > 1 && (
-              <Expand className="absolute right-1 top-1 h-3.5 w-3.5 rounded bg-background/70 p-0.5 text-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-            )}
+            <Expand className="absolute right-1 top-1 h-3.5 w-3.5 rounded bg-background/70 p-0.5 text-foreground opacity-0 transition-opacity group-hover:opacity-100" />
           </button>
         ))}
       </div>
@@ -296,10 +293,10 @@ function NodePreview({ node, output }: { node: CanvasNodeDTO; output?: CanvasNod
     );
   }
 
-  // video
+  // video：媒体区比例即画幅，播放器铺满无留白
   const url = output?.urls?.[0];
   if (!url) {
-    return <p className="line-clamp-4 leading-relaxed">{node.config.prompt || t("noPreview")}</p>;
+    return <RatioPlaceholder>{node.config.prompt || t("noPreview")}</RatioPlaceholder>;
   }
   return (
     <div className="relative h-full">
@@ -307,7 +304,7 @@ function NodePreview({ node, output }: { node: CanvasNodeDTO; output?: CanvasNod
         src={url}
         controls
         preload="metadata"
-        className="h-full w-full rounded-md bg-black object-contain"
+        className="h-full w-full bg-black object-cover"
         onPointerDown={(e) => e.stopPropagation()}
       />
       <button
@@ -365,7 +362,7 @@ function UploadMedia({
         src={url}
         controls
         preload="metadata"
-        className="h-full w-full rounded-md bg-black object-contain"
+        className="max-h-full max-w-full rounded-md bg-black object-contain"
         onPointerDown={(e) => e.stopPropagation()}
       />
     );
@@ -380,7 +377,7 @@ function UploadMedia({
         openMediaPreview({ kind: "image", urls, title });
       }}
     >
-      <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
+      <img src={url} alt="" className="max-h-full max-w-full object-contain" loading="lazy" />
     </button>
   );
 }

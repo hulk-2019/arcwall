@@ -166,6 +166,14 @@ export function useCanvasExecution() {
     [requestRun]
   );
 
+  /** 节点内「运行下游」入口：以该节点为根执行其与全部下游 */
+  const runDownstreamNode = useCallback(
+    (nodeId: string) => {
+      void requestRun("downstream", nodeId);
+    },
+    [requestRun]
+  );
+
   // 第二步：确认后提交（幂等键防重复）
   const confirmRun = useCallback(async () => {
     const pending = pendingScopeRef.current;
@@ -223,6 +231,7 @@ export function useCanvasExecution() {
     confirmOpen,
     requestRun,
     runNode,
+    runDownstreamNode,
     confirmRun,
     closeConfirm,
     cancelExecution,

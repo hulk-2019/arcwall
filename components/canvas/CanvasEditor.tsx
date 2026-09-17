@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { useTranslations } from "next-intl";
 import { saveCanvasOnUnload } from "@/services/api";
 import { useAppStore } from "@/store/useAppStore";
@@ -10,7 +10,6 @@ import { CanvasStage } from "./CanvasStage";
 import { CanvasToolbar } from "./CanvasToolbar";
 import { MediaPreviewDialog } from "./MediaPreviewDialog";
 import { NodePalette } from "./NodePalette";
-import { PropertiesPanel } from "./PropertiesPanel";
 import { RunConfirmDialog } from "./RunConfirmDialog";
 import { ZoomControls } from "./ZoomControls";
 import { useCanvasExecution } from "./hooks/useCanvasExecution";
@@ -33,11 +32,11 @@ export function CanvasEditor({ projectName, initialSnapshot }: CanvasEditorProps
     confirmOpen,
     requestRun,
     runNode,
+    runDownstreamNode,
     confirmRun,
     closeConfirm,
     cancelExecution,
   } = useCanvasExecution();
-  const [propertiesOpen, setPropertiesOpen] = useState(false);
 
   useLayoutEffect(() => {
     loadSnapshot(initialSnapshot);
@@ -60,7 +59,11 @@ export function CanvasEditor({ projectName, initialSnapshot }: CanvasEditorProps
 
   return (
     <div data-canvas className="relative h-dvh w-full overflow-hidden bg-background">
-      <CanvasStage onRunNode={runNode} runDisabled={isRunning} />
+      <CanvasStage
+        onRunNode={runNode}
+        onRunDownstream={runDownstreamNode}
+        runDisabled={isRunning}
+      />
       <div className="pointer-events-none absolute inset-0">
         <CanvasToolbar
           projectName={projectName}
@@ -69,10 +72,8 @@ export function CanvasEditor({ projectName, initialSnapshot }: CanvasEditorProps
           execution={execution}
           onRun={requestRun}
           onCancelExecution={cancelExecution}
-          onOpenProperties={() => setPropertiesOpen(true)}
         />
         <NodePalette />
-        <PropertiesPanel open={propertiesOpen} onOpenChange={setPropertiesOpen} />
         <ZoomControls />
         <p className="pointer-events-none absolute bottom-5 left-1/2 hidden max-w-md -translate-x-1/2 text-center text-[11px] text-muted-foreground lg:block">
           {t("connectHint")}

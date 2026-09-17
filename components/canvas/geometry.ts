@@ -12,11 +12,11 @@ export function bezierPath(a: Point, b: Point): string {
 }
 
 export function outputPoint(node: CanvasNodeDTO): Point {
-  return { x: node.x + NODE_WIDTH, y: node.y + nodeHeight(node.type) / 2 };
+  return { x: node.x + NODE_WIDTH, y: node.y + nodeHeight(node) / 2 };
 }
 
 export function inputPoint(node: CanvasNodeDTO): Point {
-  return { x: node.x, y: node.y + nodeHeight(node.type) / 2 };
+  return { x: node.x, y: node.y + nodeHeight(node) / 2 };
 }
 
 export function clientToWorld(
@@ -67,7 +67,7 @@ export function hitTestConnectTarget(
       world.x >= node.x &&
       world.x <= node.x + NODE_WIDTH &&
       world.y >= node.y &&
-      world.y <= node.y + nodeHeight(node.type)
+      world.y <= node.y + nodeHeight(node)
     ) {
       return node.id;
     }
@@ -86,7 +86,7 @@ export function canvasChromeInsets(width: number): ChromeInsets {
   if (width < 768) {
     return { top: 76, right: 16, bottom: 96, left: 16 };
   }
-  return { top: 76, right: 344, bottom: 56, left: 108 };
+  return { top: 76, right: 24, bottom: 56, left: 108 };
 }
 
 export function workAreaCenter(width: number, height: number): Point {
@@ -121,10 +121,10 @@ export function nextNodePosition(
     const col = index % 4;
     const row = Math.floor(index / 4);
     const x = Math.round(center.x - NODE_WIDTH / 2 + col * (NODE_WIDTH + gap));
-    const rowH = Math.max(...(nodes.length ? nodes.map((n) => nodeHeight(n.type)) : [176])) + gap;
+    const rowH = Math.max(...(nodes.length ? nodes.map((n) => nodeHeight(n)) : [176])) + gap;
     const y = Math.round(center.y - 176 / 2 + row * rowH);
     const occupied = nodes.some(
-      (node) => Math.abs(node.x - x) < NODE_WIDTH && Math.abs(node.y - y) < nodeHeight(node.type)
+      (node) => Math.abs(node.x - x) < NODE_WIDTH && Math.abs(node.y - y) < nodeHeight(node)
     );
     if (!occupied) return { x, y };
   }
@@ -158,7 +158,7 @@ export function fitNodesToView(
   const minX = Math.min(...nodes.map((n) => n.x));
   const minY = Math.min(...nodes.map((n) => n.y));
   const maxX = Math.max(...nodes.map((n) => n.x + NODE_WIDTH));
-  const maxY = Math.max(...nodes.map((n) => n.y + nodeHeight(n.type)));
+  const maxY = Math.max(...nodes.map((n) => n.y + nodeHeight(n)));
   const contentW = Math.max(1, maxX - minX + pad * 2);
   const contentH = Math.max(1, maxY - minY + pad * 2);
   const fitScale = Math.min(workW / contentW, workH / contentH);

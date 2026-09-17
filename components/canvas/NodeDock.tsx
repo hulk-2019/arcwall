@@ -1,41 +1,48 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, Link2, Loader2, Plus, Sparkles, X } from "lucide-react";
+import { ChevronsDown, Link2, Loader2, Play, Plus, Sparkles, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { NODE_TYPE_DEFS } from "@/lib/canvas/registry";
+import { NODE_TYPE_DEFS, estimateNodeCost } from "@/lib/canvas/registry";
 import { polishCanvasText } from "@/services/api";
 import { useCanvasStore } from "@/store/useCanvasStore";
-import type { CanvasNodeDTO } from "@/types/canvas";
+import type { CanvasNodeConfig, CanvasNodeDTO } from "@/types/canvas";
 import { NodeTypeIcon } from "./node-meta";
+import { PropertyFields } from "./PropertyFields";
 import { NODE_WIDTH, nodeHeight } from "./node-size";
 
 const DOCK_GAP = 22;
+const DOCK_WIDTH = 448;
 
 interface NodeDockProps {
   node: CanvasNodeDTO;
+  /** 底部运行按钮（仅可执行节点显示） */
+  onRunNode: (nodeId: string) => void;
+  onRunDownstream: (nodeId: string) => void;
+  runDisabled: boolean;
 }
 
 /**
- * 选中节点下方的浮框面板（竖线连接）：
- * - 文本节点：直接编辑内容 + AI 润色；
- * - 生成类节点：引用管理（上游节点列表 / 添加引用 / 移除引用）+ 主提示词编辑；
- * - 上传节点：文件信息与预览入口。
+ * 选中节点下方的浮框面板（竖线连接），承载节点的全部配置编辑：
+ * 引用管理 / 主提示词 / 参数字段 / 运行按钮。
+ * 文本节点：直接编辑内容 + AI 润色；上传节点：文件上传与管理。
  */
-export function NodeDock({ node }: NodeDockProps) {
+export function NodeDock({ node, onRunNode, onRunDownstream, runDisabled }: NodeDockProps) {
   const t = useTranslations("canvas");
   const nodes = useCanvasStore((s) => s.nodes);
   const edges = useCanvasStore((s) => s.edges);
   const updateNodeConfig = useCanvasStore((s) => s.updateNodeConfig);
+  const editNodeConfig = useCanvasStore((s) => s.editNodeConfig);
+  const beginEdit = useCanvasStore((s) => s.beginEdit);
   const deleteEdge = useCanvasStore((s) => s.deleteEdge);
   const setConnectFrom = useCanvasStore((s) => s.setConnectFrom);
   const connectFrom = useCanvasStore((s) => s.connectFrom);
   const canvasId = useCanvasStore((s) => s.canvasId);
-  const openMediaPreview = useCanvasStore((s) => s.openMediaPreview);
+  const live = useCanvasStore((s) => s.liveExecution);
 
   const [polishing, setPolishing] = useState(false);
 
@@ -45,7 +52,10 @@ export function NodeDock({ node }: NodeDockProps) {
     .filter((r): r is { edge: (typeof edges)[number]; source: CanvasNodeDTO } => !!r.source);
 
   const hasInputs = NODE_TYPE_DEFS[node.type].inputs.length > 0;
+  const executable = NODE_TYPE_DEFS[node.type].executable;
   const picking = connectFrom === node.id;
+  const status = live?.statusByNode?.[node.id] ?? node.status;
+  const isRunning = status === "running" || status === "queued" || status === "pending";
 
   const promptField =
     node.type === "text"
@@ -57,6 +67,37 @@ export function NodeDock({ node }: NodeDockProps) {
           : node.type === "upload"
             ? null
             : "prompt";
+
+  const labels = {
+    titleLabel: t("titleLabel"),
+    model: t("model"),
+    mode: t("mode"),
+    vocal: t("vocal"),
+    modeSong: t("modeSong"),
+    modeMusic: t("modeMusic"),
+    vocalAuto: t("vocalAuto"),
+    vocalMale: t("vocalMale"),
+    vocalFemale: t("vocalFemale"),
+    voice: t("voice"),
+    speed: t("speed"),
+    aspectRatio: t("aspectRatio"),
+    count: t("count"),
+    layout: t("layout"),
+    visualLock: t("visualLock"),
+    videoMode: t("videoMode"),
+    videoModeText: t("videoModeText"),
+    videoModeImage: t("videoModeImage"),
+    duration: t("duration"),
+    resolution: t("resolution"),
+    uploadFile: t("uploadFile"),
+    uploading: t("uploading"),
+    uploadSuccess: t("uploadSuccess"),
+    uploadFailed: t("uploadFailed"),
+    uploadTypeInvalid: t("uploadTypeInvalid"),
+    uploadTooLarge: t("uploadTooLarge"),
+    noFile: t("noFile"),
+    layouts: t.raw("layouts") as Record<string, string>,
+  };
 
   const handlePolish = async () => {
     const text = (node.config.text || "").trim();
@@ -84,20 +125,20 @@ export function NodeDock({ node }: NodeDockProps) {
     <div
       data-node-dock
       className="absolute z-20"
-      style={{ left: node.x, top: node.y + nodeHeight(node.type) + DOCK_GAP, width: NODE_WIDTH }}
+      style={{ left: node.x, top: node.y + nodeHeight(node) + DOCK_GAP, width: DOCK_WIDTH }}
       onPointerDown={(event) => event.stopPropagation()}
     >
       {/* 竖线连接件 */}
       <span
         aria-hidden
         className={cn(
-          "absolute left-1/2 -translate-x-1/2 rounded-full",
+          "absolute rounded-full",
           picking ? "bg-primary" : "bg-primary/50"
         )}
-        style={{ top: -DOCK_GAP, width: 2, height: DOCK_GAP }}
+        style={{ left: NODE_WIDTH / 2 - 1, top: -DOCK_GAP, width: 2, height: DOCK_GAP }}
       />
 
-      <div className="rounded-xl border bg-card/95 p-3 text-card-foreground shadow-xl backdrop-blur">
+      <div className="max-h-[60vh] overflow-y-auto rounded-xl border bg-card/95 p-3 text-card-foreground shadow-xl backdrop-blur">
         {hasInputs && (
           <section className="mb-2.5">
             <div className="mb-1.5 flex items-center justify-between">
@@ -134,7 +175,10 @@ export function NodeDock({ node }: NodeDockProps) {
                     key={edge.id}
                     className="group flex items-center gap-1.5 rounded-md border border-border/60 bg-muted/40 px-2 py-1"
                   >
-                    <NodeTypeIcon type={source.type} className="h-3 w-3 shrink-0 text-muted-foreground" />
+                    <NodeTypeIcon
+                      type={source.type}
+                      className="h-3 w-3 shrink-0 text-muted-foreground"
+                    />
                     <span className="min-w-0 flex-1 truncate text-[11px]">
                       {source.config.title || t(`nodeTypes.${source.type}`)}
                       {source.type === "text" && source.config.text && (
@@ -160,7 +204,7 @@ export function NodeDock({ node }: NodeDockProps) {
         )}
 
         {promptField && (
-          <section>
+          <section className="mb-1">
             <h4 className="mb-1.5 text-[11px] font-medium text-muted-foreground">
               {t(
                 node.type === "text"
@@ -206,35 +250,56 @@ export function NodeDock({ node }: NodeDockProps) {
           </section>
         )}
 
-        {node.type === "upload" && (
-          <section className="flex items-center justify-between gap-2">
-            <p className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground">
-              {node.config.fileName || t("noFile")}
-            </p>
-            {node.output?.urls?.[0] && (
+        {/* 参数字段（标题 / 模型参数 / 上传管理），compact 模式跳过与上方重复的主文本框 */}
+        <PropertyFields
+          type={node.type}
+          config={node.config}
+          previewUrl={node.output?.urls?.[0]}
+          labels={labels}
+          onBeginEdit={beginEdit}
+          onPatch={(patch: Partial<CanvasNodeConfig>) =>
+            updateNodeConfig(node.id, { ...node.config, ...patch })
+          }
+          onDiscrete={(patch: Partial<CanvasNodeConfig>) =>
+            editNodeConfig(node.id, { ...node.config, ...patch })
+          }
+        />
+
+        {executable && (
+          <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/60 pt-2.5">
+            <span className="shrink-0 text-[11px] text-muted-foreground">
+              {t("runConfirmTotal")} {estimateNodeCost(node.type, node.config)} {t("creditsUnit")}
+            </span>
+            <div className="flex items-center gap-1.5">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-7 shrink-0 rounded-full px-3 text-[11px]"
-                onClick={() =>
-                  openMediaPreview({
-                    kind:
-                      node.config.mediaType === "video"
-                        ? "video"
-                        : node.config.mediaType === "audio"
-                          ? "audio"
-                          : "image",
-                    urls: node.output!.urls!,
-                    title: node.config.fileName,
-                  })
-                }
+                className="h-8 rounded-full px-3 text-xs"
+                disabled={runDisabled}
+                title={t("runDownstreamNode")}
+                aria-label={t("runDownstreamNode")}
+                onClick={() => onRunDownstream(node.id)}
               >
-                <Eye className="mr-1 h-3 w-3" aria-hidden />
-                {t("preview")}
+                <ChevronsDown className="mr-1 h-3.5 w-3.5" aria-hidden />
+                {t("runDownstreamNode")}
               </Button>
-            )}
-          </section>
+              <Button
+                type="button"
+                size="sm"
+                className="h-8 rounded-full px-4 text-xs"
+                disabled={runDisabled}
+                onClick={() => onRunNode(node.id)}
+              >
+                {isRunning ? (
+                  <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" aria-hidden />
+                ) : (
+                  <Play className="mr-1 h-3.5 w-3.5" aria-hidden fill="currentColor" />
+                )}
+                {t("runThisNode")}
+              </Button>
+            </div>
+          </div>
         )}
       </div>
     </div>

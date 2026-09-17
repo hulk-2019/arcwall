@@ -20,7 +20,10 @@ import {
   STORYBOARD_MODEL,
   VIDEO_MODEL_DEFAULT,
   AUDIO_MODEL_DEFAULT,
+  AUDIO_MUSIC_MODEL,
   AUDIO_VOICE_DEFAULT,
+  AUDIO_VOICE_MALE_DEFAULT,
+  AUDIO_VOICE_FEMALE_DEFAULT,
   estimateNodeCost,
 } from "@/lib/canvas/registry";
 import {
@@ -165,7 +168,6 @@ async function executeImage(
   const model = config.model || IMAGE_MODEL_DEFAULT;
   const client = getDoubaoAIClient();
   const aspectRatio = config.aspectRatio || "16:9";
-  const count = Math.max(1, Math.min(4, Number(config.count) || 1));
 
   const params: any = {
     model,
@@ -185,7 +187,8 @@ async function executeImage(
     params.image = urls.length === 1 ? urls[0] : urls;
   }
 
-  const res = await client.images.generate({ ...params, n: count });
+  // 每个图片节点固定生成 1 张素材（节点即素材的一对一产出）
+  const res = await client.images.generate({ ...params, n: 1 });
 
   const rawImages: string[] = (res?.data || [])
     .map((d: any) => d?.url || (d?.b64_json ? `data:image/png;base64,${d.b64_json}` : null))
@@ -283,7 +286,24 @@ async function executeAudio(
   }
 
   const model = config.model || AUDIO_MODEL_DEFAULT;
-  const voice = config.voice || AUDIO_VOICE_DEFAULT;
+  const mode = config.mode === "music" ? "music" : "song";
+  const vocal = config.vocal === "male" || config.vocal === "female" ? config.vocal : "auto";
+  // 纯音乐需要音乐生成模型（豆包音乐生成为独立签名 API，需单独开通接入）
+  if (mode === "music" && model !== AUDIO_MUSIC_MODEL) {
+    throw new NormalizedStepError(
+      "PROVIDER_REJECTED",
+      "纯音乐模式需要配置音乐生成模型（CANVAS_AUDIO_MUSIC_MODEL）"
+    );
+  }
+
+  // 人声偏好 → 音色：显式音色优先，其次按偏好映射，最后回退默认
+  const voice =
+    config.voice ||
+    (vocal === "male"
+      ? AUDIO_VOICE_MALE_DEFAULT
+      : vocal === "female"
+        ? AUDIO_VOICE_FEMALE_DEFAULT
+        : AUDIO_VOICE_DEFAULT);
   const speed = Math.max(0.5, Math.min(2, Number(config.speed) || 1));
 
   const client = getDoubaoAIClient();
@@ -304,7 +324,7 @@ async function executeAudio(
   await uploadFile(buffer, key);
 
   return {
-    output: { kind: "audio", storageKeys: [key], meta: { model, voice } },
+    output: { kind: "audio", storageKeys: [key], meta: { model, voice, mode, vocal } },
     cost: estimateNodeCost("audio", config),
   };
 }

@@ -620,6 +620,14 @@
     "preview": "Preview",
     "download": "Download",
     "prevMedia": "Previous",
-    "nextMedia": "Next"
+    "nextMedia": "Next",
+    "mode": "Mode",
+    "vocal": "Vocal",
+    "modeSong": "Song",
+    "modeMusic": "Instrumental",
+    "vocalAuto": "Auto",
+    "vocalMale": "Male",
+    "vocalFemale": "Female",
+    "runDownstreamNode": "Run downstream"
   }
 }

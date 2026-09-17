@@ -10,15 +10,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { uploadCanvasAsset } from "@/services/api";
 import {
   ASPECT_RATIOS,
-  VIDEO_RESOLUTIONS,
+  AUDIO_MODES,
+  AUDIO_VOCALS,
   UPLOAD_ACCEPT,
   UPLOAD_MIME_TYPES,
   UPLOAD_SIZE_LIMITS,
+  VIDEO_RESOLUTIONS,
+  modelOptionsForType,
 } from "@/lib/canvas/registry";
 import type { CanvasNodeConfig, CanvasNodeType } from "@/types/canvas";
-import { FieldLabel, FieldSelect } from "./Field";
+import { cn } from "@/lib/utils";
+import { FieldLabel, ParamLabel, ParamSelect } from "./Field";
 
 const LAYOUTS = ["grid3", "grid6", "grid9", "grid12"] as const;
+const VIDEO_DURATIONS = [3, 4, 5, 6, 7, 8, 9, 10];
 
 interface PropertyFieldsProps {
   type: CanvasNodeType;
@@ -27,38 +32,38 @@ interface PropertyFieldsProps {
   onPatch: (patch: Partial<CanvasNodeConfig>) => void;
   onDiscrete: (patch: Partial<CanvasNodeConfig>) => void;
   onBeginEdit: () => void;
-  labels: {
-    titleLabel: string;
-    text: string;
-    prompt: string;
-    brief: string;
-    aspectRatio: string;
-    count: string;
-    layout: string;
-    visualLock: string;
-    videoMode: string;
-    videoModeText: string;
-    videoModeImage: string;
-    duration: string;
-    resolution: string;
-    voice: string;
-    speed: string;
-    uploadFile: string;
-    uploading: string;
-    uploadSuccess: string;
-    uploadFailed: string;
-    uploadTypeInvalid: string;
-    uploadTooLarge: string;
-    noFile: string;
-    layouts: Record<string, string>;
-  };
+  labels: PropertyLabels;
 }
 
-function visualLockText(lock?: Record<string, string>) {
-  if (!lock) return "";
-  return Object.entries(lock)
-    .map(([key, value]) => `${key}: ${value}`)
-    .join("\n");
+interface PropertyLabels {
+  titleLabel: string;
+  model: string;
+  mode: string;
+  vocal: string;
+  modeSong: string;
+  modeMusic: string;
+  vocalAuto: string;
+  vocalMale: string;
+  vocalFemale: string;
+  voice: string;
+  speed: string;
+  aspectRatio: string;
+  count: string;
+  layout: string;
+  visualLock: string;
+  videoMode: string;
+  videoModeText: string;
+  videoModeImage: string;
+  duration: string;
+  resolution: string;
+  uploadFile: string;
+  uploading: string;
+  uploadSuccess: string;
+  uploadFailed: string;
+  uploadTypeInvalid: string;
+  uploadTooLarge: string;
+  noFile: string;
+  layouts: Record<string, string>;
 }
 
 function parseVisualLock(value: string) {
@@ -70,6 +75,66 @@ function parseVisualLock(value: string) {
   return lock;
 }
 
+/** 横向网格中的单个参数：小标签 + 紧凑下拉 */
+function ParamSelectField({
+  label,
+  value,
+  options,
+  onChange,
+  className,
+}: {
+  label: string;
+  value: string;
+  options: readonly string[];
+  onChange: (value: string) => void;
+  className?: string;
+}) {
+  return (
+    <div className={cn("min-w-0", className)}>
+      <ParamLabel>{label}</ParamLabel>
+      <ParamSelect value={value} onChange={(event) => onChange(event.target.value)}>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </ParamSelect>
+    </div>
+  );
+}
+
+/** 横向网格中的枚举参数：value → 文案映射 */
+function ParamEnumField({
+  label,
+  value,
+  options,
+  onChange,
+  className,
+}: {
+  label: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (value: string) => void;
+  className?: string;
+}) {
+  return (
+    <div className={cn("min-w-0", className)}>
+      <ParamLabel>{label}</ParamLabel>
+      <ParamSelect value={value} onChange={(event) => onChange(event.target.value)}>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </ParamSelect>
+    </div>
+  );
+}
+
+/**
+ * 节点参数字段（在选中浮框中渲染，横向网格布局）：
+ * 主提示词/文本编辑由 NodeDock 提供，这里只承载标题 + 各类型生成参数 + 上传管理。
+ */
 export function PropertyFields({
   type,
   config,
@@ -117,30 +182,164 @@ export function PropertyFields({
   };
 
   return (
-    <div>
+    <div className="mb-1">
       <FieldLabel>{labels.titleLabel}</FieldLabel>
       <Input
-        className="mt-1.5"
+        className="mt-1 h-8 text-xs"
         value={config.title || ""}
         onFocus={onBeginEdit}
         onChange={(event) => onPatch({ title: event.target.value })}
       />
 
-      {type === "text" && (
-        <>
-          <FieldLabel>{labels.text}</FieldLabel>
-          <Textarea
-            className="mt-1.5 min-h-[160px] resize-none"
-            value={config.text || ""}
-            onFocus={onBeginEdit}
-            onChange={(event) => onPatch({ text: event.target.value })}
+      {type === "image" && (
+        <div className="mt-2 flex items-end gap-2">
+          <ParamSelectField
+            label={labels.model}
+            className="min-w-0 flex-1"
+            value={config.model || modelOptionsForType("image")[0] || ""}
+            options={modelOptionsForType("image")}
+            onChange={(v) => onDiscrete({ model: v })}
           />
-        </>
+          <ParamEnumField
+            label={labels.aspectRatio}
+            className="w-20"
+            value={config.aspectRatio || "16:9"}
+            options={ASPECT_RATIOS.map((r) => ({ value: r, label: r }))}
+            onChange={(v) => onDiscrete({ aspectRatio: v })}
+          />
+        </div>
+      )}
+
+      {type === "video" && (
+        <div className="mt-2 flex items-end gap-2">
+          <ParamSelectField
+            label={labels.model}
+            className="min-w-0 flex-1"
+            value={config.model || modelOptionsForType("video")[0] || ""}
+            options={modelOptionsForType("video")}
+            onChange={(v) => onDiscrete({ model: v })}
+          />
+          <ParamEnumField
+            label={labels.videoMode}
+            className="w-[72px]"
+            value={config.videoMode || "text"}
+            options={[
+              { value: "text", label: labels.videoModeText },
+              { value: "image", label: labels.videoModeImage },
+            ]}
+            onChange={(v) => onDiscrete({ videoMode: v as "text" | "image" })}
+          />
+          <ParamEnumField
+            label={labels.duration}
+            className="w-14"
+            value={String(config.duration || 5)}
+            options={VIDEO_DURATIONS.map((d) => ({ value: String(d), label: `${d}s` }))}
+            onChange={(v) => onDiscrete({ duration: Number(v) })}
+          />
+          <ParamEnumField
+            label={labels.aspectRatio}
+            className="w-[68px]"
+            value={config.aspectRatio || "16:9"}
+            options={ASPECT_RATIOS.map((r) => ({ value: r, label: r }))}
+            onChange={(v) => onDiscrete({ aspectRatio: v })}
+          />
+          <ParamEnumField
+            label={labels.resolution}
+            className="w-[72px]"
+            value={config.resolution || "1080p"}
+            options={VIDEO_RESOLUTIONS.map((r) => ({ value: r, label: r }))}
+            onChange={(v) => onDiscrete({ resolution: v })}
+          />
+        </div>
+      )}
+
+      {type === "audio" && (
+        <div className="mt-2 flex items-end gap-2">
+          <ParamSelectField
+            label={labels.model}
+            className="min-w-0 flex-1"
+            value={config.model || modelOptionsForType("audio")[0] || ""}
+            options={modelOptionsForType("audio")}
+            onChange={(v) => onDiscrete({ model: v })}
+          />
+          <ParamEnumField
+            label={labels.mode}
+            className="w-[76px]"
+            value={config.mode || "song"}
+            options={AUDIO_MODES.map((m) => ({
+              value: m,
+              label: m === "song" ? labels.modeSong : labels.modeMusic,
+            }))}
+            onChange={(v) => onDiscrete({ mode: v as "song" | "music" })}
+          />
+          <ParamEnumField
+            label={labels.vocal}
+            className="w-[68px]"
+            value={config.vocal || "auto"}
+            options={AUDIO_VOCALS.map((v) => ({
+              value: v,
+              label: v === "auto" ? labels.vocalAuto : v === "male" ? labels.vocalMale : labels.vocalFemale,
+            }))}
+            onChange={(v) =>
+              onDiscrete({
+                vocal: v as "auto" | "male" | "female",
+                // 切换人声偏好后清除显式音色，让执行层按偏好映射
+                voice: undefined,
+              })
+            }
+          />
+          <div className="w-14 min-w-0">
+            <ParamLabel>{labels.speed}</ParamLabel>
+            <Input
+              type="number"
+              min={0.5}
+              max={2}
+              step={0.1}
+              className="mt-1 h-8 px-2 text-xs"
+              value={config.speed ?? 1}
+              onChange={(event) =>
+                onDiscrete({
+                  speed: Math.max(0.5, Math.min(2, Number(event.target.value) || 1)),
+                })
+              }
+            />
+          </div>
+        </div>
+      )}
+
+      {type === "storyboard" && (
+        <div className="mt-2 flex flex-col gap-2">
+          <ParamEnumField
+            label={labels.layout}
+            className="w-28"
+            value={config.layout || "grid9"}
+            options={LAYOUTS.map((layout) => ({
+              value: layout,
+              label: labels.layouts[layout] || layout,
+            }))}
+            onChange={(v) => onDiscrete({ layout: v })}
+          />
+          <div className="min-w-0">
+            <ParamLabel>{labels.visualLock}</ParamLabel>
+            <Textarea
+              className="mt-1 min-h-[56px] resize-none font-mono text-[11px]"
+              placeholder={labels.visualLock}
+              defaultValue={
+                config.visualLock
+                  ? Object.entries(config.visualLock)
+                      .map(([key, value]) => `${key}: ${value}`)
+                      .join("\n")
+                  : ""
+              }
+              onFocus={onBeginEdit}
+              onBlur={(event) => onPatch({ visualLock: parseVisualLock(event.target.value) })}
+            />
+          </div>
+        </div>
       )}
 
       {type === "upload" && (
         <>
-          <FieldLabel>{labels.uploadFile}</FieldLabel>
           <input
             ref={fileInputRef}
             type="file"
@@ -156,7 +355,7 @@ export function PropertyFields({
             type="button"
             variant="outline"
             size="sm"
-            className="mt-1.5 w-full justify-start gap-2"
+            className="mt-2 w-full justify-start gap-2 text-xs"
             disabled={uploading}
             onClick={() => fileInputRef.current?.click()}
           >
@@ -169,178 +368,11 @@ export function PropertyFields({
               {uploading ? labels.uploading : config.fileName || labels.uploadFile}
             </span>
           </Button>
-          {previewUrl && config.mediaType === "video" ? (
-            <video
-              src={previewUrl}
-              controls
-              className="mt-2 h-36 w-full rounded-md border border-border object-cover"
-            />
-          ) : previewUrl && config.mediaType === "audio" ? (
-            <audio src={previewUrl} controls className="mt-2 h-10 w-full" />
-          ) : previewUrl ? (
-            <img
-              src={previewUrl}
-              alt=""
-              className="mt-2 h-32 w-full rounded-md border border-border object-cover"
-            />
-          ) : config.fileName ? (
-            <p className="mt-1.5 truncate text-xs text-muted-foreground">{config.fileName}</p>
-          ) : (
-            <p className="mt-1.5 text-xs text-muted-foreground">{labels.noFile}</p>
+          {previewUrl ? null : (
+            <p className="mt-1.5 truncate text-[11px] text-muted-foreground">
+              {config.fileName || labels.noFile}
+            </p>
           )}
-        </>
-      )}
-
-      {type === "audio" && (
-        <>
-          <FieldLabel>{labels.text}</FieldLabel>
-          <Textarea
-            className="mt-1.5 min-h-[120px] resize-none"
-            value={config.text || ""}
-            onFocus={onBeginEdit}
-            onChange={(event) => onPatch({ text: event.target.value })}
-          />
-          <FieldLabel>{labels.voice}</FieldLabel>
-          <Input
-            className="mt-1.5"
-            value={config.voice || ""}
-            onFocus={onBeginEdit}
-            onChange={(event) => onPatch({ voice: event.target.value })}
-          />
-          <FieldLabel>{labels.speed}</FieldLabel>
-          <Input
-            type="number"
-            min={0.5}
-            max={2}
-            step={0.1}
-            className="mt-1.5"
-            value={config.speed ?? 1}
-            onChange={(event) =>
-              onDiscrete({
-                speed: Math.max(0.5, Math.min(2, Number(event.target.value) || 1)),
-              })
-            }
-          />
-        </>
-      )}
-
-      {type === "image" && (
-        <>
-          <FieldLabel>{labels.prompt}</FieldLabel>
-          <Textarea
-            className="mt-1.5 min-h-[120px] resize-none"
-            value={config.prompt || ""}
-            onFocus={onBeginEdit}
-            onChange={(event) => onPatch({ prompt: event.target.value })}
-          />
-          <FieldLabel>{labels.aspectRatio}</FieldLabel>
-          <FieldSelect
-            value={config.aspectRatio || "16:9"}
-            onChange={(event) => onDiscrete({ aspectRatio: event.target.value })}
-          >
-            {ASPECT_RATIOS.map((ratio) => (
-              <option key={ratio} value={ratio}>
-                {ratio}
-              </option>
-            ))}
-          </FieldSelect>
-          <FieldLabel>{labels.count}</FieldLabel>
-          <Input
-            type="number"
-            min={1}
-            max={4}
-            className="mt-1.5"
-            value={config.count || 1}
-            onChange={(event) =>
-              onDiscrete({ count: Math.max(1, Math.min(4, Number(event.target.value) || 1)) })
-            }
-          />
-        </>
-      )}
-
-      {type === "storyboard" && (
-        <>
-          <FieldLabel>{labels.brief}</FieldLabel>
-          <Textarea
-            className="mt-1.5 min-h-[112px] resize-none"
-            value={config.brief || ""}
-            onFocus={onBeginEdit}
-            onChange={(event) => onPatch({ brief: event.target.value })}
-          />
-          <FieldLabel>{labels.layout}</FieldLabel>
-          <FieldSelect
-            value={config.layout || "grid9"}
-            onChange={(event) => onDiscrete({ layout: event.target.value })}
-          >
-            {LAYOUTS.map((layout) => (
-              <option key={layout} value={layout}>
-                {labels.layouts[layout] || layout}
-              </option>
-            ))}
-          </FieldSelect>
-          <FieldLabel>{labels.visualLock}</FieldLabel>
-          <Textarea
-            className="mt-1.5 min-h-[96px] resize-none font-mono text-xs"
-            placeholder={labels.visualLock}
-            defaultValue={visualLockText(config.visualLock)}
-            onFocus={onBeginEdit}
-            onBlur={(event) => onPatch({ visualLock: parseVisualLock(event.target.value) })}
-          />
-        </>
-      )}
-
-      {type === "video" && (
-        <>
-          <FieldLabel>{labels.prompt}</FieldLabel>
-          <Textarea
-            className="mt-1.5 min-h-[112px] resize-none"
-            value={config.prompt || ""}
-            onFocus={onBeginEdit}
-            onChange={(event) => onPatch({ prompt: event.target.value })}
-          />
-          <FieldLabel>{labels.videoMode}</FieldLabel>
-          <FieldSelect
-            value={config.videoMode || "text"}
-            onChange={(event) =>
-              onDiscrete({ videoMode: event.target.value as "text" | "image" })
-            }
-          >
-            <option value="text">{labels.videoModeText}</option>
-            <option value="image">{labels.videoModeImage}</option>
-          </FieldSelect>
-          <FieldLabel>{labels.duration}</FieldLabel>
-          <Input
-            type="number"
-            min={3}
-            max={10}
-            className="mt-1.5"
-            value={config.duration || 5}
-            onChange={(event) =>
-              onDiscrete({ duration: Math.max(3, Math.min(10, Number(event.target.value) || 5)) })
-            }
-          />
-          <FieldLabel>{labels.resolution}</FieldLabel>
-          <FieldSelect
-            value={config.resolution || "1080p"}
-            onChange={(event) => onDiscrete({ resolution: event.target.value })}
-          >
-            {VIDEO_RESOLUTIONS.map((resolution) => (
-              <option key={resolution} value={resolution}>
-                {resolution}
-              </option>
-            ))}
-          </FieldSelect>
-          <FieldLabel>{labels.aspectRatio}</FieldLabel>
-          <FieldSelect
-            value={config.aspectRatio || "16:9"}
-            onChange={(event) => onDiscrete({ aspectRatio: event.target.value })}
-          >
-            {ASPECT_RATIOS.map((ratio) => (
-              <option key={ratio} value={ratio}>
-                {ratio}
-              </option>
-            ))}
-          </FieldSelect>
         </>
       )}
     </div>

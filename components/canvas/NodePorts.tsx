@@ -34,7 +34,7 @@ export function NodePorts({
             <Port
               side="in"
               left={node.x}
-              top={node.y + nodeHeight(node.type) / 2}
+              top={node.y + nodeHeight(node) / 2}
               active={targetId === node.id}
               onPointerDown={(event) => event.stopPropagation()}
             />
@@ -42,7 +42,7 @@ export function NodePorts({
           <Port
             side="out"
             left={node.x + NODE_WIDTH}
-            top={node.y + nodeHeight(node.type) / 2}
+            top={node.y + nodeHeight(node) / 2}
             active={sourceId === node.id}
             onPointerDown={(event) => onBegin(node.id, event)}
             onPointerMove={onMove}

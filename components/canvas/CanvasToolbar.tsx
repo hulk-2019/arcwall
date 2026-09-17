@@ -7,7 +7,6 @@ import {
   ChevronsDown,
   Layers,
   Loader2,
-  PanelRight,
   Play,
   Redo2,
   Square,
@@ -29,7 +28,6 @@ interface CanvasToolbarProps {
   execution: ExecutionDTO | null;
   onRun: (scope: ExecutionScope) => void;
   onCancelExecution?: () => void;
-  onOpenProperties: () => void;
 }
 
 export function CanvasToolbar({
@@ -39,22 +37,16 @@ export function CanvasToolbar({
   execution,
   onRun,
   onCancelExecution,
-  onOpenProperties,
 }: CanvasToolbarProps) {
   const t = useTranslations("canvas");
   const tHeader = useTranslations("header");
   const user = useAppStore((s) => s.user);
   const nodes = useCanvasStore((s) => s.nodes);
-  const selectedId = useCanvasStore((s) => s.selectedId);
   const undo = useCanvasStore((s) => s.undo);
   const redo = useCanvasStore((s) => s.redo);
   const dirty = useCanvasStore((s) => s.dirty);
   const isSaving = useCanvasStore((s) => s.isSaving);
 
-  const selectedNode = nodes.find((node) => node.id === selectedId);
-  const executableSelected = Boolean(
-    selectedNode && NODE_TYPE_DEFS[selectedNode.type].executable
-  );
   const hasExecutable = nodes.some((node) => NODE_TYPE_DEFS[node.type].executable);
   const saveStatus = isSaving ? t("saving") : dirty ? t("unsaved") : t("saved");
   const generating = isExecutionActive(execution?.status);
@@ -118,31 +110,6 @@ export function CanvasToolbar({
       <div className="hidden items-center gap-1 md:flex">
         <Button
           type="button"
-          size="sm"
-          className="h-9"
-          disabled={!executableSelected || isRunning}
-          onClick={() => onRun("node")}
-        >
-          {isRunning ? (
-            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden />
-          ) : (
-            <Play className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-          )}
-          {t("runNode")}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-9"
-          disabled={!executableSelected || isRunning}
-          onClick={() => onRun("downstream")}
-        >
-          <ChevronsDown className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-          {t("runDownstream")}
-        </Button>
-        <Button
-          type="button"
           variant="outline"
           size="sm"
           className="h-9"
@@ -159,32 +126,11 @@ export function CanvasToolbar({
           type="button"
           size="icon"
           className="h-9 w-9"
-          disabled={!executableSelected || isRunning}
-          onClick={() => onRun("node")}
-          aria-label={t("runNode")}
-        >
-          {isRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="h-9 w-9"
           disabled={!hasExecutable || isRunning}
           onClick={() => onRun("all")}
           aria-label={t("runAll")}
         >
-          <Layers className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="h-9 w-9"
-          onClick={onOpenProperties}
-          aria-label={t("openProperties")}
-        >
-          <PanelRight className="h-4 w-4" />
+          {isRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Layers className="h-4 w-4" />}
         </Button>
       </div>
 

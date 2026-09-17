@@ -14,11 +14,13 @@ import { useCanvasConnect } from "./hooks/useCanvasConnect";
 interface CanvasStageProps {
   /** 节点内「运行此节点」按钮回调 */
   onRunNode: (nodeId: string) => void;
+  /** 节点内「运行下游」按钮回调 */
+  onRunDownstream: (nodeId: string) => void;
   /** 全局有执行进行中时禁用各节点运行按钮 */
   runDisabled: boolean;
 }
 
-export function CanvasStage({ onRunNode, runDisabled }: CanvasStageProps) {
+export function CanvasStage({ onRunNode, onRunDownstream, runDisabled }: CanvasStageProps) {
   const nodes = useCanvasStore((s) => s.nodes);
   const edges = useCanvasStore((s) => s.edges);
   const viewport = useCanvasStore((s) => s.viewport);
@@ -176,8 +178,6 @@ export function CanvasStage({ onRunNode, runDisabled }: CanvasStageProps) {
             scale={viewport.scale}
             pickMode={!!connectFrom}
             isPickSource={node.id === connectFrom}
-            runDisabled={runDisabled}
-            onRunNode={onRunNode}
           />
         ))}
         <NodePorts
@@ -190,7 +190,14 @@ export function CanvasStage({ onRunNode, runDisabled }: CanvasStageProps) {
         />
         {(() => {
           const selected = nodes.find((n) => n.id === selectedId);
-          return selected ? <NodeDock node={selected} /> : null;
+          return selected ? (
+            <NodeDock
+              node={selected}
+              onRunNode={onRunNode}
+              onRunDownstream={onRunDownstream}
+              runDisabled={runDisabled}
+            />
+          ) : null;
         })()}
       </div>
     </div>
