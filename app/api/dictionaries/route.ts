@@ -11,9 +11,9 @@ export async function POST(req: Request) {
     if (!parsed.success) {
       return respErr(errMsg("invalid.params"));
     }
-    const { categories } = parsed.data;
+    const { categories, type } = parsed.data;
 
-    const dictionaries = await getDictionariesByCategory(categories as any);
+    const dictionaries = await getDictionariesByCategory(categories as any, type);
 
     return respData(dictionaries);
   } catch (e) {

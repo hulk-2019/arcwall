@@ -593,8 +593,8 @@ export async function listExecutionsByCanvas(canvasId: number, onlyActive: boole
 }
 
 /**
- * 完成步骤并结算成本。若执行已因取消等原因进入终态（finalize 已释放预扣），
- * 此笔成功成本需立即补扣，避免取消与完成的竞争造成漏扣（技术方案 §七点三 CAS 语义）。
+ * 完成步骤并结算成本。仅 running 步骤可以提交结果：
+ * 若取消已先把步骤置为 cancelled，则丢弃稍后返回的供应商结果，避免取消被覆盖。
  */
 export async function completeStepRun(
   stepRunId: number,
@@ -613,8 +613,10 @@ export async function completeStepRun(
         where: { id: stepRun.execution_id },
         select: { status: true, user_id: true },
       });
-      await tx.step_runs.update({
-        where: { id: stepRunId },
+      if (!execution || !ACTIVE_EXECUTION_STATUSES.includes(execution.status)) return;
+
+      const completed = await tx.step_runs.updateMany({
+        where: { id: stepRunId, status: "running" },
         data: {
           status: "succeeded",
           output_json: output as any,
@@ -622,30 +624,15 @@ export async function completeStepRun(
           updated_at: new Date(),
         },
       });
-      if (!execution || ACTIVE_EXECUTION_STATUSES.includes(execution.status)) return;
-
-      // 执行已终态：finalize 不会再计入本步骤，直接补扣
-      if (creditsConsumed > 0) {
-        await adjustUserCreditsInTx(
-          tx,
-          execution.user_id,
-          -creditsConsumed,
-          TransactionType.consume,
-          `画布节点生成消耗 (step ${stepRunId})`
-        );
-        await tx.executions.update({
-          where: { id: stepRun.execution_id },
-          data: { captured_credits: { increment: creditsConsumed } },
-        });
-      }
+      if (completed.count === 0) return;
     },
     { maxWait: 10000, timeout: 30000 }
   );
 }
 
 export async function failStepRun(stepRunId: number, errorCode: string, errorMessage: string) {
-  await prisma.step_runs.update({
-    where: { id: stepRunId },
+  await prisma.step_runs.updateMany({
+    where: { id: stepRunId, status: "running" },
     data: {
       status: "failed",
       error_code: errorCode,
@@ -708,7 +695,7 @@ export async function finalizeExecutionIfDone(executionId: number): Promise<void
 }
 
 /**
- * 请求取消执行（PRD-VID-005）：pending/queued 步骤直接取消，
+ * 请求取消执行（PRD-VID-005）：所有未完成步骤直接取消，
  * 运行中的供应商任务尽力取消；已成功步骤保留结果照常结算。
  */
 export async function requestCancelExecution(executionId: number): Promise<{
@@ -727,7 +714,7 @@ export async function requestCancelExecution(executionId: number): Promise<{
     data: { status: "cancel_requested", updated_at: new Date() },
   });
   await prisma.step_runs.updateMany({
-    where: { execution_id: executionId, status: { in: ["pending", "queued"] } },
+    where: { execution_id: executionId, status: { in: ["pending", "queued", "running"] } },
     data: { status: "cancelled", updated_at: new Date() },
   });
 

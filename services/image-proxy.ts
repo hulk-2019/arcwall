@@ -151,7 +151,9 @@ export async function generateGptImage(params: {
       client.images.edit({
         model: params.model,
         prompt: params.prompt,
-        image: files,
+        // 302 单图编辑要求字段名为 `image`；数组会被 SDK 编码为
+        // `image[]`，其网关会以 403 Parameter error 拒绝。
+        image: files.length === 1 ? files[0] : files,
         size: "auto",
         n: 1,
       } as any)

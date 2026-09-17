@@ -96,10 +96,23 @@ export async function createVideoTask(
   if (input.duration) body.duration = input.duration;
   body.watermark = false;
 
-  const res = await axios.post(apiBase(), body, {
-    headers: authHeaders(),
-    timeout: 30_000,
-  });
+  let res;
+  try {
+    res = await axios.post(apiBase(), body, {
+      headers: authHeaders(),
+      timeout: 30_000,
+    });
+  } catch (error) {
+    const response = (error as any)?.response;
+    if (response?.status) {
+      const detail =
+        typeof response.data === "string" ? response.data : JSON.stringify(response.data);
+      throw new Error(
+        `Ark 视频任务创建失败（HTTP ${response.status}）：${detail || "无响应详情"}`
+      );
+    }
+    throw error;
+  }
 
   const data = res.data as { id?: string; status?: string };
   if (!data?.id) {

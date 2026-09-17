@@ -129,6 +129,11 @@ OSS_HOST=
 ARK_API_BASE_URL=
 ARK_API_KEY=
 
+# 豆包语音 TTS（与 ARK_API_KEY 分开配置）
+DOUBAO_SPEECH_API_KEY=
+# 可选，默认 seed-tts-1.0
+DOUBAO_SPEECH_RESOURCE_ID=
+
 # App / Security
 CRON_SECRET=
 ```

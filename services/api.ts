@@ -124,7 +124,8 @@ export const renameCanvasProject = (id: number, name: string) =>
   fetcher(`/api/protected/canvas/projects/${id}`, { method: "PATCH", body: JSON.stringify({ name }) });
 export const deleteCanvasProject = (id: number) =>
   fetcher(`/api/protected/canvas/projects/${id}`, { method: "DELETE" });
-export const getCanvasSnapshot = (canvasId: number) => fetcher(`/api/protected/canvas/${canvasId}`);
+export const getCanvasSnapshot = (canvasId: number) =>
+  fetcher(`/api/protected/canvas/${canvasId}`, { cache: "no-store" });
 export const saveCanvas = (canvasId: number, operations: any[]) =>
   fetcher(`/api/protected/canvas/${canvasId}`, { method: "PATCH", body: JSON.stringify({ operations }) });
 /** 页面卸载时的兜底保存：keepalive 保证导航/刷新后请求仍会送达。 */

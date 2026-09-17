@@ -129,6 +129,11 @@ OSS_HOST=
 ARK_API_BASE_URL=
 ARK_API_KEY=
 
+# Doubao Speech TTS (separate from ARK_API_KEY)
+DOUBAO_SPEECH_API_KEY=
+# Optional; defaults to seed-tts-1.0
+DOUBAO_SPEECH_RESOURCE_ID=
+
 # App / Security
 CRON_SECRET=
 ```

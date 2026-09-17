@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { getDoubaoAIClient } from "@/services/openai";
-import { getSignedInternalUrl, uploadFile } from "@/lib/oss";
+import { synthesizeDoubaoSpeech } from "@/services/doubao-speech";
+import {
+  fetchImageAsBase64,
+  getSignedInternalUrl,
+  uploadFile,
+} from "@/lib/oss";
 import {
   buildImagePrompt,
   buildStoryboardMessages,
@@ -186,6 +191,12 @@ async function executeImage(
     const provider = imageModelProvider(model);
     if (provider === "ark") {
       const client = getDoubaoAIClient();
+      // OSS 开启了 Referer 白名单，Ark 回源无法携带所需请求头。
+      // 由本服务下载参考图并以内联 Data URL 传入，避免供应商回源 403。
+      const inlineReferences =
+        referenceUrls.length > 0
+          ? await Promise.all(referenceUrls.map((url) => fetchImageAsBase64(url)))
+          : [];
       const params: any = {
         model,
         prompt,
@@ -195,8 +206,8 @@ async function executeImage(
         sequential_image_generation: "disabled",
         n: 1,
       };
-      if (referenceUrls.length > 0) {
-        params.image = referenceUrls.length === 1 ? referenceUrls[0] : referenceUrls;
+      if (inlineReferences.length > 0) {
+        params.image = inlineReferences.length === 1 ? inlineReferences[0] : inlineReferences;
       }
       const res = await client.images.generate(params);
       rawImages = (res?.data || [])
@@ -357,19 +368,12 @@ async function executeAudio(
         : AUDIO_VOICE_DEFAULT);
   const speed = Math.max(0.5, Math.min(2, Number(config.speed) || 1));
 
-  const client = getDoubaoAIClient();
-  const response = await client.audio.speech.create({
+  const buffer = await synthesizeDoubaoSpeech({
     model,
-    input,
-    voice,
+    text: input,
+    speaker: voice,
     speed,
-    response_format: "mp3",
   });
-
-  const buffer = Buffer.from(await response.arrayBuffer());
-  if (buffer.length === 0) {
-    throw new NormalizedStepError("PROVIDER_REJECTED", "音频模型未返回结果");
-  }
 
   const key = ossKey("mp3");
   await uploadFile(buffer, key);
@@ -395,7 +399,12 @@ async function executeVideoSubmit(
   }
 
   const model = config.model || VIDEO_MODEL_DEFAULT;
-  const resolution = config.resolution || "1080p";
+  const configuredResolution = config.resolution || "1080p";
+  // Seedance 2.0 Fast 最高支持 720p；历史节点可能仍保存了 1080p。
+  const resolution =
+    model === "doubao-seedance-2-0-fast-260128" && configuredResolution === "1080p"
+      ? "720p"
+      : configuredResolution;
   const duration = Math.max(3, Math.min(10, Number(config.duration) || 5));
   const ratio = config.aspectRatio || "16:9";
 
@@ -406,7 +415,8 @@ async function executeVideoSubmit(
     if (!firstFrame) {
       throw new NormalizedStepError("INPUT_NOT_READY", "图生视频缺少首帧");
     }
-    firstFrameUrl = await toHttpUrl(firstFrame);
+    // OSS 有 Referer 白名单，Ark 无法直接回源；由本服务读取后内联提交。
+    firstFrameUrl = await fetchImageAsBase64(await toHttpUrl(firstFrame));
   }
 
   // 参考音频（PRD-VID-002）：上游音频连接后透传给供应商，模型不支持时按供应商错误归一
