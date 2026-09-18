@@ -18,13 +18,13 @@ const labels = {
   model: "Model",
   mode: "Mode",
   vocal: "Vocal",
-  modeSong: "Song",
-  modeMusic: "Music",
+  modeCustom: "Custom lyrics",
+  modeAuto: "Auto lyrics",
+  modeInstrumental: "Instrumental",
+  tags: "Style tags",
   vocalAuto: "Auto",
   vocalMale: "Male",
   vocalFemale: "Female",
-  voice: "Voice",
-  speed: "Speed",
   aspectRatio: "Ratio",
   count: "Count",
   layout: "Layout",
@@ -60,5 +60,44 @@ describe("PropertyFields video mode", () => {
 
     expect(html).toContain('<option value="image" selected="">Image to video</option>');
     expect(html).toMatch(/<select[^>]*disabled=""/);
+  });
+});
+
+describe("PropertyFields audio mode (Suno)", () => {
+  it("shows custom / auto / instrumental modes and style tags + vocal in custom mode", () => {
+    const html = renderToStaticMarkup(
+      <PropertyFields
+        type="audio"
+        config={{ model: "suno-v5", mode: "custom", tags: "pop", vocal: "female" }}
+        labels={labels}
+        onPatch={vi.fn()}
+        onDiscrete={vi.fn()}
+        onBeginEdit={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('<option value="custom" selected="">Custom lyrics</option>');
+    expect(html).toContain('<option value="auto">Auto lyrics</option>');
+    expect(html).toContain('<option value="instrumental">Instrumental</option>');
+    expect(html).toContain("Style tags");
+    expect(html).toContain("pop");
+    expect(html).toContain('<option value="female" selected="">Female</option>');
+  });
+
+  it("hides tags and vocal outside custom mode", () => {
+    const html = renderToStaticMarkup(
+      <PropertyFields
+        type="audio"
+        config={{ model: "suno-v5", mode: "instrumental" }}
+        labels={labels}
+        onPatch={vi.fn()}
+        onDiscrete={vi.fn()}
+        onBeginEdit={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('<option value="instrumental" selected="">Instrumental</option>');
+    expect(html).not.toContain("Style tags");
+    expect(html).not.toContain("Vocal");
   });
 });

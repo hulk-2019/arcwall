@@ -43,13 +43,13 @@ interface PropertyLabels {
   model: string;
   mode: string;
   vocal: string;
-  modeSong: string;
-  modeMusic: string;
+  modeCustom: string;
+  modeAuto: string;
+  modeInstrumental: string;
+  tags: string;
   vocalAuto: string;
   vocalMale: string;
   vocalFemale: string;
-  voice: string;
-  speed: string;
   aspectRatio: string;
   count: string;
   layout: string;
@@ -257,7 +257,7 @@ export function PropertyFields({
       )}
 
       {type === "audio" && (
-        <div className="mt-2 flex items-end gap-2">
+        <div className="mt-2 flex flex-wrap items-end gap-2">
           <ParamEnumField
             label={labels.model}
             className="min-w-0 flex-1"
@@ -267,46 +267,44 @@ export function PropertyFields({
           />
           <ParamEnumField
             label={labels.mode}
-            className="w-[76px]"
-            value={config.mode || "song"}
+            className="w-[96px]"
+            value={config.mode || "auto"}
             options={AUDIO_MODES.map((m) => ({
               value: m,
-              label: m === "song" ? labels.modeSong : labels.modeMusic,
+              label:
+                m === "custom"
+                  ? labels.modeCustom
+                  : m === "instrumental"
+                    ? labels.modeInstrumental
+                    : labels.modeAuto,
             }))}
-            onChange={(v) => onDiscrete({ mode: v as "song" | "music" })}
+            onChange={(v) => onDiscrete({ mode: v as "custom" | "auto" | "instrumental" })}
           />
-          <ParamEnumField
-            label={labels.vocal}
-            className="w-[68px]"
-            value={config.vocal || "auto"}
-            options={AUDIO_VOCALS.map((v) => ({
-              value: v,
-              label: v === "auto" ? labels.vocalAuto : v === "male" ? labels.vocalMale : labels.vocalFemale,
-            }))}
-            onChange={(v) =>
-              onDiscrete({
-                vocal: v as "auto" | "male" | "female",
-                // 切换人声偏好后清除显式音色，让执行层按偏好映射
-                voice: undefined,
-              })
-            }
-          />
-          <div className="w-14 min-w-0">
-            <ParamLabel>{labels.speed}</ParamLabel>
-            <Input
-              type="number"
-              min={0.5}
-              max={2}
-              step={0.1}
-              className="mt-1 h-8 px-2 text-xs"
-              value={config.speed ?? 1}
-              onChange={(event) =>
-                onDiscrete({
-                  speed: Math.max(0.5, Math.min(2, Number(event.target.value) || 1)),
-                })
-              }
-            />
-          </div>
+          {/* 自定义歌词模式下：风格标签 + 人声偏好 */}
+          {(config.mode || "auto") === "custom" && (
+            <>
+              <div className="w-36 min-w-0">
+                <ParamLabel>{labels.tags}</ParamLabel>
+                <Input
+                  className="mt-1 h-8 px-2 text-xs"
+                  placeholder="pop, ballad"
+                  onFocus={onBeginEdit}
+                  value={config.tags || ""}
+                  onChange={(event) => onPatch({ tags: event.target.value })}
+                />
+              </div>
+              <ParamEnumField
+                label={labels.vocal}
+                className="w-[68px]"
+                value={config.vocal || "auto"}
+                options={AUDIO_VOCALS.map((v) => ({
+                  value: v,
+                  label: v === "auto" ? labels.vocalAuto : v === "male" ? labels.vocalMale : labels.vocalFemale,
+                }))}
+                onChange={(v) => onDiscrete({ vocal: v as "auto" | "male" | "female" })}
+              />
+            </>
+          )}
         </div>
       )}
 

@@ -25,10 +25,16 @@ const MODELS: {
   { key: "doubao-seedance-2-0-260128", type: "video", label_zh: "Seedance 2.0", label_en: "Seedance 2.0" },
   { key: "doubao-seedance-1-0-pro-250528", type: "video", label_zh: "Seedance 1.0 Pro", label_en: "Seedance 1.0 Pro" },
   { key: "doubao-seedance-1-0-lite-t2v-250428", type: "video", label_zh: "Seedance 1.0 Lite", label_en: "Seedance 1.0 Lite" },
-  // 音频：Ark TTS 系列
-  { key: "doubao-seed-tts-1-0", type: "audio", label_zh: "Doubao TTS 1.0", label_en: "Doubao TTS 1.0" },
-  { key: "doubao-seed-tts-1-0-mini", type: "audio", label_zh: "Doubao TTS 1.0 Mini", label_en: "Doubao TTS 1.0 Mini" },
+// 音频：Suno 音乐生成（302.ai 代理，services/suno-proxy.ts 映射 mv 版本码）
+  { key: "suno-v5.5", type: "audio", label_zh: "Suno V5.5", label_en: "Suno V5.5" },
+  { key: "suno-v5", type: "audio", label_zh: "Suno V5", label_en: "Suno V5" },
+  { key: "suno-v4.5plus", type: "audio", label_zh: "Suno V4.5+", label_en: "Suno V4.5+" },
+  { key: "suno-v4.5", type: "audio", label_zh: "Suno V4.5", label_en: "Suno V4.5" },
+  { key: "suno-v4", type: "audio", label_zh: "Suno V4", label_en: "Suno V4" },
 ];
+
+/** 旧 TTS 模型：音频已切换 Suno，历史字典条目停用避免继续出现在可选项 */
+const DEPRECATED_KEYS = ["doubao-seed-tts-1-0", "doubao-seed-tts-1-0-mini"];
 
 async function main() {
   let sort = 1;
@@ -57,7 +63,15 @@ async function main() {
     });
     sort += 1;
   }
-  console.log(`Seeded ${MODELS.length} canvas models.`);
+
+  // 停用旧 TTS 条目（已存在的更新 is_active=false，不存在的跳过）
+  for (const key of DEPRECATED_KEYS) {
+    await prisma.dictionaries.updateMany({
+      where: { category: "canvas_model", key },
+      data: { is_active: false, updated_at: new Date() },
+    });
+  }
+  console.log(`Seeded ${MODELS.length} canvas models, deactivated ${DEPRECATED_KEYS.length} legacy TTS entries.`);
 }
 
 main()

@@ -17,9 +17,12 @@ VALUES
   ('canvas_model', 'doubao-seedance-2-0-260128',       'video', 'Seedance 2.0',      'Seedance 2.0',      8,  true, NOW(), NOW()),
   ('canvas_model', 'doubao-seedance-1-0-pro-250528',   'video', 'Seedance 1.0 Pro',  'Seedance 1.0 Pro',  9,  true, NOW(), NOW()),
   ('canvas_model', 'doubao-seedance-1-0-lite-t2v-250428', 'video', 'Seedance 1.0 Lite', 'Seedance 1.0 Lite', 10, true, NOW(), NOW()),
-  -- 音频：Ark TTS 系列
-  ('canvas_model', 'doubao-seed-tts-1-0',      'audio', 'Doubao TTS 1.0',      'Doubao TTS 1.0',      11, true, NOW(), NOW()),
-  ('canvas_model', 'doubao-seed-tts-1-0-mini', 'audio', 'Doubao TTS 1.0 Mini', 'Doubao TTS 1.0 Mini', 12, true, NOW(), NOW())
+  -- 音频：Suno 音乐生成（302.ai 代理，services/suno-proxy.ts 映射 mv 版本码）
+  ('canvas_model', 'suno-v5.5',    'audio', 'Suno V5.5', 'Suno V5.5', 11, true, NOW(), NOW()),
+  ('canvas_model', 'suno-v5',      'audio', 'Suno V5',   'Suno V5',   12, true, NOW(), NOW()),
+  ('canvas_model', 'suno-v4.5plus','audio', 'Suno V4.5+','Suno V4.5+',13, true, NOW(), NOW()),
+  ('canvas_model', 'suno-v4.5',    'audio', 'Suno V4.5', 'Suno V4.5', 14, true, NOW(), NOW()),
+  ('canvas_model', 'suno-v4',      'audio', 'Suno V4',   'Suno V4',   15, true, NOW(), NOW())
 ON CONFLICT (category, key) DO UPDATE
 SET type = EXCLUDED.type,
     label_zh = EXCLUDED.label_zh,
@@ -45,6 +48,9 @@ WHERE category = 'canvas_model'
     'doubao-seedance-2-0-260128',
     'doubao-seedance-1-0-pro-250528',
     'doubao-seedance-1-0-lite-t2v-250428',
-    'doubao-seed-tts-1-0',
-    'doubao-seed-tts-1-0-mini'
+    'suno-v5.5',
+    'suno-v5',
+    'suno-v4.5plus',
+    'suno-v4.5',
+    'suno-v4'
   );

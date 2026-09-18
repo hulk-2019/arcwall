@@ -73,13 +73,13 @@ export function NodeDock({ node, onRunNode, onRunDownstream, runDisabled }: Node
     model: t("model"),
     mode: t("mode"),
     vocal: t("vocal"),
-    modeSong: t("modeSong"),
-    modeMusic: t("modeMusic"),
+    modeCustom: t("modeCustom"),
+    modeAuto: t("modeAuto"),
+    modeInstrumental: t("modeInstrumental"),
+    tags: t("tags"),
     vocalAuto: t("vocalAuto"),
     vocalMale: t("vocalMale"),
     vocalFemale: t("vocalFemale"),
-    voice: t("voice"),
-    speed: t("speed"),
     aspectRatio: t("aspectRatio"),
     count: t("count"),
     layout: t("layout"),
@@ -212,7 +212,11 @@ export function NodeDock({ node, onRunNode, onRunDownstream, runDisabled }: Node
                   : node.type === "storyboard"
                     ? "storyboardBrief"
                     : node.type === "audio"
-                      ? "audioText"
+                      ? (node.config.mode || "auto") === "custom"
+                        ? "audioTextCustom"
+                        : (node.config.mode || "auto") === "instrumental"
+                          ? "audioTextInstrumental"
+                          : "audioTextAuto"
                       : "prompt"
               )}
             </h4>

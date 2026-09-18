@@ -75,7 +75,7 @@ function proxyKey(): string {
   return (process.env.PROXY_302AI_API_KEY || "").trim();
 }
 
-function proxyBase(): string {
+export function proxyBase(): string {
   return (process.env.PROXY_302AI_BASE_URL || "https://api.302.ai")
     .trim()
     // 容错：剥离误写的包裹引号与行尾分号（.env 常见笔误）
@@ -88,7 +88,7 @@ export function isProxyConfigured(): boolean {
   return proxyKey().length > 0;
 }
 
-function requireProxy(): { baseUrl: string; headers: Record<string, string> } {
+export function requireProxy(): { baseUrl: string; headers: Record<string, string> } {
   const key = proxyKey();
   if (!key) {
     throw new Error("未配置 302.ai 代理（PROXY_302AI_API_KEY）");

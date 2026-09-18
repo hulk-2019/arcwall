@@ -290,7 +290,7 @@ OpenAI 官方文档区分从提示词生成图片的 generations 能力、基于
 
 ### 八点五 音频适配
 
-Doubao Seed TTS 使用火山语音原生单向流式接口，不复用 Ark/OpenAI 兼容密钥。Worker 使用 `DOUBAO_SPEECH_API_KEY` 与 `DOUBAO_SPEECH_RESOURCE_ID`，解析 NDJSON 音频分片、拼接后转存 OSS；上游文本与节点自身文案按顺序合并后送入 TTS。
+音频生成统一切换 Suno（302.ai 代理，`PROXY_302AI_API_KEY` 复用同一密钥）。提交走 `/suno/submit/music`（任务 id 在 `data` 字段，每次生成 2 首），查询走 `/suno/fetch/{taskId}`，展示模型 ID 在适配层映射为 Suno mv 版本码。支持三种模式：custom（自定义歌词，`prompt` 传歌词 + `tags` 风格 + `metadata.create_mode=custom`，人声偏好映射 `vocal_gender`）、auto（自动写词，`gpt_description_prompt` 传歌曲描述）、instrumental（纯音乐，`gpt_description_prompt` + `make_instrumental=true`）。音频为两阶段异步任务：Worker 提交后由 poller 按退避轮询至终态，成功后取首个可用 clip 的 `audio_url` 下载转存 OSS；`provider_jobs.provider` 记录为 `suno_302`，Suno 无取消接口，平台超时统一归一为 `PROVIDER_TIMEOUT`。旧 Doubao Seed TTS 已下线，历史节点的 `mode: "music"` 配置自动迁移为 `instrumental`。
 
 ## 九 API 设计
 

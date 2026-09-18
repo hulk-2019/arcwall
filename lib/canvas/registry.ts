@@ -32,20 +32,20 @@ export const STORYBOARD_MODEL =
 export const VIDEO_MODEL_DEFAULT =
   process.env.CANVAS_VIDEO_MODEL || "doubao-seedance-2-0-fast-260128";
 
-/** TTS 模型与音色依赖供应商开通情况，可通过环境变量覆盖 */
+/** 音频生成统一走 Suno（302.ai 代理），展示 ID → mv 版本码见 services/suno-proxy.ts */
+export const SUNO_MODEL_OPTIONS = [
+  "suno-v5.5",
+  "suno-v5",
+  "suno-v4.5plus",
+  "suno-v4.5",
+  "suno-v4",
+];
+
 export const AUDIO_MODEL_DEFAULT =
-  process.env.CANVAS_AUDIO_MODEL || "doubao-seed-tts-1-0";
+  process.env.CANVAS_AUDIO_MODEL || "suno-v5";
 
-export const AUDIO_VOICE_DEFAULT =
-  process.env.CANVAS_AUDIO_VOICE || "zh_female_cancan_mars_bigtreenlm";
-
-/** 人声偏好 → 音色映射（可通过环境变量覆盖实际音色 ID） */
-export const AUDIO_VOICE_MALE_DEFAULT =
-  process.env.CANVAS_AUDIO_VOICE_MALE || "zh_male_jyunjun_terra_mars_bigtreenlm";
-export const AUDIO_VOICE_FEMALE_DEFAULT =
-  process.env.CANVAS_AUDIO_VOICE_FEMALE || "zh_female_cancan_mars_bigtreenlm";
-
-export const AUDIO_MODES = ["song", "music"] as const;
+/** 音频生成模式：自定义歌词 / 自动写词成曲 / 纯音乐 */
+export const AUDIO_MODES = ["custom", "auto", "instrumental"] as const;
 export const AUDIO_VOCALS = ["auto", "male", "female"] as const;
 
 export const VIDEO_RESOLUTIONS = ["480p", "720p", "1080p"];
@@ -103,10 +103,10 @@ export const VIDEO_MODEL_OPTIONS: string[] = parseModelList(process.env.CANVAS_V
   "doubao-seedance-1-0-lite-t2v-250428",
 ]);
 
-export const AUDIO_MODEL_OPTIONS: string[] = parseModelList(process.env.CANVAS_AUDIO_MODELS, [
-  AUDIO_MODEL_DEFAULT,
-  "doubao-seed-tts-1-0-mini",
-]);
+export const AUDIO_MODEL_OPTIONS: string[] = parseModelList(
+  process.env.CANVAS_AUDIO_MODELS,
+  SUNO_MODEL_OPTIONS
+);
 
 /**
  * 全局模型池（可选）：设置 CANVAS_MODELS 后，各节点类型的可选模型
@@ -117,7 +117,7 @@ const MODEL_POOL: string[] = parseModelList(process.env.CANVAS_MODELS, []);
 const MODEL_FILTER_RULES: Partial<Record<CanvasNodeType, RegExp[]>> = {
   image: [/seedream/i, /t2i/i, /gpt-image/i, /gemini-\d.*image/i],
   video: [/seedance/i],
-  audio: [/tts/i, /music/i, /seed-audio/i],
+  audio: [/suno/i],
 };
 
 /** 节点可选模型：全局池按类型过滤；未配置全局池时回退各类型默认列表 */
@@ -133,10 +133,6 @@ export function modelOptionsForType(type: CanvasNodeType): string[] {
   const filtered = MODEL_POOL.filter((m) => rules.some((r) => r.test(m)));
   return filtered.length > 0 ? filtered : (defaults[type] ?? []);
 }
-
-/** 音乐生成模型（纯音乐/人声歌曲，需供应商开通；未配置时纯音乐模式会明确失败） */
-export const AUDIO_MUSIC_MODEL =
-  process.env.CANVAS_AUDIO_MUSIC_MODEL || "";
 
 /** 文本节点 AI 润色的单次计费（PRD-NOD-003，独立于画布执行） */
 export const POLISH_TEXT_COST = 1;
@@ -221,10 +217,9 @@ export const NODE_TYPE_DEFS: Record<CanvasNodeType, NodeTypeDef> = {
       title: "音频生成",
       text: "",
       model: AUDIO_MODEL_DEFAULT,
-      voice: AUDIO_VOICE_DEFAULT,
-      speed: 1,
-      mode: "song",
+      mode: "auto",
       vocal: "auto",
+      tags: "",
     },
   },
   upload: {

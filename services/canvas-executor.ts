@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { getDoubaoAIClient } from "@/services/openai";
-import { synthesizeDoubaoSpeech } from "@/services/doubao-speech";
 import {
   fetchImageAsBase64,
   getSignedInternalUrl,
@@ -25,13 +24,10 @@ import {
   STORYBOARD_MODEL,
   VIDEO_MODEL_DEFAULT,
   AUDIO_MODEL_DEFAULT,
-  AUDIO_MUSIC_MODEL,
-  AUDIO_VOICE_DEFAULT,
-  AUDIO_VOICE_MALE_DEFAULT,
-  AUDIO_VOICE_FEMALE_DEFAULT,
   estimateNodeCost,
   imageModelProvider,
 } from "@/lib/canvas/registry";
+import { submitSunoTask, fetchSunoTask } from "@/services/suno-proxy";
 import {
   generateGptImage,
   generateGeminiNativeImage,
@@ -331,57 +327,84 @@ async function executeStoryboard(
 }
 
 // ---------------------------------------------------------------------------
-// 视频生成：两阶段（提交 + poller 轮询），不再阻塞 Worker（技术方案 §八点四）
+// 音频生成：Suno（302.ai 代理）两阶段——提交任务后由 poller 轮询至终态
 // ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// 音频生成（TTS）：上游文本 + 自身文案 → 供应商语音合成 → 转存 OSS
-// ---------------------------------------------------------------------------
-
-async function executeAudio(
+async function executeAudioSubmit(
+  stepRunId: number,
   config: CanvasNodeConfig,
   compiled: ReturnType<typeof compileInputs>
 ): Promise<StepExecutionResult> {
+  // 历史配置兼容：旧 TTS 的 "music"（纯音乐）迁移为 instrumental，旧 "song" 走自动写词
+  const rawMode = config.mode as string | undefined;
+  const mode: "custom" | "auto" | "instrumental" =
+    rawMode === "custom" || rawMode === "instrumental" || rawMode === "music"
+      ? rawMode === "music"
+        ? "instrumental"
+        : rawMode
+      : "auto";
   const input = mergePrompt(compiled.textChunks, config.text);
   if (!input.trim()) {
-    throw new NormalizedStepError("INPUT_NOT_READY", "缺少音频文案");
-  }
-
-  const model = config.model || AUDIO_MODEL_DEFAULT;
-  const mode = config.mode === "music" ? "music" : "song";
-  const vocal = config.vocal === "male" || config.vocal === "female" ? config.vocal : "auto";
-  // 纯音乐需要音乐生成模型（豆包音乐生成为独立签名 API，需单独开通接入）
-  if (mode === "music" && model !== AUDIO_MUSIC_MODEL) {
     throw new NormalizedStepError(
-      "PROVIDER_REJECTED",
-      "纯音乐模式需要配置音乐生成模型（CANVAS_AUDIO_MUSIC_MODEL）"
+      "INPUT_NOT_READY",
+      mode === "custom" ? "缺少歌词" : "缺少歌曲描述"
     );
   }
 
-  // 人声偏好 → 音色：显式音色优先，其次按偏好映射，最后回退默认
-  const voice =
-    config.voice ||
-    (vocal === "male"
-      ? AUDIO_VOICE_MALE_DEFAULT
-      : vocal === "female"
-        ? AUDIO_VOICE_FEMALE_DEFAULT
-        : AUDIO_VOICE_DEFAULT);
-  const speed = Math.max(0.5, Math.min(2, Number(config.speed) || 1));
+  const model = config.model || AUDIO_MODEL_DEFAULT;
 
-  const buffer = await synthesizeDoubaoSpeech({
-    model,
-    text: input,
-    speaker: voice,
-    speed,
+  // 先落 SUBMITTING 记录再提交供应商：崩溃后可由恢复任务收敛
+  const job = await prisma.provider_jobs.create({
+    data: {
+      step_run_id: stepRunId,
+      provider: "suno_302",
+      status: "submitting",
+      next_poll_at: new Date(Date.now() + 60_000),
+    },
   });
 
-  const key = ossKey("mp3");
-  await uploadFile(buffer, key);
+  try {
+    const taskId = await submitSunoTask({
+      model,
+      mode,
+      text: input,
+      tags: typeof config.tags === "string" ? config.tags : undefined,
+      title: typeof config.title === "string" ? config.title : undefined,
+      vocal:
+        config.vocal === "male" || config.vocal === "female" ? config.vocal : "auto",
+    });
 
-  return {
-    output: { kind: "audio", storageKeys: [key], meta: { model, voice, mode, vocal } },
-    cost: estimateNodeCost("audio", config),
-  };
+    await prisma.provider_jobs.update({
+      where: { id: job.id },
+      data: {
+        external_id: taskId,
+        status: "running",
+        next_poll_at: new Date(Date.now() + 5000),
+        updated_at: new Date(),
+      },
+    });
+
+    // 供应商任务已提交，本步骤保持 running，由 poller 驱动至终态
+    return {
+      output: { kind: "audio", storageKeys: [], meta: { model, mode } },
+      cost: 0,
+      asyncJob: { provider: "suno_302", externalId: taskId },
+    };
+  } catch (e) {
+    await prisma.provider_jobs.update({
+      where: { id: job.id },
+      data: { status: "failed", updated_at: new Date() },
+    });
+    throw e;
+  }
+}
+
+/** 下载 Suno 音频并转存 OSS（转存成功才算任务成功） */
+async function transferAudioToOss(audioUrl: string): Promise<string> {
+  const resp = await axios.get(audioUrl, { responseType: "arraybuffer", timeout: 300_000 });
+  const key = ossKey("mp3");
+  await uploadFile(Buffer.from(resp.data), key);
+  return key;
 }
 
 // ---------------------------------------------------------------------------
@@ -482,8 +505,104 @@ async function transferVideoToOss(videoUrl: string): Promise<string> {
 }
 
 /**
- * 轮询处理一条供应商任务（由 poller 消息驱动）。幂等：终态直接返回。
+ * Suno 音乐任务轮询：查询 → 成功转存 OSS → 完成；失败 → 跳过下游。
+ * 平台超时检查由 pollProviderJob 统一执行（在分发前），此处无需重复。
  */
+async function pollSunoJob(
+  job: {
+    id: number;
+    external_id: string | null;
+    poll_count: number;
+  },
+  stepRun: { id: number; node_id: string; execution_id: number; node_revision?: { config_json: unknown } | null }
+): Promise<void> {
+  let result;
+  try {
+    result = await fetchSunoTask(job.external_id!);
+  } catch (e) {
+    // 查询失败：退避后重试，不改状态
+    await prisma.provider_jobs.update({
+      where: { id: job.id },
+      data: {
+        poll_count: { increment: 1 },
+        next_poll_at: new Date(Date.now() + pollBackoffMs(job.poll_count + 1)),
+        updated_at: new Date(),
+      },
+    });
+    return;
+  }
+
+  if (result.status === "succeeded" && result.audioUrl) {
+    let storageKey: string;
+    try {
+      storageKey = await transferAudioToOss(result.audioUrl);
+    } catch (e) {
+      // 转存失败：退避后重试
+      await prisma.provider_jobs.update({
+        where: { id: job.id },
+        data: {
+          status: "running",
+          next_poll_at: new Date(Date.now() + pollBackoffMs(job.poll_count + 1)),
+          updated_at: new Date(),
+        },
+      });
+      return;
+    }
+
+    const config = (stepRun.node_revision?.config_json ?? {}) as CanvasNodeConfig;
+    await prisma.provider_jobs.update({
+      where: { id: job.id },
+      data: { status: "succeeded", next_poll_at: null, updated_at: new Date() },
+    });
+    await completeStepRun(
+      stepRun.id,
+      {
+        kind: "audio",
+        storageKeys: [storageKey],
+        meta: {
+          title: result.title,
+          clipCount: result.clips.length,
+          providerTaskId: job.external_id,
+        },
+      },
+      estimateNodeCost("audio", config)
+    );
+    await enqueueReadySteps(stepRun.execution_id);
+    return;
+  }
+
+  await prisma.provider_jobs.update({
+    where: { id: job.id },
+    data: {
+      poll_count: { increment: 1 },
+      // raw_status 为 VarChar(100)：只落 Suno 原始任务状态，不落整段 JSON
+      raw_status: result.rawStatus ? String(result.rawStatus).slice(0, 100) : undefined,
+      updated_at: new Date(),
+    },
+  });
+
+  if (result.status === "failed") {
+    await prisma.provider_jobs.update({
+      where: { id: job.id },
+      data: { status: "failed", next_poll_at: null, updated_at: new Date() },
+    });
+    await failStepRun(stepRun.id, "PROVIDER_REJECTED", "音乐任务生成失败");
+    await skipDownstreamSteps(stepRun.execution_id, stepRun.node_id);
+    await enqueueReadySteps(stepRun.execution_id);
+    return;
+  }
+
+  // running / unknown：按退避继续轮询
+  await prisma.provider_jobs.update({
+    where: { id: job.id },
+    data: {
+      status: "running",
+      next_poll_at: new Date(Date.now() + pollBackoffMs(job.poll_count + 1)),
+      updated_at: new Date(),
+    },
+  });
+}
+
 export async function pollProviderJob(providerJobId: number): Promise<void> {
   const job = await prisma.provider_jobs.findUnique({
     where: { id: providerJobId },
@@ -495,10 +614,13 @@ export async function pollProviderJob(providerJobId: number): Promise<void> {
   if (["succeeded", "failed", "cancelled"].includes(job.status)) return;
 
   const stepRun = job.step_run;
+  const isSuno = job.provider === "suno_302";
+  const providerLabel = isSuno ? "音乐生成" : "视频生成";
 
-  // 步骤已被取消（用户取消等）：尽力取消供应商任务并收敛
+  // 步骤已被取消（用户取消等）：尽力取消供应商任务并收敛（Suno 无取消接口，跳过）
   if (stepRun && ["cancelled", "skipped"].includes(stepRun.status)) {
-    if (job.external_id) await cancelVideoTask(job.external_id).catch(() => false);
+    if (job.external_id && !isSuno)
+      await cancelVideoTask(job.external_id).catch(() => false);
     await prisma.provider_jobs.update({
       where: { id: job.id },
       data: { status: "cancelled", updated_at: new Date() },
@@ -521,18 +643,23 @@ export async function pollProviderJob(providerJobId: number): Promise<void> {
 
   const executionId = stepRun.execution_id;
 
-  // 平台超时：供应商长时间无终态（技术方案 §十四点三）
+  // 平台超时：供应商长时间无终态（技术方案 §十四点三），Suno / 视频任务统一收敛
   const deadline = new Date(job.created_at?.getTime() ?? 0).getTime() + PROVIDER_JOB_TIMEOUT_MS;
   if (Date.now() > deadline) {
-    await cancelVideoTask(job.external_id).catch(() => false);
+    if (!isSuno) await cancelVideoTask(job.external_id).catch(() => false);
     await prisma.provider_jobs.update({
       where: { id: job.id },
       data: { status: "failed", raw_status: "platform_timeout", updated_at: new Date() },
     });
-    await failStepRun(stepRun.id, "PROVIDER_TIMEOUT", "视频生成超时");
+    await failStepRun(stepRun.id, "PROVIDER_TIMEOUT", `${providerLabel}超时`);
     await skipDownstreamSteps(executionId, stepRun.node_id);
     await enqueueReadySteps(executionId);
     return;
+  }
+
+  // ------- Suno（302.ai）音乐任务轮询 -------
+  if (isSuno) {
+    return pollSunoJob(job, stepRun);
   }
 
   let result;
@@ -658,7 +785,7 @@ export async function executeNodeStep(stepRun: {
     case "storyboard":
       return executeStoryboard(config, compiled);
     case "audio":
-      return executeAudio(config, compiled);
+      return executeAudioSubmit(stepRun.id, config, compiled);
     case "video":
       return executeVideoSubmit(stepRun.id, config, compiled);
     case "text":

@@ -63,11 +63,12 @@ export interface CanvasNodeConfig {
   duration?: number;
   // video: 480p/720p/1080p；image（GPT-Image 系列）: 1k/2k
   resolution?: string;
-  // audio 节点（TTS / 音乐生成）
-  voice?: string;
-  speed?: number;
-  mode?: "song" | "music"; // 歌曲（人声）/ 纯音乐
-  vocal?: "auto" | "male" | "female"; // 人声偏好（映射到音色）
+  // audio 节点（Suno 音乐生成）
+  voice?: string; // 兼容旧 TTS 配置，Suno 不使用
+  speed?: number; // 兼容旧 TTS 配置，Suno 不使用
+  mode?: "custom" | "auto" | "instrumental"; // 自定义歌词 / 自动写词成曲 / 纯音乐
+  vocal?: "auto" | "male" | "female"; // 人声偏好（custom 模式映射 vocal_gender）
+  tags?: string; // 风格标签（custom 模式）
   // upload 节点
   storageKey?: string; // OSS 对象键
   fileName?: string;
