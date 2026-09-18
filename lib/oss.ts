@@ -178,6 +178,16 @@ export async function uploadFile(buffer: Buffer, path: string): Promise<string> 
   }
 }
 
+export async function objectExists(path: string): Promise<boolean> {
+  try {
+    await client.head(path, { headers: internalDownloadHeaders() });
+    return true;
+  } catch (error: any) {
+    if (error?.status === 404 || error?.code === "NoSuchKey") return false;
+    throw error;
+  }
+}
+
 /**
  * Generate a signed URL for OSS object
  * @param path OSS object path
@@ -203,19 +213,39 @@ export function getSignedInternalUrl(path: string, expires: number = 3600): stri
   return client.signatureUrl(path, { expires });
 }
 
+function rewriteSignedUrlHost(url: string): string {
+  const ossHost = process.env.OSS_HOST;
+  if (!ossHost) return url;
+  const parsed = new URL(url);
+  parsed.protocol = "https:";
+  parsed.host = ossHost.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+  return parsed.toString();
+}
+
+/** 生成仅用于下载的短时签名地址，不改变对象本身用于预览的元数据。 */
+export function getSignedDownloadUrl(
+  path: string,
+  fileName: string,
+  expires: number = 600
+): string {
+  const extension = fileName.match(/(\.[A-Za-z0-9]{1,10})$/)?.[1] ?? "";
+  const encodedName = encodeURIComponent(fileName);
+  const url = client.signatureUrl(path, {
+    expires,
+    response: {
+      "content-disposition":
+        `attachment; filename="download${extension}"; filename*=UTF-8''${encodedName}`,
+    },
+  });
+  return rewriteSignedUrlHost(url);
+}
+
 export async function getSignedUrl(path: string, expires: number = 86400): Promise<string> {
   try {
     const url = client.signatureUrl(path, {
       expires: expires,
     });
-    const ossHost = process.env.OSS_HOST;
-    if (ossHost) {
-      const parsed = new URL(url);
-      parsed.protocol = 'https';
-      parsed.host = ossHost;
-      return parsed.toString();
-    }
-    return url;
+    return rewriteSignedUrlHost(url);
   } catch (e) {
     console.log("generate signed url failed:", e);
     throw e;

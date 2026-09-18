@@ -126,6 +126,14 @@ export const deleteCanvasProject = (id: number) =>
   fetcher(`/api/protected/canvas/projects/${id}`, { method: "DELETE" });
 export const getCanvasSnapshot = (canvasId: number) =>
   fetcher(`/api/protected/canvas/${canvasId}`, { cache: "no-store" });
+export async function prepareCanvasDownload(url: string, signal?: AbortSignal): Promise<string> {
+  const result = await fetcher<{ url: string }>(url, {
+    headers: { Accept: "application/json" },
+    signal,
+  });
+  if (!result.url) throw new Error("下载地址生成失败");
+  return result.url;
+}
 export const saveCanvas = (canvasId: number, operations: any[]) =>
   fetcher(`/api/protected/canvas/${canvasId}`, { method: "PATCH", body: JSON.stringify({ operations }) });
 /** 页面卸载时的兜底保存：keepalive 保证导航/刷新后请求仍会送达。 */

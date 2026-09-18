@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getCanvasSnapshot } from "./api";
+import { getCanvasSnapshot, prepareCanvasDownload } from "./api";
 
 describe("getCanvasSnapshot", () => {
   afterEach(() => {
@@ -17,6 +17,23 @@ describe("getCanvasSnapshot", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/protected/canvas/3",
       expect.objectContaining({ cache: "no-store" })
+    );
+  });
+
+  it("prepares a signed download without following its redirect", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ url: "https://oss.test/file" }))
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      prepareCanvasDownload("/api/protected/canvas/download?nodeId=1")
+    ).resolves.toBe("https://oss.test/file");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/protected/canvas/download?nodeId=1",
+      expect.objectContaining({
+        headers: expect.objectContaining({ Accept: "application/json" }),
+      })
     );
   });
 });

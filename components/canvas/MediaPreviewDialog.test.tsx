@@ -42,18 +42,13 @@ vi.mock("@/components/ui/button", () => ({
 import { MediaPreviewDialog } from "./MediaPreviewDialog";
 
 describe("MediaPreviewDialog audio lyrics", () => {
-  it("renders timed lyrics and both lyric-aware download formats", () => {
+  it("renders timed lyrics without duplicating node-toolbar download actions", () => {
     const html = renderToStaticMarkup(<MediaPreviewDialog />);
 
     expect(html).toContain("灯火沿着河流");
     expect(html).toContain("晚风轻轻吹");
-    expect(html).toContain("downloadLyricsMp3");
-    expect(html).toContain("downloadSongPackage");
-    expect(html).toContain(
-      "/api/protected/canvas/audio-download?canvasId=12&amp;nodeId=audio-1&amp;format=mp3"
-    );
-    expect(html).toContain(
-      "/api/protected/canvas/audio-download?canvasId=12&amp;nodeId=audio-1&amp;format=zip"
-    );
+    expect(html).not.toContain("downloadOriginal");
+    expect(html).not.toContain("downloadLyricsMp3");
+    expect(html).not.toContain("downloadSongPackage");
   });
 });

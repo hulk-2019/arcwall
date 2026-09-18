@@ -619,6 +619,8 @@
     "polishEmpty": "Enter some text first",
     "preview": "Preview",
     "download": "Download",
+    "downloadOriginal": "Download original",
+    "downloadFailed": "Download failed. Please try again.",
     "lyrics": "Lyrics",
     "downloadLyricsMp3": "Download MP3 with lyrics",
     "downloadSongPackage": "Download song package",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Download, FileArchive } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   Dialog,
@@ -18,13 +18,11 @@ import {
 } from "@/lib/audio-lyrics";
 
 /**
- * 媒体预览弹窗：图片灯箱（多图可切换）、视频 / 音频播放，支持下载。
- * 链接为读取时签名的 OSS URL，直接 <a download> 下载。
+ * 媒体预览弹窗：图片灯箱（多图可切换）、视频 / 音频播放。
  */
 export function MediaPreviewDialog() {
   const t = useTranslations("canvas");
   const preview = useCanvasStore((s) => s.mediaPreview);
-  const canvasId = useCanvasStore((s) => s.canvasId);
   const closeMediaPreview = useCanvasStore((s) => s.closeMediaPreview);
   const cycleMediaPreview = useCanvasStore((s) => s.cycleMediaPreview);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -151,37 +149,6 @@ export function MediaPreviewDialog() {
           )}
         </div>
 
-        <div className="flex flex-wrap justify-end gap-2">
-          {preview.kind === "audio" && canvasId && preview.nodeId && preview.lyrics ? (
-            <>
-              <Button type="button" variant="outline" size="sm" asChild>
-                <a
-                  href={`/api/protected/canvas/audio-download?canvasId=${canvasId}&nodeId=${encodeURIComponent(preview.nodeId)}&format=mp3`}
-                  download
-                >
-                  <Download className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                  {t("downloadLyricsMp3")}
-                </a>
-              </Button>
-              <Button type="button" variant="outline" size="sm" asChild>
-                <a
-                  href={`/api/protected/canvas/audio-download?canvasId=${canvasId}&nodeId=${encodeURIComponent(preview.nodeId)}&format=zip`}
-                  download
-                >
-                  <FileArchive className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                  {t("downloadSongPackage")}
-                </a>
-              </Button>
-            </>
-          ) : (
-            <Button type="button" variant="outline" size="sm" asChild>
-              <a href={url} download target="_blank" rel="noreferrer">
-                <Download className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                {t("download")}
-              </a>
-            </Button>
-          )}
-        </div>
       </DialogContent>
     </Dialog>
   );

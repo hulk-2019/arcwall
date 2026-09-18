@@ -1,8 +1,15 @@
 import axios from "axios";
+import { createHash } from "crypto";
 import { NextRequest } from "next/server";
 import { requireAuthOrResponse } from "@/lib/auth";
 import { safeSongFilename, type TimedLyricWord } from "@/lib/audio-lyrics";
-import { getSignedInternalUrl } from "@/lib/oss";
+import {
+  getSignedDownloadUrl,
+  getSignedInternalUrl,
+  internalDownloadHeaders,
+  objectExists,
+  uploadFile,
+} from "@/lib/oss";
 import { prisma } from "@/lib/prisma";
 import { getOwnedCanvas } from "@/models/canvas";
 import { findUserByEmail } from "@/models/user";
@@ -21,14 +28,6 @@ function asTimedWords(value: unknown): TimedLyricWord[] {
       Number.isFinite((item as TimedLyricWord).startMs) &&
       Number.isFinite((item as TimedLyricWord).endMs)
   );
-}
-
-function attachmentHeaders(filename: string, contentType: string): HeadersInit {
-  return {
-    "Content-Type": contentType,
-    "Content-Disposition": `attachment; filename="song.${filename.split(".").pop()}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
-    "Cache-Control": "private, no-store",
-  };
 }
 
 export async function GET(req: NextRequest) {
@@ -69,23 +68,29 @@ export async function GET(req: NextRequest) {
       ? output.meta.title.trim()
       : "song";
   const timedWords = asTimedWords(output.meta?.timedWords);
-  const audioResponse = await axios.get(getSignedInternalUrl(storageKey), {
-    responseType: "arraybuffer",
-    timeout: 300_000,
-  });
-  const audio = Buffer.from(audioResponse.data);
+  const extension = format === "zip" ? "zip" : "mp3";
+  const fileName = `${safeSongFilename(title)}.${extension}`;
+  const hash = createHash("sha256")
+    .update(JSON.stringify({ version: 1, storageKey, title, lyrics, timedWords, format }))
+    .digest("hex");
+  const cacheKey = `canvas/downloads/${hash}.${extension}`;
 
-  if (format === "zip") {
-    const archive = await buildSongPackage(audio, title, lyrics, timedWords);
-    const filename = `${safeSongFilename(title)}.zip`;
-    return new Response(new Uint8Array(archive), {
-      headers: attachmentHeaders(filename, "application/zip"),
+  if (!(await objectExists(cacheKey))) {
+    const audioResponse = await axios.get(getSignedInternalUrl(storageKey), {
+      responseType: "arraybuffer",
+      timeout: 300_000,
+      headers: internalDownloadHeaders(),
     });
+    const audio = Buffer.from(audioResponse.data);
+    const derivative =
+      format === "zip"
+        ? await buildSongPackage(audio, title, lyrics, timedWords)
+        : embedLyricsInMp3(audio, title, lyrics, timedWords);
+    await uploadFile(derivative, cacheKey);
   }
 
-  const tagged = embedLyricsInMp3(audio, title, lyrics, timedWords);
-  const filename = `${safeSongFilename(title)}.mp3`;
-  return new Response(new Uint8Array(tagged), {
-    headers: attachmentHeaders(filename, "audio/mpeg"),
-  });
+  const url = getSignedDownloadUrl(cacheKey, fileName, 600);
+  return req.headers.get("accept")?.includes("application/json")
+    ? Response.json({ url })
+    : Response.redirect(url, 302);
 }

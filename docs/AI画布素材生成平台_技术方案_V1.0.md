@@ -292,7 +292,7 @@ OpenAI 官方文档区分从提示词生成图片的 generations 能力、基于
 
 音频生成统一切换 Suno（302.ai 代理，`PROXY_302AI_API_KEY` 复用同一密钥）。歌曲提交走 `/suno/submit/music`（任务 id 在 `data` 字段，每次生成 2 首），查询走 `/suno/fetch/{taskId}`，展示模型 ID 在适配层映射为 Suno mv 版本码。支持三种模式：custom（自定义歌词，`prompt` 传歌词，预设风格映射为 `tags`，男/女声映射 `metadata.vocal_gender`）、auto（自动写词，将歌曲描述、风格关键词和男/女声拼入 `gpt_description_prompt`）、instrumental（纯音乐，将音乐描述和风格关键词写入 `tags`，并设置 `make_instrumental=true`；不显示人声选项）。风格预设为流行、摇滚、电子、嘻哈、古典、民谣和爵士。custom 模式可将文本框内不超过 200 字的描述提交到 `/suno/submit/lyrics`，前端通过受保护接口轮询并用首个歌词版本及标题更新节点配置。
 
-音频任务由 Worker/poller 分阶段收敛：音乐成功后取首个可用 clip 的 `audio_url` 转存 OSS，并将歌词、歌曲标题、clip ID 与原音乐任务 ID 写入输出元数据；非纯音乐再调用 `/suno/timing`，以 `suno_timing_302` provider job 轮询 `/suno/fetch/{taskId}`，将 `word/start_s/end_s` 转换为毫秒级 `timedWords`。时间轴失败或超时只降级为普通歌词，不会丢弃已生成歌曲。应用内播放器按当前播放时间高亮行级歌词；受保护下载接口提供写入 ID3 `USLT`/`SYLT` 的 MP3，以及包含同名 `.mp3 + .lrc + .txt` 的 ZIP 歌曲包。歌曲标题在快照读取时覆盖节点展示名称且不创建新 revision。Suno 无取消接口，音乐生成超时归一为 `PROVIDER_TIMEOUT`。旧 Doubao Seed TTS 已下线，历史节点的 `mode: "music"` 配置自动迁移为 `instrumental`。
+音频任务由 Worker/poller 分阶段收敛：音乐成功后取首个可用 clip 的 `audio_url` 转存 OSS，并将歌词、歌曲标题、clip ID 与原音乐任务 ID 写入输出元数据；非纯音乐再调用 `/suno/timing`，以 `suno_timing_302` provider job 轮询 `/suno/fetch/{taskId}`，将 `word/start_s/end_s` 转换为毫秒级 `timedWords`。时间轴失败或超时只降级为普通歌词，不会丢弃已生成歌曲。应用内播放器按当前播放时间高亮行级歌词；歌词 MP3 和 ZIP 下载按源对象、标题、歌词及时间轴计算内容哈希，首次生成后缓存到 `canvas/downloads/`，后续直接复用 OSS 派生对象。MP3 写入 ID3 `USLT`/`SYLT`，ZIP 包含同名 `.mp3 + .lrc + .txt`。歌曲标题在快照读取时覆盖节点展示名称且不创建新 revision。Suno 无取消接口，音乐生成超时归一为 `PROVIDER_TIMEOUT`。旧 Doubao Seed TTS 已下线，历史节点的 `mode: "music"` 配置自动迁移为 `instrumental`。
 
 ## 九 API 设计
 
@@ -378,7 +378,7 @@ workspaces/{workspace_id}/assets/{asset_id}/variants/preview-720p.mp4
 
 - 数据库和消息中只保存 storage_key，不保存永久公开 URL。
 
-- 下载通过短期签名 URL 或鉴权代理；分享链接绑定项目权限和有效期。
+- 下载入口统一放在节点上方操作浮框；原始图片、视频和音频下载先经过同源鉴权接口校验画布归属，再获取携带 `response-content-disposition: attachment` 的十分钟 OSS 签名地址，应用服务器不转发原始大文件。需要二次加工的歌词 MP3/ZIP 缓存到 OSS 后使用同样的附件签名下载。客户端准备签名地址期间使用请求生命周期锁禁用下载入口，请求结束立即解锁，不使用定时器；最终下载导航在页面级隐藏 iframe 中执行，跨域 OSS 异常不会刷新或替换画布主页面。分享链接绑定项目权限和有效期。
 
 - 画布快照与执行结果查询根据 `storage_key` 即时生成签名 URL；客户端读取快照时使用 `cache: no-store`，避免浏览器或框架复用已经过期的签名地址。持久化输出不得写入临时签名 URL。
 
