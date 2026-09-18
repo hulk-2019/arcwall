@@ -1,7 +1,8 @@
-import type { ModelConfig, ModelType, ImageSize, ImageGenerateParamsType } from "@/types/model-config";
+import type { ModelConfig, ModelType, ImageGenerateParamsType } from "@/types/model-config";
+import { gptImageSize } from "@/lib/image-size";
 
 /**
- * 模型配置映射（目前仅支持 doubao-seedream-4-0-250828）
+ * 首页/工作台图片模型配置（Seedream / GPT-Image-2 / Gemini）
  */
 const MODEL_CONFIGS: Record<ModelType, ModelConfig> = {
   doubao: {
@@ -47,7 +48,7 @@ const MODEL_CONFIGS: Record<ModelType, ModelConfig> = {
 export function getSizeForAspectRatio(
   aspectRatio: string,
   modelConfig: ModelConfig
-): ImageSize {
+): string {
   const fallbackRatioMap = MODEL_CONFIGS.doubao?.aspectRatioSizeMap || {};
   const ratioMap = modelConfig.aspectRatioSizeMap || fallbackRatioMap;
 
@@ -153,14 +154,18 @@ export function buildImageGenerateParams(
     return null;
   }
   const modelConfig = MODEL_CONFIGS[matchedModelType];
-  
-  const size = modelConfig.aspectRatioSizeMap[aspectRatio];
-
   const rules = MODEL_PARAM_RULES[matchedModelType];
+  const mappedSize = modelConfig.aspectRatioSizeMap[aspectRatio];
+  const size =
+    options?.size ||
+    (matchedModelType === "gpt" || mappedSize === undefined
+      ? gptImageSize(aspectRatio, "1k")
+      : mappedSize);
 
   const params: ImageGenerateParamsType = {
     model: modelType,
     prompt,
+    aspectRatio,
   };
 
   if (rules.withSize) {

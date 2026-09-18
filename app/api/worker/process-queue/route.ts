@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { downloadAndUploadImageWithThumbnail, generateOssKey } from "@/lib/oss";
-import { getDoubaoAIClient } from "@/services/openai";
+import { generateWallpaperRawImage } from "@/services/wallpaper-image";
 import { getRabbitMQChannel, closeRabbitMQ } from "@/lib/rabbitmq";
 import { redis } from "@/lib/redis";
 import { QUEUE_WALLPAPER_GENERATION, redisKeys, redisTTL } from "@/lib/constants";
@@ -37,11 +37,8 @@ async function processJob(data: any) {
 
     await redis.set(redisKeys.taskProgress(wallpaperId), 30, "EX", redisTTL.taskProgress);
 
-    const client = getDoubaoAIClient();
-    const res = await client.images.generate(llm_params);
-    const raw_img_url = res?.data?.[0]?.url;
-
-    if (!raw_img_url) throw new Error("Failed to generate image from Doubao");
+    const raw_img_url = await generateWallpaperRawImage(llm_params);
+    if (!raw_img_url) throw new Error("Failed to generate image");
 
     await redis.set(redisKeys.taskProgress(wallpaperId), 70, "EX", redisTTL.taskProgress);
 

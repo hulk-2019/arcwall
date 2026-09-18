@@ -15,6 +15,11 @@ import { internalDownloadHeaders } from "@/lib/oss";
 
 /** 下载 OSS 参考图（带桶 Referer 白名单所需的请求头） */
 async function downloadReference(url: string): Promise<{ buffer: Buffer; mime: string }> {
+  if (url.startsWith("data:")) {
+    const match = /^data:([^;]+);base64,(.+)$/.exec(url);
+    if (!match) throw new Error("invalid data url");
+    return { buffer: Buffer.from(match[2], "base64"), mime: match[1] };
+  }
   const resp = await axios.get(url, {
     responseType: "arraybuffer",
     timeout: 120_000,
@@ -104,18 +109,7 @@ export function getProxy302Client(): OpenAI {
   return new OpenAI({ baseURL: `${baseUrl}/v1`, apiKey: proxyKey() });
 }
 
-/** gpt-image-2：1K/2K 指长边 1024/2048，宽高须为 16 的倍数 */
-export function gptImageSize(aspectRatio: string, resolution: string): string {
-  const m = /^(\d+(?:\.\d+)?)\s*:\s*(\d+(?:\.\d+)?)$/.exec(aspectRatio || "");
-  const w = m ? Number(m[1]) : 16;
-  const h = m ? Number(m[2]) : 9;
-  const long = resolution === "2k" ? 2048 : 1024;
-  const round16 = (v: number) => Math.max(16, Math.round(v / 16) * 16);
-  if (w >= h) {
-    return `${long}x${round16((long * h) / w)}`;
-  }
-  return `${round16((long * w) / h)}x${long}`;
-}
+export { gptImageSize } from "@/lib/image-size";
 
 /**
  * GPT-Image 系列；返回原始图片（http url 或 data:base64）。

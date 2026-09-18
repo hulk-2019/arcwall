@@ -88,14 +88,18 @@ export async function downloadAndUploadImageWithThumbnail(
   ossKeyMap: Record<string, string>
 ): Promise<{ img_path: string | null; img_thumbnail_path: string | null; img_watermark_path: string | null }> {
   try {
-    // Download image to buffer
-    const response = await axios({
-      method: "GET",
-      url: imageUrl,
-      responseType: "arraybuffer",
-    });
-
-    const imageBuffer = Buffer.from(response.data);
+    let imageBuffer: Buffer;
+    if (imageUrl.startsWith("data:")) {
+      const [, b64] = imageUrl.split(",");
+      imageBuffer = Buffer.from(b64, "base64");
+    } else {
+      const response = await axios({
+        method: "GET",
+        url: imageUrl,
+        responseType: "arraybuffer",
+      });
+      imageBuffer = Buffer.from(response.data);
+    }
     const { original, watermark, thumbnail } = ossKeyMap;
 
     // Get image metadata to determine dimensions

@@ -65,4 +65,16 @@ describe("generateGptImage edits", () => {
       })
     );
   });
+
+  it("accepts inlined data-url references without downloading", async () => {
+    await generateGptImage({
+      model: "gpt-image-2",
+      prompt: "change the sky",
+      size: "1024x1024",
+      referenceUrls: ["data:image/png;base64,aGVsbG8="],
+    });
+
+    expect(mocks.axiosGet).not.toHaveBeenCalled();
+    expect(mocks.edit).toHaveBeenCalled();
+  });
 });

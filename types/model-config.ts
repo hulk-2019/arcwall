@@ -21,7 +21,7 @@ export type ImageSize =
   | "768x768";
 
 export interface ModelConfig {
-  aspectRatioSizeMap: Record<string, ImageSize>;
+  aspectRatioSizeMap: Record<string, string>;
   responseFormat: "url" | "b64_json";
   watermark?: boolean;
   sequentialImageGeneration?: "disabled" | "auto";
@@ -29,9 +29,9 @@ export interface ModelConfig {
   n?: number;
 }
 
-
 export type ImageGenerateParamsType = ImageGenerateParams & {
   watermark?: boolean;
   sequential_image_generation?: "disabled" | "auto";
   image?: string | string[];
+  aspectRatio?: string;
 };

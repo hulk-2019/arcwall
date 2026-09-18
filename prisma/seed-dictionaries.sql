@@ -1,7 +1,10 @@
 -- Insert model dictionaries
 INSERT INTO dictionaries (category, key, label_en, label_zh, sort_order, is_active, created_at, updated_at)
 VALUES
-  ('model', 'doubao-seedream-4-5-251128', 'Doubao Seedream 4.5', 'Doubao Seedream 4.5', 1, true, NOW(), NOW())
+  ('model', 'doubao-seedream-4-5-251128', 'Doubao Seedream 4.5', 'Doubao Seedream 4.5', 1, true, NOW(), NOW()),
+  ('model', 'gpt-image-2', 'GPT-Image-2', 'GPT-Image-2', 2, true, NOW(), NOW()),
+  ('model', 'gemini-3.1-flash-image-preview', 'Nano Banana 2', 'Nano Banana 2', 3, true, NOW(), NOW()),
+  ('model', 'gemini-3-pro-image-preview', 'Nano Banana Pro', 'Nano Banana Pro', 4, true, NOW(), NOW())
 ON CONFLICT (category, key) DO UPDATE
 SET label_en = EXCLUDED.label_en,
     label_zh = EXCLUDED.label_zh,
