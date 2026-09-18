@@ -173,6 +173,7 @@ export async function generateGeminiNativeImage(params: {
   model: string;
   prompt: string;
   aspectRatio: string;
+  imageSize?: "1K" | "2K";
   referenceUrls?: string[];
 }): Promise<string[]> {
   const { baseUrl, headers } = requireProxy();
@@ -197,7 +198,10 @@ export async function generateGeminiNativeImage(params: {
         contents: [{ parts }],
         generationConfig: {
           responseModalities: ["TEXT", "IMAGE"],
-          imageConfig: { aspectRatio: params.aspectRatio },
+          imageConfig: {
+            aspectRatio: params.aspectRatio,
+            ...(params.imageSize ? { imageSize: params.imageSize } : {}),
+          },
         },
       },
       { headers, timeout: 180_000 }

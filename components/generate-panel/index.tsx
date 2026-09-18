@@ -9,6 +9,7 @@ import {
   Sparkles,
   Plus,
   Layout,
+  Maximize2,
   Loader2,
   X,
 } from "lucide-react";
@@ -32,6 +33,7 @@ import {
 } from "@/services/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations, useLocale } from "next-intl";
+import { IMAGE_RESOLUTION_OPTIONS, normalizeImageResolution } from "@/lib/image-size";
 
 interface GeneratePanelProps {
   onSuccess?: () => void;
@@ -46,11 +48,14 @@ export function GeneratePanel({ onSuccess, className = "" }: GeneratePanelProps)
     setModel: setSelectedModel,
     aspectRatio,
     setAspectRatio,
+    resolution,
+    setResolution,
     imgUrl: uploadedImageUrl,
     setImgUrl: setUploadedImageUrl,
     imgPath: uploadedImagePath,
     setImgPath: setUploadedImagePath,
   } = useDesignStore();
+  const selectedResolution = normalizeImageResolution(resolution);
   
   const { isSignedIn } = useUser();
   const { fetchUserCredits } = useAppStore();
@@ -159,6 +164,7 @@ export function GeneratePanel({ onSuccess, className = "" }: GeneratePanelProps)
       imgUrl: uploadedImageUrl || undefined,
       imgPath: uploadedImagePath || undefined,
       aspectRatio,
+      resolution: selectedResolution,
     });
   };
 
@@ -476,6 +482,29 @@ export function GeneratePanel({ onSuccess, className = "" }: GeneratePanelProps)
               </DropdownMenuContent>
             </DropdownMenu>
             )}
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-900 dark:bg-white/10 text-white border border-transparent dark:border-white/10 text-xs font-medium hover:bg-gray-800 dark:hover:bg-white/20 transition-colors shadow-sm outline-none"
+                  title={t("sizeLabel")}
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                  {IMAGE_RESOLUTION_OPTIONS.find((option) => option.value === selectedResolution)?.label}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[100px]">
+                {IMAGE_RESOLUTION_OPTIONS.map((option) => (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onClick={() => setResolution(option.value)}
+                    className="cursor-pointer"
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <button
               onClick={handleOptimizePrompt}

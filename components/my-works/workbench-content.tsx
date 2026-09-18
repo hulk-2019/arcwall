@@ -48,6 +48,7 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
     setPrompt,
     setModel,
     setAspectRatio,
+    setResolution,
     setImgUrl,
     setImgPath,
   } = useDesignStore();
@@ -216,6 +217,7 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
     setPrompt(wallpaper.img_description || "");
     if (wallpaper.model_key) setModel(wallpaper.model_key);
     if (wallpaper.aspect_ratio_key) setAspectRatio(wallpaper.aspect_ratio_key);
+    setResolution(wallpaper.llm_params?.resolution === "1k" ? "1k" : "2k");
 
     if (wallpaper.llm_params && wallpaper.llm_params.imgPath) {
       const imgPath = wallpaper.llm_params.imgPath;
@@ -260,6 +262,7 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
       aspectRatio: wallpaper.aspect_ratio_key,
       model: wallpaper.model_key,
       language: locale,
+      resolution: wallpaper.llm_params?.resolution === "1k" ? "1k" : "2k",
       optimisticId: wallpaper.id,
     });
   };

@@ -34,4 +34,5 @@ export type ImageGenerateParamsType = ImageGenerateParams & {
   sequential_image_generation?: "disabled" | "auto";
   image?: string | string[];
   aspectRatio?: string;
+  resolution?: "1k" | "2k";
 };

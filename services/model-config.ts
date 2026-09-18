@@ -1,5 +1,5 @@
 import type { ModelConfig, ModelType, ImageGenerateParamsType } from "@/types/model-config";
-import { gptImageSize } from "@/lib/image-size";
+import { gptImageSize, normalizeImageResolution, scalePixelSize } from "@/lib/image-size";
 
 /**
  * 首页/工作台图片模型配置（Seedream / GPT-Image-2 / Gemini）
@@ -146,6 +146,7 @@ export function buildImageGenerateParams(
     quality?: "standard" | "hd";
     size?: string;
     imgUrl?: string | string[];
+    resolution?: string;
   }
 ): ImageGenerateParamsType | null  { 
   const matchedModelType = matchModelType(modelType);
@@ -155,17 +156,19 @@ export function buildImageGenerateParams(
   }
   const modelConfig = MODEL_CONFIGS[matchedModelType];
   const rules = MODEL_PARAM_RULES[matchedModelType];
+  const resolution = normalizeImageResolution(options?.resolution);
   const mappedSize = modelConfig.aspectRatioSizeMap[aspectRatio];
   const size =
     options?.size ||
-    (matchedModelType === "gpt" || mappedSize === undefined
-      ? gptImageSize(aspectRatio, "1k")
-      : mappedSize);
+    (matchedModelType === "gpt" || matchedModelType === "gemini" || mappedSize === undefined
+      ? gptImageSize(aspectRatio, resolution)
+      : scalePixelSize(mappedSize, resolution));
 
   const params: ImageGenerateParamsType = {
     model: modelType,
     prompt,
     aspectRatio,
+    resolution,
   };
 
   if (rules.withSize) {

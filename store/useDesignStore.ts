@@ -5,11 +5,13 @@ export interface DesignState {
   prompt: string;
   model: string;
   aspectRatio: string;
+  resolution: string;
   imgUrl: string | null;
   imgPath: string[] | null;
   setPrompt: (prompt: string) => void;
   setModel: (model: string) => void;
   setAspectRatio: (ratio: string) => void;
+  setResolution: (resolution: string) => void;
   setImgUrl: (url: string | null) => void;
   setImgPath: (path: string[] | null) => void;
 }
@@ -21,12 +23,14 @@ export const createDesignStore = (initProps?: Partial<DesignState>) => {
     prompt: "",
     model: "",
     aspectRatio: "",
+    resolution: "2k",
     imgUrl: null,
     imgPath: null,
     ...initProps,
     setPrompt: (prompt) => set({ prompt }),
     setModel: (model) => set({ model }),
     setAspectRatio: (aspectRatio) => set({ aspectRatio }),
+    setResolution: (resolution) => set({ resolution }),
     setImgUrl: (imgUrl) => set({ imgUrl }),
     setImgPath: (imgPath) => set({ imgPath }),
   }));

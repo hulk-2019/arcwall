@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     if (!parsed.success) {
       return respErr(errMsg("invalid.params"));
     }
-    const { description, aspectRatio, model, language, imgPath } = parsed.data;
+    const { description, aspectRatio, model, language, imgPath, resolution } = parsed.data;
 
     const ratio = aspectRatio || "16:9";
     const modelType: ModelType | string = model;
@@ -81,7 +81,10 @@ export async function POST(req: Request) {
     }
 
     // 使用模型配置服务构建参数，从参数中动态获取模型名称
-    const llm_params = buildImageGenerateParams(modelType, prompt, ratio, { imgUrl: resolvedImgUrl });
+    const llm_params = buildImageGenerateParams(modelType, prompt, ratio, {
+      imgUrl: resolvedImgUrl,
+      resolution,
+    });
 
     if (!llm_params) {
       return respErr(errMsg("invalid.params"));

@@ -1,9 +1,9 @@
 import { imageModelProvider } from "@/lib/canvas/registry";
+import { gptImageSize, normalizeImageResolution } from "@/lib/image-size";
 import {
   generateGeminiChatImage,
   generateGeminiNativeImage,
   generateGptImage,
-  gptImageSize,
   isProxyConfigured,
 } from "@/services/image-proxy";
 import { getDoubaoAIClient } from "@/services/openai";
@@ -32,12 +32,14 @@ export async function generateWallpaperRawImage(llm_params: {
   const model = llm_params.model;
   const prompt = llm_params.prompt;
   const aspectRatio = llm_params.aspectRatio || "16:9";
+  const resolution = normalizeImageResolution(llm_params.resolution);
+  const imageSize = resolution.toUpperCase() as "1K" | "2K";
   const references = toReferenceList(llm_params.image);
   const provider = imageModelProvider(model);
 
   if (provider === "ark") {
     const client = getDoubaoAIClient();
-    const { aspectRatio: _aspectRatio, ...arkParams } = llm_params;
+    const { aspectRatio: _aspectRatio, resolution: _resolution, ...arkParams } = llm_params;
     const res = await client.images.generate(arkParams as any);
     const url = firstImageUrl(res);
     if (!url) throw new Error("Failed to generate image from Doubao");
@@ -53,7 +55,7 @@ export async function generateWallpaperRawImage(llm_params: {
     urls = await generateGptImage({
       model,
       prompt,
-      size: llm_params.size || gptImageSize(aspectRatio, "1k"),
+      size: llm_params.size || gptImageSize(aspectRatio, resolution),
       referenceUrls: references,
     });
   } else if (provider === "gemini-native") {
@@ -61,12 +63,13 @@ export async function generateWallpaperRawImage(llm_params: {
       model,
       prompt,
       aspectRatio,
+      imageSize,
       referenceUrls: references,
     });
   } else {
     urls = await generateGeminiChatImage({
       model,
-      prompt: `${prompt}\n\n（请生成 ${aspectRatio} 画幅的图片）`,
+      prompt: `${prompt}\n\n（请生成 ${aspectRatio}、${imageSize} 画幅的图片）`,
       referenceUrls: references,
     });
   }

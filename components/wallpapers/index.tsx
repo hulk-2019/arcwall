@@ -27,7 +27,7 @@ interface Props {
 export default function WallpapersGrid({ wallpapers, loading }: Props) {
   const t = useTranslations("trending");
   const tPreview = useTranslations("myWorks");
-  const { setPrompt, setModel, setAspectRatio, setImgPath, setImgUrl } = useDesignStore();
+  const { setPrompt, setModel, setAspectRatio, setResolution, setImgPath, setImgUrl } = useDesignStore();
   const { user } = useAppStore();
   const router = useRouter();
 
@@ -39,6 +39,7 @@ export default function WallpapersGrid({ wallpapers, loading }: Props) {
     setPrompt(wallpaper.img_description);
     if (wallpaper.model_key) setModel(wallpaper.model_key);
     if (wallpaper.aspect_ratio_key) setAspectRatio(wallpaper.aspect_ratio_key);
+    setResolution(wallpaper.llm_params?.resolution === "1k" ? "1k" : "2k");
     if (wallpaper.llm_params?.imgPath) {
       const imgPath = wallpaper.llm_params.imgPath;
       setImgPath(Array.isArray(imgPath) ? imgPath : [imgPath]);

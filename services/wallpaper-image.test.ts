@@ -37,24 +37,26 @@ describe("generateWallpaperRawImage", () => {
     const url = await generateWallpaperRawImage({
       model: "gpt-image-2",
       prompt: "a cat",
-      size: "1024x576",
+      size: "2048x1152",
       aspectRatio: "16:9",
+      resolution: "2k",
     });
 
     expect(url).toBe("https://cdn.example/gpt.png");
     expect(mocks.generateGptImage).toHaveBeenCalledWith(
-      expect.objectContaining({ model: "gpt-image-2", prompt: "a cat" }),
+      expect.objectContaining({ model: "gpt-image-2", prompt: "a cat", size: "2048x1152" }),
     );
     expect(mocks.generate).not.toHaveBeenCalled();
   });
 
-  it("sends gemini flash jobs to the native gemini proxy", async () => {
+  it("sends gemini flash jobs with native imageSize", async () => {
     mocks.generateGeminiNativeImage.mockResolvedValue(["https://cdn.example/gemini.png"]);
 
     const url = await generateWallpaperRawImage({
       model: "gemini-3.1-flash-image-preview",
       prompt: "a forest",
       aspectRatio: "9:16",
+      resolution: "2k",
     });
 
     expect(url).toBe("https://cdn.example/gemini.png");
@@ -62,6 +64,24 @@ describe("generateWallpaperRawImage", () => {
       expect.objectContaining({
         model: "gemini-3.1-flash-image-preview",
         aspectRatio: "9:16",
+        imageSize: "2K",
+      }),
+    );
+  });
+
+  it("hints 1K size in gemini chat prompts", async () => {
+    mocks.generateGeminiChatImage.mockResolvedValue(["https://cdn.example/pro.png"]);
+
+    await generateWallpaperRawImage({
+      model: "gemini-3-pro-image-preview",
+      prompt: "a lake",
+      aspectRatio: "1:1",
+      resolution: "1k",
+    });
+
+    expect(mocks.generateGeminiChatImage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: expect.stringContaining("1K"),
       }),
     );
   });

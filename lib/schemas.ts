@@ -26,6 +26,7 @@ export const GenWallpaperSchema = z.object({
   language: z.enum(["en", "zh", "EN"]).optional(),
   imgUrl: z.string().url().optional(),
   imgPath: z.array(z.string()).optional(),
+  resolution: z.enum(["1k", "2k"]).optional(),
 });
 
 export const OptimizePromptSchema = z.object({
