@@ -4,16 +4,16 @@ import Link from "next/link";
 import {
   ArrowLeft,
   Check,
-  ChevronsDown,
   Layers,
   Loader2,
-  Play,
-  Redo2,
   Square,
   Undo2,
+  Redo2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import LanguageToggle from "@/components/language-toggle";
+import ThemeToggle from "@/components/theme-toggle";
 import { NODE_TYPE_DEFS } from "@/lib/canvas/registry";
 import { useAppStore } from "@/store/useAppStore";
 import { useCanvasStore } from "@/store/useCanvasStore";
@@ -162,6 +162,13 @@ export function CanvasToolbar({
           </span>
         </Button>
       )}
+
+      <span className="hidden h-5 w-px bg-border sm:block" />
+
+      <div className="flex items-center gap-1">
+        <LanguageToggle />
+        <ThemeToggle />
+      </div>
     </CanvasGlass>
   );
 }
