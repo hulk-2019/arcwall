@@ -161,3 +161,20 @@ export const polishCanvasText = (canvasId: number, text: string) =>
     method: "POST",
     body: JSON.stringify({ canvasId, text }),
   });
+export const submitCanvasLyrics = (canvasId: number, prompt: string) =>
+  fetcher<{ code: number; message: string; data?: { taskId: string } }>(
+    "/api/protected/canvas/generate-lyrics",
+    {
+      method: "POST",
+      body: JSON.stringify({ canvasId, prompt }),
+    }
+  );
+export const getCanvasLyrics = (taskId: string) =>
+  fetcher<{
+    code: number;
+    message: string;
+    data?: {
+      status: "running" | "succeeded" | "failed" | "unknown";
+      variants: Array<{ id?: string; title?: string; text: string }>;
+    };
+  }>(`/api/protected/canvas/generate-lyrics?taskId=${encodeURIComponent(taskId)}`);

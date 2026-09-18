@@ -19,6 +19,7 @@ import type {
   StepStatus,
 } from "@/types/canvas";
 import {
+  applyOutputMetadataToConfig,
   deriveTextOutput,
   deriveUploadOutput,
   type CanvasPlan,
@@ -249,10 +250,16 @@ export async function getCanvasSnapshot(canvasId: number) {
 
   const nodeDTOs = await Promise.all(
     nodes.map(async (n: any) => {
-      const config = (n.current_revision?.config_json ?? {}) as CanvasNodeConfig;
+      const storedConfig = (n.current_revision?.config_json ?? {}) as CanvasNodeConfig;
       const run = runMap.get(n.id);
       let output = run?.output ?? undefined;
       const status = (run?.status as StepStatus) ?? "idle";
+      const config = applyOutputMetadataToConfig(
+        n.type as CanvasNodeType,
+        storedConfig,
+        output,
+        status
+      );
 
       if (n.type === "text") {
         output = deriveTextOutput(derivationSnapshot, n.id, textMemo);

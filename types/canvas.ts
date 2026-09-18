@@ -17,6 +17,15 @@ export type StepStatus =
 
 export type ExecutionScope = "node" | "downstream" | "all";
 
+export type AudioStyle =
+  | "pop"
+  | "rock"
+  | "electronic"
+  | "hip-hop"
+  | "classical"
+  | "folk"
+  | "jazz";
+
 export type ExecutionStatus =
   | "queued"
   | "running"
@@ -67,8 +76,9 @@ export interface CanvasNodeConfig {
   voice?: string; // 兼容旧 TTS 配置，Suno 不使用
   speed?: number; // 兼容旧 TTS 配置，Suno 不使用
   mode?: "custom" | "auto" | "instrumental"; // 自定义歌词 / 自动写词成曲 / 纯音乐
-  vocal?: "auto" | "male" | "female"; // 人声偏好（custom 模式映射 vocal_gender）
-  tags?: string; // 风格标签（custom 模式）
+  vocal?: "auto" | "male" | "female"; // 人声偏好（custom 映射 vocal_gender；auto 拼入描述）
+  style?: AudioStyle; // 预设音乐风格
+  tags?: string; // 兼容旧配置；新节点由 style 映射关键词
   // upload 节点
   storageKey?: string; // OSS 对象键
   fileName?: string;

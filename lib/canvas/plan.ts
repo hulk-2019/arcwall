@@ -33,6 +33,23 @@ export interface CanvasPlan {
   totalCredits: number;
 }
 
+/**
+ * 将供应商生成的展示元数据投影到节点配置。
+ * 不创建新 revision，避免仅因自动改名导致刚生成的产物被判定 stale。
+ */
+export function applyOutputMetadataToConfig(
+  type: CanvasNodeType,
+  config: CanvasNodeConfig,
+  output: CanvasNodeOutput | undefined,
+  status: string
+): CanvasNodeConfig {
+  const generatedTitle =
+    type === "audio" && status === "succeeded" && typeof output?.meta?.title === "string"
+      ? output.meta.title.trim()
+      : "";
+  return generatedTitle ? { ...config, title: generatedTitle } : config;
+}
+
 export class PlanError extends Error {
   code: string;
   constructor(code: string, message?: string) {

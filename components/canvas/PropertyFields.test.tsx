@@ -21,8 +21,16 @@ const labels = {
   modeCustom: "Custom lyrics",
   modeAuto: "Auto lyrics",
   modeInstrumental: "Instrumental",
-  tags: "Style tags",
-  vocalAuto: "Auto",
+  style: "Style",
+  styles: {
+    pop: "Pop",
+    rock: "Rock",
+    electronic: "Electronic",
+    "hip-hop": "Hip-hop",
+    classical: "Classical",
+    folk: "Folk",
+    jazz: "Jazz",
+  },
   vocalMale: "Male",
   vocalFemale: "Female",
   aspectRatio: "Ratio",
@@ -64,11 +72,11 @@ describe("PropertyFields video mode", () => {
 });
 
 describe("PropertyFields audio mode (Suno)", () => {
-  it("shows custom / auto / instrumental modes and style tags + vocal in custom mode", () => {
+  it("shows preset styles and vocal selection in custom mode", () => {
     const html = renderToStaticMarkup(
       <PropertyFields
         type="audio"
-        config={{ model: "suno-v5", mode: "custom", tags: "pop", vocal: "female" }}
+        config={{ model: "suno-v5", mode: "custom", style: "rock", vocal: "female" }}
         labels={labels}
         onPatch={vi.fn()}
         onDiscrete={vi.fn()}
@@ -79,16 +87,33 @@ describe("PropertyFields audio mode (Suno)", () => {
     expect(html).toContain('<option value="custom" selected="">Custom lyrics</option>');
     expect(html).toContain('<option value="auto">Auto lyrics</option>');
     expect(html).toContain('<option value="instrumental">Instrumental</option>');
-    expect(html).toContain("Style tags");
-    expect(html).toContain("pop");
+    expect(html).toContain("Style");
+    expect(html).toContain('<option value="rock" selected="">Rock</option>');
+    expect(html).toContain('<option value="jazz">Jazz</option>');
     expect(html).toContain('<option value="female" selected="">Female</option>');
   });
 
-  it("hides tags and vocal outside custom mode", () => {
+  it("shows preset styles and vocal selection in automatic mode", () => {
     const html = renderToStaticMarkup(
       <PropertyFields
         type="audio"
-        config={{ model: "suno-v5", mode: "instrumental" }}
+        config={{ model: "suno-v5", mode: "auto", style: "folk", vocal: "male" }}
+        labels={labels}
+        onPatch={vi.fn()}
+        onDiscrete={vi.fn()}
+        onBeginEdit={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('<option value="folk" selected="">Folk</option>');
+    expect(html).toContain('<option value="male" selected="">Male</option>');
+  });
+
+  it("shows style but hides vocal in instrumental mode", () => {
+    const html = renderToStaticMarkup(
+      <PropertyFields
+        type="audio"
+        config={{ model: "suno-v5", mode: "instrumental", style: "classical" }}
         labels={labels}
         onPatch={vi.fn()}
         onDiscrete={vi.fn()}
@@ -97,7 +122,7 @@ describe("PropertyFields audio mode (Suno)", () => {
     );
 
     expect(html).toContain('<option value="instrumental" selected="">Instrumental</option>');
-    expect(html).not.toContain("Style tags");
+    expect(html).toContain('<option value="classical" selected="">Classical</option>');
     expect(html).not.toContain("Vocal");
   });
 });

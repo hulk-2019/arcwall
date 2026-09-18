@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useCanvasStore } from "@/store/useCanvasStore";
 import type { CanvasNodeDTO } from "@/types/canvas";
 import { NODE_WIDTH } from "./node-size";
+import type { TimedLyricWord } from "@/lib/audio-lyrics";
 
 const TOOLBAR_GAP = 10;
 
@@ -20,6 +21,11 @@ export function NodeActionToolbar({ node }: { node: CanvasNodeDTO }) {
   const openMediaPreview = useCanvasStore((s) => s.openMediaPreview);
 
   const urls = node.output?.urls ?? [];
+  const lyrics =
+    typeof node.output?.meta?.lyrics === "string" ? node.output.meta.lyrics : undefined;
+  const timedWords = Array.isArray(node.output?.meta?.timedWords)
+    ? (node.output.meta.timedWords as TimedLyricWord[])
+    : undefined;
   const previewKind =
     node.type === "video"
       ? "video"
@@ -55,6 +61,9 @@ export function NodeActionToolbar({ node }: { node: CanvasNodeDTO }) {
               kind: previewKind,
               urls,
               title: node.config.title || node.config.fileName,
+              ...(node.type === "audio"
+                ? { nodeId: node.id, lyrics, timedWords }
+                : {}),
             })
           }
         >

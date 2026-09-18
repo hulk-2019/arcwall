@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { NODE_TYPE_DEFS, estimateNodeCost } from "@/lib/canvas/registry";
-import { polishCanvasText } from "@/services/api";
+import { getCanvasLyrics, polishCanvasText, submitCanvasLyrics } from "@/services/api";
 import { useCanvasStore } from "@/store/useCanvasStore";
 import type { CanvasNodeConfig, CanvasNodeDTO } from "@/types/canvas";
 import { NodeTypeIcon } from "./node-meta";
@@ -45,6 +45,7 @@ export function NodeDock({ node, onRunNode, onRunDownstream, runDisabled }: Node
   const live = useCanvasStore((s) => s.liveExecution);
 
   const [polishing, setPolishing] = useState(false);
+  const [generatingLyrics, setGeneratingLyrics] = useState(false);
 
   const references = edges
     .filter((e) => e.targetNodeId === node.id)
@@ -76,8 +77,8 @@ export function NodeDock({ node, onRunNode, onRunDownstream, runDisabled }: Node
     modeCustom: t("modeCustom"),
     modeAuto: t("modeAuto"),
     modeInstrumental: t("modeInstrumental"),
-    tags: t("tags"),
-    vocalAuto: t("vocalAuto"),
+    style: t("style"),
+    styles: t.raw("audioStyles") as Record<string, string>,
     vocalMale: t("vocalMale"),
     vocalFemale: t("vocalFemale"),
     aspectRatio: t("aspectRatio"),
@@ -119,6 +120,50 @@ export function NodeDock({ node, onRunNode, onRunDownstream, runDisabled }: Node
       toast.error(error?.message || t("polishFailed"));
     }
     setPolishing(false);
+  };
+
+  const handleGenerateLyrics = async () => {
+    const description = (node.config.text || "").trim();
+    if (!description) {
+      toast.error(t("lyricsEmpty"));
+      return;
+    }
+    if (description.length > 200) {
+      toast.error(t("lyricsTooLong"));
+      return;
+    }
+    if (!canvasId) return;
+
+    setGeneratingLyrics(true);
+    try {
+      const submitted = await submitCanvasLyrics(canvasId, description);
+      const taskId = submitted.code === 0 ? submitted.data?.taskId : undefined;
+      if (!taskId) throw new Error(submitted.message || t("lyricsFailed"));
+
+      for (let attempt = 0; attempt < 60; attempt += 1) {
+        const result = await getCanvasLyrics(taskId);
+        if (result.code !== 0 || !result.data) {
+          throw new Error(result.message || t("lyricsFailed"));
+        }
+        if (result.data.status === "succeeded" && result.data.variants[0]?.text) {
+          const variant = result.data.variants[0];
+          updateNodeConfig(node.id, {
+            ...node.config,
+            text: variant.text,
+            ...(variant.title ? { title: variant.title } : {}),
+          });
+          toast.success(t("lyricsSuccess"));
+          return;
+        }
+        if (result.data.status === "failed") throw new Error(t("lyricsFailed"));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+      throw new Error(t("lyricsTimeout"));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("lyricsFailed"));
+    } finally {
+      setGeneratingLyrics(false);
+    }
   };
 
   return (
@@ -205,26 +250,46 @@ export function NodeDock({ node, onRunNode, onRunDownstream, runDisabled }: Node
 
         {promptField && (
           <section className="mb-1">
-            <h4 className="mb-1.5 text-[11px] font-medium text-muted-foreground">
-              {t(
-                node.type === "text"
-                  ? "textContent"
-                  : node.type === "storyboard"
-                    ? "storyboardBrief"
-                    : node.type === "audio"
-                      ? (node.config.mode || "auto") === "custom"
-                        ? "audioTextCustom"
-                        : (node.config.mode || "auto") === "instrumental"
-                          ? "audioTextInstrumental"
-                          : "audioTextAuto"
-                      : "prompt"
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <h4 className="text-[11px] font-medium text-muted-foreground">
+                {t(
+                  node.type === "text"
+                    ? "textContent"
+                    : node.type === "storyboard"
+                      ? "storyboardBrief"
+                      : node.type === "audio"
+                        ? (node.config.mode || "auto") === "custom"
+                          ? "audioTextCustom"
+                          : (node.config.mode || "auto") === "instrumental"
+                            ? "audioTextInstrumental"
+                            : "audioTextAuto"
+                        : "prompt"
+                )}
+              </h4>
+              {node.type === "audio" && (node.config.mode || "auto") === "custom" && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 rounded-full px-2 text-[11px] text-primary"
+                  disabled={generatingLyrics}
+                  onClick={() => void handleGenerateLyrics()}
+                >
+                  {generatingLyrics ? (
+                    <Loader2 className="mr-1 h-3 w-3 animate-spin" aria-hidden />
+                  ) : (
+                    <Sparkles className="mr-1 h-3 w-3" aria-hidden />
+                  )}
+                  {generatingLyrics ? t("generatingLyrics") : t("generateLyrics")}
+                </Button>
               )}
-            </h4>
+            </div>
             <Textarea
               value={(node.config[promptField] as string) || ""}
               placeholder={t("promptPlaceholder")}
               className="min-h-[64px] resize-none border-border/60 bg-muted/30 text-xs"
               rows={3}
+              disabled={generatingLyrics}
               onChange={(e) =>
                 updateNodeConfig(node.id, {
                   ...node.config,

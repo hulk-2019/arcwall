@@ -290,7 +290,9 @@ OpenAI 官方文档区分从提示词生成图片的 generations 能力、基于
 
 ### 八点五 音频适配
 
-音频生成统一切换 Suno（302.ai 代理，`PROXY_302AI_API_KEY` 复用同一密钥）。提交走 `/suno/submit/music`（任务 id 在 `data` 字段，每次生成 2 首），查询走 `/suno/fetch/{taskId}`，展示模型 ID 在适配层映射为 Suno mv 版本码。支持三种模式：custom（自定义歌词，`prompt` 传歌词 + `tags` 风格 + `metadata.create_mode=custom`，人声偏好映射 `vocal_gender`）、auto（自动写词，`gpt_description_prompt` 传歌曲描述）、instrumental（纯音乐，`gpt_description_prompt` + `make_instrumental=true`）。音频为两阶段异步任务：Worker 提交后由 poller 按退避轮询至终态，成功后取首个可用 clip 的 `audio_url` 下载转存 OSS；`provider_jobs.provider` 记录为 `suno_302`，Suno 无取消接口，平台超时统一归一为 `PROVIDER_TIMEOUT`。旧 Doubao Seed TTS 已下线，历史节点的 `mode: "music"` 配置自动迁移为 `instrumental`。
+音频生成统一切换 Suno（302.ai 代理，`PROXY_302AI_API_KEY` 复用同一密钥）。歌曲提交走 `/suno/submit/music`（任务 id 在 `data` 字段，每次生成 2 首），查询走 `/suno/fetch/{taskId}`，展示模型 ID 在适配层映射为 Suno mv 版本码。支持三种模式：custom（自定义歌词，`prompt` 传歌词，预设风格映射为 `tags`，男/女声映射 `metadata.vocal_gender`）、auto（自动写词，将歌曲描述、风格关键词和男/女声拼入 `gpt_description_prompt`）、instrumental（纯音乐，将音乐描述和风格关键词写入 `tags`，并设置 `make_instrumental=true`；不显示人声选项）。风格预设为流行、摇滚、电子、嘻哈、古典、民谣和爵士。custom 模式可将文本框内不超过 200 字的描述提交到 `/suno/submit/lyrics`，前端通过受保护接口轮询并用首个歌词版本及标题更新节点配置。
+
+音频任务由 Worker/poller 分阶段收敛：音乐成功后取首个可用 clip 的 `audio_url` 转存 OSS，并将歌词、歌曲标题、clip ID 与原音乐任务 ID 写入输出元数据；非纯音乐再调用 `/suno/timing`，以 `suno_timing_302` provider job 轮询 `/suno/fetch/{taskId}`，将 `word/start_s/end_s` 转换为毫秒级 `timedWords`。时间轴失败或超时只降级为普通歌词，不会丢弃已生成歌曲。应用内播放器按当前播放时间高亮行级歌词；受保护下载接口提供写入 ID3 `USLT`/`SYLT` 的 MP3，以及包含同名 `.mp3 + .lrc + .txt` 的 ZIP 歌曲包。歌曲标题在快照读取时覆盖节点展示名称且不创建新 revision。Suno 无取消接口，音乐生成超时归一为 `PROVIDER_TIMEOUT`。旧 Doubao Seed TTS 已下线，历史节点的 `mode: "music"` 配置自动迁移为 `instrumental`。
 
 ## 九 API 设计
 

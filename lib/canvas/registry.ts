@@ -1,4 +1,4 @@
-import type { CanvasNodeType, OutputKind, CanvasNodeConfig } from "@/types/canvas";
+import type { AudioStyle, CanvasNodeType, OutputKind, CanvasNodeConfig } from "@/types/canvas";
 
 /**
  * 能力注册表：节点类型、端口、连线兼容规则、模型与成本。
@@ -46,7 +46,24 @@ export const AUDIO_MODEL_DEFAULT =
 
 /** 音频生成模式：自定义歌词 / 自动写词成曲 / 纯音乐 */
 export const AUDIO_MODES = ["custom", "auto", "instrumental"] as const;
-export const AUDIO_VOCALS = ["auto", "male", "female"] as const;
+export const AUDIO_VOCALS = ["male", "female"] as const;
+export const AUDIO_STYLE_PRESETS: Array<{
+  name: string;
+  value: AudioStyle;
+  keywords: string[];
+}> = [
+  { name: "流行", value: "pop", keywords: ["pop", "ballad", "acoustic"] },
+  { name: "摇滚", value: "rock", keywords: ["rock", "indie", "alternative"] },
+  { name: "电子", value: "electronic", keywords: ["electronic", "edm", "synthwave"] },
+  { name: "嘻哈", value: "hip-hop", keywords: ["rap", "hip-hop", "trap"] },
+  { name: "古典", value: "classical", keywords: ["classical", "orchestral", "piano"] },
+  { name: "民谣", value: "folk", keywords: ["folk", "country", "bluegrass"] },
+  { name: "爵士", value: "jazz", keywords: ["jazz", "blues", "soul"] },
+];
+
+export function audioStyleTags(style?: AudioStyle): string {
+  return AUDIO_STYLE_PRESETS.find((preset) => preset.value === style)?.keywords.join(", ") ?? "";
+}
 
 export const VIDEO_RESOLUTIONS = ["480p", "720p", "1080p"];
 
@@ -218,8 +235,8 @@ export const NODE_TYPE_DEFS: Record<CanvasNodeType, NodeTypeDef> = {
       text: "",
       model: AUDIO_MODEL_DEFAULT,
       mode: "auto",
-      vocal: "auto",
-      tags: "",
+      vocal: "female",
+      style: "pop",
     },
   },
   upload: {

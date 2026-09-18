@@ -11,6 +11,7 @@ import { uploadCanvasAsset } from "@/services/api";
 import {
   ASPECT_RATIOS,
   AUDIO_MODES,
+  AUDIO_STYLE_PRESETS,
   AUDIO_VOCALS,
   UPLOAD_ACCEPT,
   UPLOAD_MIME_TYPES,
@@ -46,8 +47,8 @@ interface PropertyLabels {
   modeCustom: string;
   modeAuto: string;
   modeInstrumental: string;
-  tags: string;
-  vocalAuto: string;
+  style: string;
+  styles: Record<string, string>;
   vocalMale: string;
   vocalFemale: string;
   aspectRatio: string;
@@ -280,30 +281,27 @@ export function PropertyFields({
             }))}
             onChange={(v) => onDiscrete({ mode: v as "custom" | "auto" | "instrumental" })}
           />
-          {/* 自定义歌词模式下：风格标签 + 人声偏好 */}
-          {(config.mode || "auto") === "custom" && (
-            <>
-              <div className="w-36 min-w-0">
-                <ParamLabel>{labels.tags}</ParamLabel>
-                <Input
-                  className="mt-1 h-8 px-2 text-xs"
-                  placeholder="pop, ballad"
-                  onFocus={onBeginEdit}
-                  value={config.tags || ""}
-                  onChange={(event) => onPatch({ tags: event.target.value })}
-                />
-              </div>
-              <ParamEnumField
-                label={labels.vocal}
-                className="w-[68px]"
-                value={config.vocal || "auto"}
-                options={AUDIO_VOCALS.map((v) => ({
-                  value: v,
-                  label: v === "auto" ? labels.vocalAuto : v === "male" ? labels.vocalMale : labels.vocalFemale,
-                }))}
-                onChange={(v) => onDiscrete({ vocal: v as "auto" | "male" | "female" })}
-              />
-            </>
+          <ParamEnumField
+            label={labels.style}
+            className="w-[82px]"
+            value={config.style || "pop"}
+            options={AUDIO_STYLE_PRESETS.map((style) => ({
+              value: style.value,
+              label: labels.styles[style.value] || style.name,
+            }))}
+            onChange={(v) => onDiscrete({ style: v as CanvasNodeConfig["style"] })}
+          />
+          {(config.mode || "auto") !== "instrumental" && (
+            <ParamEnumField
+              label={labels.vocal}
+              className="w-[68px]"
+              value={config.vocal === "male" ? "male" : "female"}
+              options={AUDIO_VOCALS.map((v) => ({
+                value: v,
+                label: v === "male" ? labels.vocalMale : labels.vocalFemale,
+              }))}
+              onChange={(v) => onDiscrete({ vocal: v as "male" | "female" })}
+            />
           )}
         </div>
       )}

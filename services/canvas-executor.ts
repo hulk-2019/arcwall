@@ -27,7 +27,12 @@ import {
   estimateNodeCost,
   imageModelProvider,
 } from "@/lib/canvas/registry";
-import { submitSunoTask, fetchSunoTask } from "@/services/suno-proxy";
+import {
+  fetchSunoTask,
+  fetchSunoTiming,
+  submitSunoTask,
+  submitSunoTiming,
+} from "@/services/suno-proxy";
 import {
   generateGptImage,
   generateGeminiNativeImage,
@@ -370,8 +375,9 @@ async function executeAudioSubmit(
       text: input,
       tags: typeof config.tags === "string" ? config.tags : undefined,
       title: typeof config.title === "string" ? config.title : undefined,
+      style: config.style || "pop",
       vocal:
-        config.vocal === "male" || config.vocal === "female" ? config.vocal : "auto",
+        config.vocal === "male" ? "male" : "female",
     });
 
     await prisma.provider_jobs.update({
@@ -550,24 +556,70 @@ async function pollSunoJob(
     }
 
     const config = (stepRun.node_revision?.config_json ?? {}) as CanvasNodeConfig;
-    await prisma.provider_jobs.update({
-      where: { id: job.id },
-      data: { status: "succeeded", next_poll_at: null, updated_at: new Date() },
-    });
-    await completeStepRun(
-      stepRun.id,
-      {
-        kind: "audio",
-        storageKeys: [storageKey],
-        meta: {
-          title: result.title,
-          clipCount: result.clips.length,
-          providerTaskId: job.external_id,
-        },
+    const isInstrumental =
+      config.mode === "instrumental" || (config.mode as string | undefined) === "music";
+    const lyrics = isInstrumental
+      ? undefined
+      : result.lyrics || (config.mode === "custom" ? config.text : undefined);
+    const selected = result.clips.find((clip) => clip.audioUrl === result.audioUrl);
+    const output: CanvasNodeOutput = {
+      kind: "audio",
+      storageKeys: [storageKey],
+      meta: {
+        title: result.title,
+        ...(lyrics ? { lyrics } : {}),
+        ...(selected?.tags ? { tags: selected.tags } : {}),
+        ...(selected?.id ? { clipId: selected.id } : {}),
+        clipCount: result.clips.length,
+        providerTaskId: job.external_id,
+        model: config.model || AUDIO_MODEL_DEFAULT,
+        mode: isInstrumental ? "instrumental" : config.mode || "auto",
       },
-      estimateNodeCost("audio", config)
-    );
-    await enqueueReadySteps(stepRun.execution_id);
+    };
+
+    // 纯音乐没有歌词，直接完成；带歌词歌曲继续异步获取 timing。
+    if (isInstrumental) {
+      await prisma.provider_jobs.update({
+        where: { id: job.id },
+        data: { status: "succeeded", next_poll_at: null, updated_at: new Date() },
+      });
+      await completeStepRun(stepRun.id, output, estimateNodeCost("audio", config));
+      await enqueueReadySteps(stepRun.execution_id);
+      return;
+    }
+
+    try {
+      const timingTaskId = await submitSunoTiming(job.external_id!);
+      await prisma.$transaction([
+        prisma.provider_jobs.update({
+          where: { id: job.id },
+          data: { status: "succeeded", next_poll_at: null, updated_at: new Date() },
+        }),
+        prisma.step_runs.updateMany({
+          where: { id: stepRun.id, status: "running" },
+          data: { output_json: output as any, updated_at: new Date() },
+        }),
+        prisma.provider_jobs.create({
+          data: {
+            step_run_id: stepRun.id,
+            provider: "suno_timing_302",
+            external_id: timingTaskId,
+            status: "running",
+            next_poll_at: new Date(Date.now() + 3000),
+          },
+        }),
+      ]);
+    } catch (error) {
+      // timing 是增强能力：提交失败时保留已生成音乐与普通歌词，不让歌曲任务失败。
+      console.error(`Suno timing submit failed for step ${stepRun.id}:`, error);
+      await prisma.provider_jobs.update({
+        where: { id: job.id },
+        data: { status: "succeeded", next_poll_at: null, updated_at: new Date() },
+      });
+      output.meta = { ...output.meta, timingStatus: "failed" };
+      await completeStepRun(stepRun.id, output, estimateNodeCost("audio", config));
+      await enqueueReadySteps(stepRun.execution_id);
+    }
     return;
   }
 
@@ -603,6 +655,109 @@ async function pollSunoJob(
   });
 }
 
+async function finishSunoTimingJob(
+  job: { id: number },
+  stepRun: {
+    id: number;
+    node_id: string;
+    execution_id: number;
+    output_json?: unknown;
+    node_revision?: { config_json: unknown } | null;
+  },
+  status: "succeeded" | "failed",
+  timedWords?: Awaited<ReturnType<typeof fetchSunoTiming>>["tracks"][number]["words"]
+): Promise<void> {
+  const output = stepRun.output_json as CanvasNodeOutput | null | undefined;
+  if (!output || output.kind !== "audio" || !output.storageKeys?.length) {
+    await prisma.provider_jobs.update({
+      where: { id: job.id },
+      data: { status: "failed", raw_status: "missing_audio_output", next_poll_at: null },
+    });
+    await failStepRun(stepRun.id, "ASSET_TRANSFER_FAILED", "音乐时间轴缺少音频输出");
+    await skipDownstreamSteps(stepRun.execution_id, stepRun.node_id);
+    await enqueueReadySteps(stepRun.execution_id);
+    return;
+  }
+
+  const config = (stepRun.node_revision?.config_json ?? {}) as CanvasNodeConfig;
+  const completedOutput: CanvasNodeOutput = {
+    ...output,
+    meta: {
+      ...(output.meta ?? {}),
+      timingStatus: status,
+      ...(timedWords?.length ? { timedWords } : {}),
+    },
+  };
+  await prisma.provider_jobs.update({
+    where: { id: job.id },
+    data: {
+      status,
+      next_poll_at: null,
+      updated_at: new Date(),
+    },
+  });
+  // timing 失败只降级为普通歌词，歌曲本身仍成功。
+  await completeStepRun(
+    stepRun.id,
+    completedOutput,
+    estimateNodeCost("audio", config)
+  );
+  await enqueueReadySteps(stepRun.execution_id);
+}
+
+async function pollSunoTimingJob(
+  job: {
+    id: number;
+    external_id: string | null;
+    poll_count: number;
+  },
+  stepRun: {
+    id: number;
+    node_id: string;
+    execution_id: number;
+    output_json?: unknown;
+    node_revision?: { config_json: unknown } | null;
+  }
+): Promise<void> {
+  let result;
+  try {
+    result = await fetchSunoTiming(job.external_id!);
+  } catch {
+    await prisma.provider_jobs.update({
+      where: { id: job.id },
+      data: {
+        poll_count: { increment: 1 },
+        next_poll_at: new Date(Date.now() + pollBackoffMs(job.poll_count + 1)),
+        updated_at: new Date(),
+      },
+    });
+    return;
+  }
+
+  if (result.status === "succeeded") {
+    const output = stepRun.output_json as CanvasNodeOutput | null | undefined;
+    const clipId = typeof output?.meta?.clipId === "string" ? output.meta.clipId : undefined;
+    const track = result.tracks.find((item) => item.clipId === clipId) ?? result.tracks[0];
+    await finishSunoTimingJob(job, stepRun, "succeeded", track?.words);
+    return;
+  }
+  if (result.status === "failed") {
+    await finishSunoTimingJob(job, stepRun, "failed");
+    return;
+  }
+
+  await prisma.provider_jobs.update({
+    where: { id: job.id },
+    data: {
+      status: "running",
+      raw_status: result.rawStatus?.slice(0, 100),
+      poll_count: { increment: 1 },
+      next_poll_at: new Date(Date.now() + pollBackoffMs(job.poll_count + 1)),
+      updated_at: new Date(),
+    },
+  });
+}
+
 export async function pollProviderJob(providerJobId: number): Promise<void> {
   const job = await prisma.provider_jobs.findUnique({
     where: { id: providerJobId },
@@ -615,11 +770,13 @@ export async function pollProviderJob(providerJobId: number): Promise<void> {
 
   const stepRun = job.step_run;
   const isSuno = job.provider === "suno_302";
-  const providerLabel = isSuno ? "音乐生成" : "视频生成";
+  const isSunoTiming = job.provider === "suno_timing_302";
+  const isSunoProvider = isSuno || isSunoTiming;
+  const providerLabel = isSunoTiming ? "歌词时间轴" : isSuno ? "音乐生成" : "视频生成";
 
   // 步骤已被取消（用户取消等）：尽力取消供应商任务并收敛（Suno 无取消接口，跳过）
   if (stepRun && ["cancelled", "skipped"].includes(stepRun.status)) {
-    if (job.external_id && !isSuno)
+    if (job.external_id && !isSunoProvider)
       await cancelVideoTask(job.external_id).catch(() => false);
     await prisma.provider_jobs.update({
       where: { id: job.id },
@@ -646,7 +803,15 @@ export async function pollProviderJob(providerJobId: number): Promise<void> {
   // 平台超时：供应商长时间无终态（技术方案 §十四点三），Suno / 视频任务统一收敛
   const deadline = new Date(job.created_at?.getTime() ?? 0).getTime() + PROVIDER_JOB_TIMEOUT_MS;
   if (Date.now() > deadline) {
-    if (!isSuno) await cancelVideoTask(job.external_id).catch(() => false);
+    if (isSunoTiming) {
+      await prisma.provider_jobs.update({
+        where: { id: job.id },
+        data: { raw_status: "platform_timeout", updated_at: new Date() },
+      });
+      await finishSunoTimingJob(job, stepRun, "failed");
+      return;
+    }
+    if (!isSunoProvider) await cancelVideoTask(job.external_id).catch(() => false);
     await prisma.provider_jobs.update({
       where: { id: job.id },
       data: { status: "failed", raw_status: "platform_timeout", updated_at: new Date() },
@@ -660,6 +825,9 @@ export async function pollProviderJob(providerJobId: number): Promise<void> {
   // ------- Suno（302.ai）音乐任务轮询 -------
   if (isSuno) {
     return pollSunoJob(job, stepRun);
+  }
+  if (isSunoTiming) {
+    return pollSunoTimingJob(job, stepRun);
   }
 
   let result;

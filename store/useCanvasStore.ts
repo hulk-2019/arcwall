@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { saveCanvas } from "@/services/api";
 import { resolveTargetPort, getNodeTypeDef, nodeOutputKind } from "@/lib/canvas/registry";
+import type { TimedLyricWord } from "@/lib/audio-lyrics";
 import type {
   CanvasEdgeDTO,
   CanvasNodeDTO,
@@ -40,6 +41,9 @@ export interface MediaPreviewState {
   urls: string[];
   index: number;
   title?: string;
+  nodeId?: string;
+  lyrics?: string;
+  timedWords?: TimedLyricWord[];
 }
 
 interface CanvasState {
