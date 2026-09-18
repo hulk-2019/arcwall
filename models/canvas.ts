@@ -25,6 +25,7 @@ import {
   type CanvasPlan,
 } from "@/lib/canvas/plan";
 import { NODE_TYPE_DEFS } from "@/lib/canvas/registry";
+import { collectCoverTiles, type CoverTile, type CoverTileSource } from "@/lib/canvas/covers";
 
 /** 展示用签名 URL 的有效期（秒）。事实源始终是 storageKeys，URL 不落库。 */
 export const SIGNED_URL_TTL = 3600;
@@ -81,32 +82,103 @@ export async function listProjects(userId: number) {
     include: { canvases: { select: { id: true } } },
   });
 
-  const rows = await Promise.all(
-    projects.map(async (p) => {
-      const canvasId = p.canvases[0]?.id ?? null;
-      let nodeCount = 0;
-      let coverUrl: string | null = null;
-      if (canvasId) {
-        nodeCount = await prisma.nodes.count({ where: { canvas_id: canvasId } });
+  const canvasIds = projects
+    .map((project) => project.canvases[0]?.id)
+    .filter((id): id is number => typeof id === "number");
+
+  const nodes = canvasIds.length
+    ? await prisma.nodes.findMany({
+        where: { canvas_id: { in: canvasIds } },
+        include: { current_revision: { select: { config_json: true } } },
+        orderBy: [{ created_at: "asc" }, { id: "asc" }],
+      })
+    : [];
+
+  const visualNodeIds = nodes
+    .filter((node) => node.type === "image" || node.type === "video")
+    .map((node) => node.id);
+
+  const runs = visualNodeIds.length
+    ? await prisma.step_runs.findMany({
+        where: { node_id: { in: visualNodeIds }, status: "succeeded" },
+        orderBy: { id: "desc" },
+        select: { node_id: true, output_json: true },
+      })
+    : [];
+
+  const latestOutput = new Map<string, CanvasNodeOutput>();
+  for (const run of runs) {
+    if (!latestOutput.has(run.node_id)) {
+      latestOutput.set(run.node_id, (run.output_json ?? null) as CanvasNodeOutput);
+    }
+  }
+
+  const nodeCountByCanvas = new Map<number, number>();
+  const visualByCanvas = new Map<number, CoverTile[]>();
+  const sourcesByCanvas = new Map<number, CoverTileSource[]>();
+  for (const node of nodes) {
+    nodeCountByCanvas.set(node.canvas_id, (nodeCountByCanvas.get(node.canvas_id) ?? 0) + 1);
+    if (node.type !== "image" && node.type !== "video" && node.type !== "upload") continue;
+    const sources = sourcesByCanvas.get(node.canvas_id) ?? [];
+    sources.push({
+      type: node.type,
+      config: (node.current_revision?.config_json ?? {}) as { storageKey?: string; mediaType?: string },
+      output: latestOutput.get(node.id) ?? null,
+    });
+    sourcesByCanvas.set(node.canvas_id, sources);
+  }
+  for (const [canvasId, sources] of sourcesByCanvas) {
+    visualByCanvas.set(canvasId, collectCoverTiles(sources));
+  }
+
+  const coverAssetIds = projects
+    .map((project) => project.cover_asset_id)
+    .filter((id): id is number => typeof id === "number");
+  const coverAssets = coverAssetIds.length
+    ? await prisma.canvas_assets.findMany({
+        where: { id: { in: coverAssetIds } },
+        select: { id: true, storage_key: true },
+      })
+    : [];
+  const coverKeyById = new Map(coverAssets.map((asset) => [asset.id, asset.storage_key]));
+
+  return Promise.all(
+    projects.map(async (project) => {
+      const canvasId = project.canvases[0]?.id ?? null;
+      const tiles = canvasId ? [...(visualByCanvas.get(canvasId) ?? [])] : [];
+      if (tiles.length === 0 && project.cover_asset_id) {
+        const storageKey = coverKeyById.get(project.cover_asset_id);
+        if (storageKey) tiles.push({ kind: "image", storageKey });
       }
-      if (p.cover_asset_id) {
-        const asset = await prisma.canvas_assets.findUnique({
-          where: { id: p.cover_asset_id },
-        });
-        if (asset) coverUrl = asset.storage_key;
-      }
+
+      const coverTiles = (
+        await Promise.all(
+          tiles.map(async (tile) => {
+            try {
+              return {
+                kind: tile.kind,
+                url: await getSignedUrl(tile.storageKey, SIGNED_URL_TTL),
+              };
+            } catch (e) {
+              console.error(`sign cover failed for ${tile.storageKey}:`, e);
+              return null;
+            }
+          }),
+        )
+      ).filter((tile): tile is { kind: CoverTile["kind"]; url: string } => tile != null);
+
       return {
-        id: p.id,
-        name: p.name,
+        id: project.id,
+        name: project.name,
         canvasId,
-        nodeCount,
-        coverUrl,
-        updatedAt: p.updated_at?.toISOString(),
-        createdAt: p.created_at?.toISOString(),
+        nodeCount: canvasId ? nodeCountByCanvas.get(canvasId) ?? 0 : 0,
+        coverUrl: coverTiles.find((tile) => tile.kind === "image")?.url ?? coverTiles[0]?.url ?? null,
+        coverTiles,
+        updatedAt: project.updated_at?.toISOString(),
+        createdAt: project.created_at?.toISOString(),
       };
-    })
+    }),
   );
-  return rows;
 }
 
 export async function getProject(userId: number, projectId: number) {

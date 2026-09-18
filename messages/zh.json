@@ -4,11 +4,26 @@
     "subhead": "壁纸生成器",
     "nav": [
       {
+        "key": "home",
+        "title": "首页",
+        "url": "/"
+      },
+      {
         "key": "canvas",
-        "title": "画布",
-        "url": "/canvas"
+        "title": "AI画布",
+        "url": "/canvas",
+        "auth": true
+      },
+      {
+        "key": "workbench",
+        "title": "工作台",
+        "url": "/my-works",
+        "auth": true
       }
     ],
+    "navAria": "主导航",
+    "openMenu": "打开菜单",
+    "closeMenu": "关闭菜单",
     "creditsLabel": "积分",
     "login": "登录",
     "loading": "加载中…"

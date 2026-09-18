@@ -118,9 +118,6 @@ export default function ({ user }: Props) {
           )}
 
           <DropdownMenuItem asChild>
-            <Link href="/my-works" className="w-full cursor-pointer">{t("myWorkspace")}</Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
             <Link href="/trash" className="w-full cursor-pointer">{t("trash")}</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>

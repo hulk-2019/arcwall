@@ -4,11 +4,26 @@
     "subhead": "Wallpaper Generator",
     "nav": [
       {
+        "key": "home",
+        "title": "Home",
+        "url": "/"
+      },
+      {
         "key": "canvas",
-        "title": "Canvas",
-        "url": "/canvas"
+        "title": "AI Canvas",
+        "url": "/canvas",
+        "auth": true
+      },
+      {
+        "key": "workbench",
+        "title": "Workbench",
+        "url": "/my-works",
+        "auth": true
       }
     ],
+    "navAria": "Main navigation",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
     "creditsLabel": "Credits",
     "login": "Login",
     "loading": "Loading…"
