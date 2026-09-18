@@ -32,7 +32,7 @@ export default function Header() {
   const nav = t.raw("nav") as HeaderNavItem[];
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur">
+    <header className="sticky top-0 z-40 w-full border-b border-[rgb(229,229,229)] bg-background/95 backdrop-blur dark:border-border">
       <div className="grid h-16 w-full grid-cols-[auto_1fr_auto] items-stretch px-4 md:px-6">
         <Link
           href="/"
