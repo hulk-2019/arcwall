@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/button';
-import { useTranslations } from 'next-intl';
+import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 interface BatchActionsProps {
   selectedIds: number[];
@@ -30,35 +30,35 @@ export function BatchActions({
   if (selectedIds.length === 0) return null;
 
   return (
-    <div className="fixed bottom-4 sm:bottom-10 left-1/2 z-50 flex w-[calc(100vw-2rem)] sm:w-auto -translate-x-1/2 flex-col sm:flex-row items-center gap-3 sm:gap-6 rounded-2xl sm:rounded-full border border-border/50 bg-background/95 p-4 sm:px-6 sm:py-4 shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <span className="text-sm font-medium whitespace-nowrap self-start sm:self-auto">
-        {copy.batch.selected}: {selectedIds.length}
-      </span>
-      <div className="flex w-full flex-wrap items-center sm:justify-center gap-2 sm:w-auto sm:flex-nowrap">
-        {activeTab !== 'favorites' && (
-          <Button variant="outline" size="sm" onClick={handleBatchDownload} className="rounded-full">
+    <div className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-3 md:bottom-6 md:left-56">
+      <div className="pointer-events-auto flex w-fit max-w-[calc(100%-0.5rem)] flex-wrap items-center justify-center gap-2 rounded-md border border-border bg-background/95 px-3 py-2 shadow-lg backdrop-blur sm:flex-nowrap sm:gap-3 sm:px-4">
+        <span className="px-1 text-sm font-medium text-foreground">
+          {copy.batch.selected}: {selectedIds.length}
+        </span>
+        {activeTab !== "favorites" && (
+          <Button variant="outline" size="sm" onClick={handleBatchDownload}>
             {copy.batch.downloadSelected}
           </Button>
         )}
-        {activeTab === 'creations' && (
-          <Button variant="outline" size="sm" onClick={handleBatchPublish} className="rounded-full">
+        {activeTab === "creations" && (
+          <Button variant="outline" size="sm" onClick={handleBatchPublish}>
             {t("batchPublish")}
           </Button>
         )}
-        {activeTab === 'published' ? (
-          <Button variant="destructive" size="sm" disabled={isUnpublishing} onClick={handleBatchUnpublish} className="rounded-full">
+        {activeTab === "published" ? (
+          <Button variant="destructive" size="sm" disabled={isUnpublishing} onClick={handleBatchUnpublish}>
             {isUnpublishing ? t("processing") : copy.batch.unpublishSelected}
           </Button>
-        ) : activeTab === 'favorites' ? (
-          <Button variant="destructive" size="sm" onClick={handleBatchUnfavorite} className="rounded-full">
+        ) : activeTab === "favorites" ? (
+          <Button variant="destructive" size="sm" onClick={handleBatchUnfavorite}>
             {t("unfavorite")}
           </Button>
         ) : (
-          <Button variant="destructive" size="sm" onClick={handleBatchDelete} className="rounded-full">
+          <Button variant="destructive" size="sm" onClick={handleBatchDelete}>
             {copy.batch.deleteSelected}
           </Button>
         )}
-        <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])} className="rounded-full text-primary hover:text-primary/80">
+        <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])} className="text-muted-foreground">
           {copy.batch.cancel}
         </Button>
       </div>

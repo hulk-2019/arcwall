@@ -185,8 +185,11 @@
       "publishedSuccess": "发布成功",
       "noEligibleWorks": "没有可发布的作品",
       "deselectAll": "取消全选",
+      "selectAll": "全选",
       "selectAllOnPage": "全选本页",
       "currentPage": "当前页共 {count} 个作品",
+      "loadedCount": "已加载 {loaded} / {total}",
+      "loadingMore": "加载更多...",
       "filter": "筛选",
       "filters": "筛选条件",
       "keyword": "关键词",
@@ -231,9 +234,13 @@
     "sidebar": {
       "title": "数字资产工作台",
       "creations": "我的创作",
+      "creationsDesc": "预览、编辑、发布和批量管理你生成的壁纸。",
       "published": "已发布作品",
+      "publishedDesc": "已经公开到画廊的作品会显示在这里。",
       "favorites": "我的收藏",
-      "trash": "回收站"
+      "favoritesDesc": "收藏过的壁纸会集中放在这里，方便再次使用。",
+      "trash": "回收站",
+      "trashDesc": "删除的作品会先进入回收站，可以恢复或彻底清除。"
     },
     "preview": {
       "aspectRatio": "图片比例",

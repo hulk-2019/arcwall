@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDesignStore } from "@/store/useDesignStore";
 import { useAppStore } from "@/store/useAppStore";
 import { Wallpaper } from "@/types/wallpaper";
 import { toast } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getMyWorks,
   genWallpaper,
@@ -31,7 +32,12 @@ import {
   WorkbenchEmptyState,
   WorkbenchGridSkeleton,
 } from "@/components/my-works/workbench-grid-states";
-import { WorkbenchPagination } from "@/components/my-works/workbench-pagination";
+import {
+  WORKBENCH_GRID_CLASS,
+  flattenMyWorksPages,
+  getNextWorksPageParam,
+  mapMyWorksPages,
+} from "@/components/my-works/workbench-list";
 import { useTranslations, useLocale } from "next-intl";
 interface WorkbenchContentProps {
   activeTab: "creations" | "published" | "favorites";
@@ -51,11 +57,6 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
   const tWorkbench = useTranslations("myWorks.workbench");
   const locale = useLocale();
   const copy = {
-    pagination: {
-      previous: tMyWorks("pagination.previous"),
-      next: tMyWorks("pagination.next"),
-      page: tMyWorks("pagination.page"),
-    },
     batch: {
       selected: tMyWorks("batch.selected"),
       deleteSelected: tMyWorks("batch.deleteSelected"),
@@ -82,7 +83,6 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
 
   const queryClient = useQueryClient();
 
-  const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [previewWallpaper, setPreviewWallpaper] = useState<Wallpaper | null>(
     null,
@@ -110,7 +110,6 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
   const queryKey = [
     "myWorks",
     activeTab,
-    page,
     limit,
     debouncedKeyword,
     startDate,
@@ -118,12 +117,19 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
     sortByLikes,
   ];
 
-  const { data: myWorksData, isLoading: loading } = useQuery({
+  const {
+    data: myWorksData,
+    isLoading: loading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
     queryKey,
-    queryFn: async () => {
+    initialPageParam: 1,
+    queryFn: async ({ pageParam }) => {
       try {
         return await getMyWorks({
-          page,
+          page: pageParam,
           limit,
           type: activeTab,
           keyword: debouncedKeyword || undefined,
@@ -139,11 +145,12 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
         }
         throw e;
       }
-    }
+    },
+    getNextPageParam: (lastPage, allPages) => getNextWorksPageParam(lastPage, allPages),
   });
 
-  const wallpapers: Wallpaper[] = myWorksData?.data?.wallpapers || [];
-  const total = myWorksData?.data?.total || 0;
+  const { wallpapers, total } = flattenMyWorksPages(myWorksData?.pages);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const hasPending = activeTab === "creations" && wallpapers.some((w) => w.status === 0);
 
@@ -153,17 +160,10 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
     const unsubscribe = subscribeGenStatus({
       onUpdate: (updated) => {
         queryClient.setQueryData(queryKey, (old: any) => {
-          if (!old?.data?.wallpapers) return old;
           const updatedMap = new Map(updated.map((w: any) => [w.id, w]));
-          return {
-            ...old,
-            data: {
-              ...old.data,
-              wallpapers: old.data.wallpapers.map((w: any) =>
-                updatedMap.has(w.id) ? { ...w, ...updatedMap.get(w.id) } : w
-              ),
-            },
-          };
+          return mapMyWorksPages(old, (w: any) =>
+            updatedMap.has(w.id) ? { ...w, ...updatedMap.get(w.id) } : w,
+          );
         });
       },
       onDone: () => {
@@ -177,11 +177,15 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
     return unsubscribe;
   }, [hasPending, queryKey.join(",")]);
 
-  // Keep selected IDs in sync with current page wallpapers
   useEffect(() => {
-    const currentWallpapers: Wallpaper[] = myWorksData?.data?.wallpapers || [];
+    setSelectedIds([]);
+  }, [activeTab, debouncedKeyword, startDate, endDate, sortByLikes]);
+
+  const wallpaperIdsKey = wallpapers.map((w) => w.id).join(",");
+
+  useEffect(() => {
     const currentIds = new Set(
-      currentWallpapers
+      wallpapers
         .map((w) => w.id!)
         .filter((id): id is number => id !== undefined),
     );
@@ -190,7 +194,23 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
       if (filtered.length === prev.length) return prev;
       return filtered;
     });
-  }, [myWorksData?.data?.wallpapers]);
+  }, [wallpaperIdsKey]);
+
+  useEffect(() => {
+    const node = loadMoreRef.current;
+    if (!node) return;
+    const root = node.closest("[data-workbench-scroll]");
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          void fetchNextPage();
+        }
+      },
+      { root: root instanceof Element ? root : null, rootMargin: "240px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, wallpapers.length]);
 
   const handleEdit = async (wallpaper: Wallpaper) => {
     setPrompt(wallpaper.img_description || "");
@@ -213,18 +233,11 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
     mutationFn: genWallpaper,
     onMutate: async (variables: any) => {
       // Optimistically update status to generating
-      queryClient.setQueryData(queryKey, (old: any) => {
-        if (!old?.data?.wallpapers) return old;
-        return {
-          ...old,
-          data: {
-            ...old.data,
-            wallpapers: old.data.wallpapers.map((w: any) =>
-              w.id === variables.optimisticId ? { ...w, status: 0 } : w,
-            ),
-          },
-        };
-      });
+      queryClient.setQueryData(queryKey, (old: any) =>
+        mapMyWorksPages(old, (w: any) =>
+          w.id === variables.optimisticId ? { ...w, status: 0 } : w,
+        ),
+      );
     },
     onSuccess: (res: any) => {
       if (res.code === 0) {
@@ -588,59 +601,49 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
     }
   };
 
-  const totalPages = Math.ceil(total / limit);
-
   return (
     <TooltipProvider>
-      <div className="space-y-6">
-        <WorkbenchToolbar
-          selectedCount={selectedIds.length}
-          totalCount={wallpapers.length}
-          activeTab={activeTab}
-          keyword={keyword}
-          startDate={startDate}
-          endDate={endDate}
-          sortByLikes={sortByLikes}
-          tWorkbench={tWorkbench}
-          onToggleSelectAll={toggleSelectAll}
-          onKeywordChange={(value) => {
-            setKeyword(value);
-            setPage(1);
-          }}
-          onStartDateChange={(value) => {
-            setStartDate(value);
-            setPage(1);
-          }}
-          onEndDateChange={(value) => {
-            setEndDate(value);
-            setPage(1);
-          }}
-          onSortByLikesChange={(value) => {
-            setSortByLikes(value);
-            setPage(1);
-          }}
-          onResetFilters={() => {
-            setKeyword("");
-            setStartDate("");
-            setEndDate("");
-            setSortByLikes("");
-            setPage(1);
-          }}
-          onOpenGenerate={() => setIsGenerateDialogOpen(true)}
-        />
+      <div>
+        <div className="sticky top-0 z-20 bg-background/95 shadow-[0_8px_20px_-12px_hsl(var(--foreground)/0.22)] backdrop-blur">
+          <div className="w-full px-2 py-2 md:px-3">
+            <WorkbenchToolbar
+              selectedCount={selectedIds.length}
+              loadedCount={wallpapers.length}
+              totalCount={total}
+              activeTab={activeTab}
+              keyword={keyword}
+              startDate={startDate}
+              endDate={endDate}
+              sortByLikes={sortByLikes}
+              tWorkbench={tWorkbench}
+              onToggleSelectAll={toggleSelectAll}
+              onKeywordChange={setKeyword}
+              onStartDateChange={setStartDate}
+              onEndDateChange={setEndDate}
+              onSortByLikesChange={setSortByLikes}
+              onResetFilters={() => {
+                setStartDate("");
+                setEndDate("");
+                setSortByLikes("");
+              }}
+              onOpenGenerate={() => setIsGenerateDialogOpen(true)}
+            />
+          </div>
+        </div>
 
-        <BatchActions
-          selectedIds={selectedIds}
-          activeTab={activeTab}
-          copy={copy}
-          isUnpublishing={batchUnpublishMutation.isPending}
-          setSelectedIds={setSelectedIds}
-          handleBatchDownload={handleBatchDownload}
-          handleBatchUnpublish={handleBatchUnpublish}
-          handleBatchUnfavorite={handleBatchUnfavorite}
-          handleBatchDelete={handleBatchDelete}
-          handleBatchPublish={handleBatchPublish}
-        />
+        <div className="w-full space-y-3 px-2 py-3 md:px-3">
+          <BatchActions
+            selectedIds={selectedIds}
+            activeTab={activeTab}
+            copy={copy}
+            isUnpublishing={batchUnpublishMutation.isPending}
+            setSelectedIds={setSelectedIds}
+            handleBatchDownload={handleBatchDownload}
+            handleBatchUnpublish={handleBatchUnpublish}
+            handleBatchUnfavorite={handleBatchUnfavorite}
+            handleBatchDelete={handleBatchDelete}
+            handleBatchPublish={handleBatchPublish}
+          />
 
         {loading ? (
           <WorkbenchGridSkeleton />
@@ -648,7 +651,7 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
           <WorkbenchEmptyState activeTab={activeTab} tWorkbench={tWorkbench} />
         ) : (
           <>
-            <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+            <div className={WORKBENCH_GRID_CLASS}>
               {wallpapers.map((wallpaper) => (
                 <WallpaperCard
                   key={wallpaper.id}
@@ -670,19 +673,20 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
               ))}
             </div>
 
-            <div className={selectedIds.length > 0 ? "pb-36 sm:pb-28" : ""}>
-              <WorkbenchPagination
-                page={page}
-                totalPages={totalPages}
-                previousText={copy.pagination.previous}
-                nextText={copy.pagination.next}
-                pageText={copy.pagination.page}
-                onPrev={() => setPage(page - 1)}
-                onNext={() => setPage(page + 1)}
-              />
+            <div
+              ref={loadMoreRef}
+              className={`flex min-h-8 items-center justify-center ${selectedIds.length > 0 ? "pb-36 sm:pb-28" : "pb-4"}`}
+            >
+              {isFetchingNextPage ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  {tWorkbench("loadingMore")}
+                </div>
+              ) : null}
             </div>
           </>
         )}
+        </div>
       </div>
 
       {/* Dialogs */}
@@ -716,7 +720,7 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
       />
 
       <Dialog open={isGenerateDialogOpen} onOpenChange={setIsGenerateDialogOpen}>
-        <DialogContent className="w-[95vw] max-w-4xl p-0 bg-transparent border-0 shadow-none sm:rounded-3xl [&>button]:top-4 [&>button]:right-4 [&>button]:text-gray-500 hover:[&>button]:text-gray-900 dark:[&>button]:text-gray-400 dark:hover:[&>button]:text-gray-100 [&>button]:z-50 [&>button]:bg-white/80 dark:[&>button]:bg-black/50 [&>button]:p-1 [&>button]:rounded-full backdrop-blur-sm">
+        <DialogContent className="w-[95vw] max-w-4xl p-0 bg-transparent border-0 shadow-none sm:rounded-lg [&>button]:top-4 [&>button]:right-4 [&>button]:text-gray-500 hover:[&>button]:text-gray-900 dark:[&>button]:text-gray-400 dark:hover:[&>button]:text-gray-100 [&>button]:z-50 [&>button]:bg-white/80 dark:[&>button]:bg-black/50 [&>button]:p-1 [&>button]:rounded-md backdrop-blur-sm">
           <DialogTitle className="sr-only">Generate Wallpaper</DialogTitle>
           <DialogDescription className="sr-only">Create a new wallpaper</DialogDescription>
           <GeneratePanel 

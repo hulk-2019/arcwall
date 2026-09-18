@@ -185,8 +185,11 @@
       "publishedSuccess": "Published successfully",
       "noEligibleWorks": "No eligible works to publish",
       "deselectAll": "Deselect all",
+      "selectAll": "Select all",
       "selectAllOnPage": "Select all on page",
       "currentPage": "Current page: {count} items",
+      "loadedCount": "{loaded} / {total} loaded",
+      "loadingMore": "Loading more...",
       "filter": "Filter",
       "filters": "Filters",
       "keyword": "Keyword",
@@ -231,9 +234,13 @@
     "sidebar": {
       "title": "My Workspace",
       "creations": "My Creations",
+      "creationsDesc": "Preview, edit, publish, and batch-manage the wallpapers you generated.",
       "published": "Published",
+      "publishedDesc": "Works you have published to the gallery appear here.",
       "favorites": "My Favorites",
-      "trash": "Trash"
+      "favoritesDesc": "Wallpapers you saved live here so you can reuse them later.",
+      "trash": "Trash",
+      "trashDesc": "Deleted works stay here until you restore or permanently remove them."
     },
     "preview": {
       "aspectRatio": "Aspect ratio",

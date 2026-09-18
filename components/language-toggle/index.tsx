@@ -27,7 +27,7 @@ const LanguageToggle = () => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex h-9 items-center gap-1.5 rounded-full border border-white/20 bg-white/70 px-3 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-white/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-white/10 dark:bg-white/5 dark:text-white/80 dark:hover:bg-white/10">
+      <DropdownMenuTrigger className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
         <Globe className="h-4 w-4" />
         <span>{locales.find((l) => l.value === locale)?.label ?? "EN"}</span>
         <ChevronDown className="h-3 w-3 opacity-50" />

@@ -39,7 +39,7 @@ export function WallpaperCard({
   const t = useTranslations("myWorks.card");
 
   return (
-    <article className="group relative overflow-hidden rounded-[28px] border border-white/20 bg-card shadow-xl dark:border-white/10 dark:bg-slate-900">
+    <article className="group relative overflow-hidden rounded-lg border border-border/80 bg-card text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg">
       <div className="relative aspect-square overflow-hidden">
         {wallpaper.status === 0 ? (
           <div className="flex h-full w-full flex-col items-center justify-center bg-muted/50 p-4 text-center">
@@ -48,7 +48,7 @@ export function WallpaperCard({
           </div>
         ) : wallpaper.status === 2 ? (
           <div className="flex h-full w-full flex-col items-center justify-center bg-muted/50 p-4 text-center">
-            <div className="rounded-full bg-destructive/10 p-3 mb-3">
+            <div className="rounded-md bg-destructive/10 p-3 mb-3">
               <ImageOff className="h-8 w-8 text-destructive" />
             </div>
             <div className="flex items-center gap-1.5 text-destructive">
@@ -77,7 +77,7 @@ export function WallpaperCard({
               src={wallpaper.img_thumbnail_url || ""}
               alt={wallpaper.img_description || ""}
               fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, (max-width: 1280px) 20vw, 16vw"
               className="object-cover transition duration-700 group-hover:scale-105"
             />
           </div>
@@ -87,7 +87,7 @@ export function WallpaperCard({
           <div className="absolute left-2 top-2">
             <button
               onClick={(e) => { e.stopPropagation(); toggleSelect(wallpaper.id!); }}
-              className="rounded-full bg-black/50 p-1.5 text-white backdrop-blur hover:bg-black/70"
+              className="rounded-md bg-black/50 p-1.5 text-white backdrop-blur hover:bg-black/70"
             >
               {selectedIds.includes(wallpaper.id!) ? <CheckSquare className="h-5 w-5" /> : <Square className="h-5 w-5" />}
             </button>
@@ -103,7 +103,7 @@ export function WallpaperCard({
         )}
 
         {activeTab === "published" && (
-          <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-xs font-medium text-white backdrop-blur shadow-sm">
+          <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white backdrop-blur shadow-sm">
             <Heart className="h-3 w-3" />
             <span>{wallpaper.likes_count || 0}</span>
           </div>
@@ -116,7 +116,7 @@ export function WallpaperCard({
         )}
       </div>
 
-      <div className="space-y-2 px-4 pt-4 pb-3">
+      <div className="space-y-2 px-3 pb-3 pt-3">
         <p className="line-clamp-2 text-sm font-medium text-foreground">{wallpaper.img_description}</p>
 
         <div className="flex items-center justify-between gap-2 mt-2">

@@ -96,4 +96,14 @@ describe("Header navigation", () => {
     expect(html).toContain('href="/sign-in?redirect_url=%2Fmy-works"');
     expect(html).toContain('href="/"');
   });
+
+  it("renders a text nav without a boxed cluster", () => {
+    state.pathname = "/";
+    state.user = { id: 1 };
+    const html = renderToStaticMarkup(<Header />);
+
+    expect(html).toContain('aria-current="page"');
+    expect(html).not.toContain("bg-muted/50");
+    expect(html).toContain("after:bg-primary");
+  });
 });

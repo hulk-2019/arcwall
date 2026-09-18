@@ -23,7 +23,7 @@ export function WorkbenchPagination({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-center gap-4 pt-6">
+    <div className="flex items-center justify-center gap-3 pt-4">
       <Button variant="outline" disabled={page === 1} onClick={onPrev}>
         <ChevronLeft className="mr-2 h-4 w-4" />
         {previousText}

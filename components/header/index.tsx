@@ -32,45 +32,44 @@ export default function Header() {
   const nav = t.raw("nav") as HeaderNavItem[];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/75 backdrop-blur-xl">
-      <div className="grid h-16 w-full grid-cols-[auto_1fr_auto] items-center gap-4 px-4 md:px-8">
+    <header className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur">
+      <div className="grid h-16 w-full grid-cols-[auto_1fr_auto] items-stretch px-4 md:px-6">
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex items-center gap-2.5 self-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-sm">
+          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
             A
           </span>
-          <span className="text-lg font-semibold tracking-tight">{t("brand")}</span>
+          <span className="text-base font-semibold tracking-tight">{t("brand")}</span>
         </Link>
 
-        <nav aria-label={t("navAria")} className="hidden justify-self-center md:block">
-          <div className="flex items-center gap-0.5 rounded-full border border-border/70 bg-muted/50 p-1 shadow-sm">
-            {nav.map((item) => (
-              <HeaderNavLink
-                key={item.key}
-                item={item}
-                pathname={pathname}
-                user={user}
-                variant="desktop"
-              />
-            ))}
-          </div>
+        <nav
+          aria-label={t("navAria")}
+          className="hidden h-full items-stretch justify-self-center md:flex"
+        >
+          {nav.map((item) => (
+            <HeaderNavLink
+              key={item.key}
+              item={item}
+              pathname={pathname}
+              user={user}
+              variant="desktop"
+            />
+          ))}
         </nav>
 
-        <div className="flex shrink-0 items-center justify-self-end gap-2">
-          <div className="hidden items-center gap-3 md:flex">
-            <div className="flex items-center gap-2">
-              <LanguageToggle />
-              <ThemeToggle />
-            </div>
-            <div className="h-6 w-px bg-border" />
+        <div className="flex items-center justify-self-end gap-1 self-center md:gap-2">
+          <div className="hidden items-center gap-1 md:flex">
+            <LanguageToggle />
+            <ThemeToggle />
+            <div className="mx-1 h-4 w-px bg-border" />
             <HeaderAccount user={user} loginLabel={t("login")} />
           </div>
 
           <button
             type="button"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
             aria-expanded={isMobileMenuOpen}
             aria-controls="mobile-nav"
             aria-label={isMobileMenuOpen ? t("closeMenu") : t("openMenu")}
@@ -84,9 +83,9 @@ export default function Header() {
       {isMobileMenuOpen && (
         <div
           id="mobile-nav"
-          className="border-t border-border/60 bg-background/95 backdrop-blur-xl md:hidden"
+          className="border-t border-border bg-background md:hidden"
         >
-          <nav aria-label={t("navAria")} className="space-y-1 px-4 py-3">
+          <nav aria-label={t("navAria")} className="flex flex-col px-2 py-2">
             {nav.map((item) => (
               <HeaderNavLink
                 key={item.key}
@@ -98,8 +97,8 @@ export default function Header() {
               />
             ))}
           </nav>
-          <div className="border-t border-border/60 px-4 py-4">
-            <div className="mb-4 flex items-center justify-end gap-2">
+          <div className="flex items-center justify-between border-t border-border px-4 py-3">
+            <div className="flex items-center gap-1">
               <LanguageToggle />
               <ThemeToggle />
             </div>
@@ -141,16 +140,16 @@ function HeaderNavLink({
         "inline-flex items-center gap-2 font-medium transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         variant === "desktop" &&
-          "whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          "relative h-full px-4 text-sm after:absolute after:inset-x-4 after:bottom-0 after:h-0.5 after:bg-primary after:opacity-0 after:transition-opacity",
         variant === "desktop" &&
           (active
-            ? "bg-background text-foreground shadow-sm"
-            : "text-muted-foreground hover:text-foreground"),
-        variant === "mobile" && "min-h-11 w-full rounded-xl px-3 text-base",
+            ? "text-foreground after:opacity-100"
+            : "text-muted-foreground hover:text-foreground hover:after:opacity-40"),
+        variant === "mobile" && "min-h-11 w-full rounded-md px-3 text-sm",
         variant === "mobile" &&
           (active
-            ? "bg-primary/10 text-primary"
-            : "text-muted-foreground hover:bg-muted hover:text-foreground"),
+            ? "bg-muted text-foreground"
+            : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"),
       )}
     >
       {Icon ? <Icon className="h-4 w-4" aria-hidden /> : null}
@@ -173,11 +172,11 @@ function HeaderAccount({
   if (user === undefined) {
     return mobile ? (
       <div className="flex items-center gap-3">
-        <Loading variant="skeleton" className="h-9 w-9 rounded-full" />
-        <Loading variant="skeleton" className="h-4 w-32" />
+        <Loading variant="skeleton" className="h-8 w-8 rounded-full" />
+        <Loading variant="skeleton" className="h-4 w-24" />
       </div>
     ) : (
-      <Loading variant="skeleton" className="h-9 w-9 rounded-full" />
+      <Loading variant="skeleton" className="h-8 w-8 rounded-full" />
     );
   }
 
@@ -185,8 +184,9 @@ function HeaderAccount({
     return (
       <Link href="/sign-in" onClick={onLogin}>
         <Button
-          variant={mobile ? "outline" : "ghost"}
-          className={cn("rounded-full font-medium", mobile && "w-full")}
+          variant="ghost"
+          size="sm"
+          className={cn("font-medium", mobile && "h-9")}
         >
           {loginLabel}
         </Button>
@@ -196,22 +196,19 @@ function HeaderAccount({
 
   if (mobile) {
     return (
-      <div className="flex items-center justify-between">
-        <div className="flex min-w-0 items-center gap-3">
-          <User user={user} />
-          <span className="max-w-[150px] truncate text-sm font-medium">{user.email}</span>
-        </div>
+      <div className="flex min-w-0 items-center gap-2">
+        <User user={user} />
         {user.credits && (
-          <span className="text-sm text-muted-foreground">⚡ {user.credits.left_credits}</span>
+          <span className="text-xs text-muted-foreground">⚡ {user.credits.left_credits}</span>
         )}
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2">
       {user.credits && (
-        <span className="text-sm font-medium text-muted-foreground">
+        <span className="text-xs font-medium text-muted-foreground">
           ⚡ {user.credits.left_credits}
         </span>
       )}

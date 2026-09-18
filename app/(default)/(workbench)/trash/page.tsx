@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { Trash2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +9,7 @@ import { Wallpaper } from "@/types/wallpaper";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getTrash, restoreTrash, deleteTrash, clearTrash } from "@/services/api";
+import { WORKBENCH_GRID_CLASS } from "@/components/my-works/workbench-list";
 import { useTranslations } from "next-intl";
 
 export default function TrashPage() {
@@ -66,45 +66,47 @@ export default function TrashPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div />
-        <div className="flex gap-2">
-          {trash.length > 0 && (
-            <Button variant="destructive" onClick={handleClearAll}>{t("clearAll")}</Button>
-          )}
+    <div>
+      {trash.length > 0 && (
+        <div className="sticky top-0 z-20 bg-background/95 shadow-[0_8px_20px_-12px_hsl(var(--foreground)/0.22)] backdrop-blur">
+          <div className="flex w-full items-center justify-end px-2 py-2 md:px-3">
+            <Button variant="destructive" onClick={handleClearAll}>
+              {t("clearAll")}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
+      <div className="w-full px-2 py-3 md:px-3">
       {loading ? (
-        <div className="grid gap-4 sm:gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <article key={i} className="overflow-hidden rounded-[28px] border border-white/20 bg-card shadow-xl dark:border-white/10 dark:bg-slate-900">
+        <div className={WORKBENCH_GRID_CLASS}>
+          {Array.from({ length: 12 }).map((_, index) => (
+            <article key={index} className="overflow-hidden rounded-lg border border-border/80 bg-card shadow-sm">
               <Skeleton className="aspect-square w-full rounded-none" />
-              <div className="space-y-2 px-4 pt-4 pb-3">
+              <div className="space-y-2 px-4 py-3">
                 <Skeleton className="h-4 w-2/3" />
-                <div className="flex justify-end gap-2 mt-2">
-                  <Skeleton className="h-8 w-8 rounded-md" />
-                  <Skeleton className="h-8 w-8 rounded-md" />
+                <div className="mt-2 flex justify-end gap-2">
+                  <Skeleton className="h-8 w-20 rounded-md" />
+                  <Skeleton className="h-8 w-20 rounded-md" />
                 </div>
               </div>
             </article>
           ))}
         </div>
       ) : trash.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-32 h-32 mb-6 opacity-20 bg-muted rounded-full flex items-center justify-center">
-            <Trash2 className="w-16 h-16" />
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-card/60 px-6 py-20 text-center">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-md bg-muted">
+            <Trash2 className="h-7 w-7 text-muted-foreground" aria-hidden />
           </div>
-          <h3 className="text-xl font-medium mb-2">{t("emptyTitle")}</h3>
-          <p className="text-muted-foreground">{t("emptyDesc")}</p>
+          <h3 className="text-lg font-medium">{t("emptyTitle")}</h3>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">{t("emptyDesc")}</p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+        <div className={WORKBENCH_GRID_CLASS}>
           {trash.map((item) => (
             <article
               key={item.id}
-              className="group relative overflow-hidden rounded-xl border border-white/20 bg-card shadow-sm dark:border-white/10 dark:bg-slate-900 flex flex-col transition-all hover:shadow-md"
+              className="group flex flex-col overflow-hidden rounded-lg border border-border/80 bg-card shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg"
             >
               <div className="relative aspect-square overflow-hidden">
                 <ImageWithPlaceholder
@@ -115,20 +117,22 @@ export default function TrashPage() {
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
               </div>
-              <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
+              <div className="flex flex-1 flex-col justify-between space-y-3 p-4">
                 <div>
-                  <p className="line-clamp-2 text-sm font-medium text-foreground opacity-80">{item.img_description}</p>
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    <Badge variant="secondary" className="text-[10px] px-1.5 opacity-70">{item.model_name}</Badge>
-                  </div>
+                  <p className="line-clamp-2 text-sm font-medium text-foreground">{item.img_description}</p>
+                  {item.model_name && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      <Badge variant="secondary" className="px-1.5 text-[10px]">{item.model_name}</Badge>
+                    </div>
+                  )}
                 </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2">
-                  <Button variant="outline" size="sm" className="flex-1 text-xs px-2 sm:px-3" onClick={() => restoreMutation.mutate(item.id!)}>
-                    <RotateCcw className="mr-1 h-3 w-3 flex-shrink-0" />
+                <div className="flex flex-col items-stretch gap-2 pt-1 sm:flex-row sm:items-center">
+                  <Button variant="outline" size="sm" className="flex-1 rounded-md px-2 text-xs sm:px-3" onClick={() => restoreMutation.mutate(item.id!)}>
+                    <RotateCcw className="mr-1 h-3 w-3 shrink-0" />
                     <span className="truncate">{t("restore")}</span>
                   </Button>
-                  <Button variant="destructive" size="sm" className="flex-1 text-xs px-2 sm:px-3" onClick={() => handleDelete(item.id!)}>
-                    <Trash2 className="mr-1 h-3 w-3 flex-shrink-0" />
+                  <Button variant="destructive" size="sm" className="flex-1 rounded-md px-2 text-xs sm:px-3" onClick={() => handleDelete(item.id!)}>
+                    <Trash2 className="mr-1 h-3 w-3 shrink-0" />
                     <span className="truncate">{t("delete")}</span>
                   </Button>
                 </div>
@@ -137,6 +141,7 @@ export default function TrashPage() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

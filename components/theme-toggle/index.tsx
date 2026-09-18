@@ -110,32 +110,32 @@ const ThemeToggle = () => {
           z-index: 999;
         }
       `}</style>
-      <div className="flex h-9 items-center rounded-full border border-white/20 bg-white/70 p-1 text-xs font-semibold text-gray-700 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/80">
+      <div className="flex h-8 items-center rounded-md bg-muted p-0.5">
         <button
           type="button"
           aria-label="Switch to light theme"
           disabled={!mounted}
           onClick={(event) => switchThemeWithReveal('light', event)}
-          className={`flex items-center justify-center min-w-[36px] rounded-full px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-xs transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+          className={`inline-flex h-7 w-7 items-center justify-center rounded-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
             currentTheme === 'light'
-              ? 'bg-primary text-primary-foreground shadow'
-              : 'text-gray-500 dark:text-white/60'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <Sun className="h-4 w-4" />
+          <Sun className="h-3.5 w-3.5" />
         </button>
         <button
           type="button"
           aria-label="Switch to dark theme"
           disabled={!mounted}
           onClick={(event) => switchThemeWithReveal('dark', event)}
-          className={`flex items-center justify-center min-w-[36px] rounded-full px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-xs transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+          className={`inline-flex h-7 w-7 items-center justify-center rounded-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
             currentTheme === 'dark'
-              ? 'bg-primary text-primary-foreground shadow'
-              : 'text-gray-500 dark:text-white/60'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <Moon className="h-4 w-4" />
+          <Moon className="h-3.5 w-3.5" />
         </button>
         {!mounted && (
           <span className="sr-only">initializing theme switcher</span>

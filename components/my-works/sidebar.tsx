@@ -1,61 +1,58 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
-import { ImageIcon, Globe, Heart, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Globe, Heart, ImageIcon, LayoutDashboard, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { cn } from "@/lib/utils";
+
+const ITEMS = [
+  { href: "/my-works", key: "creations", icon: ImageIcon },
+  { href: "/published", key: "published", icon: Globe },
+  { href: "/favorites", key: "favorites", icon: Heart },
+  { href: "/trash", key: "trash", icon: Trash2 },
+] as const;
 
 interface SidebarProps {
-  locale: string;
   pathname: string;
 }
 
-export function Sidebar({ locale, pathname }: SidebarProps) {
-  const router = useRouter();
+export function Sidebar({ pathname }: SidebarProps) {
   const t = useTranslations("myWorks.sidebar");
 
   return (
-    <div className="w-full md:w-64 border-b md:border-b-0 md:border-r border-border p-2 md:p-4 flex-shrink-0">
-      <div className="flex flex-col h-full">
-        <h3 className="hidden md:block font-semibold text-lg px-2 mb-4">
+    <aside className="flex shrink-0 flex-col border-b border-border bg-muted/40 md:h-full md:w-56 md:border-b-0 md:border-r">
+      <div className="hidden px-4 pb-3 pt-5 md:block">
+        <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">
+          <LayoutDashboard className="h-4 w-4 text-muted-foreground" aria-hidden />
           {t("title")}
-        </h3>
-
-        <div className="flex flex-row md:flex-col overflow-x-auto md:overflow-visible gap-1 pb-1 md:pb-0 scrollbar-hide">
-          <Button
-            variant={pathname === "/my-works" ? "secondary" : "ghost"}
-            className="justify-center md:justify-start flex-shrink-0"
-            onClick={() => router.push("/my-works")}
-          >
-            <ImageIcon className="w-4 h-4 mr-2 hidden md:inline-block" />
-            {t("creations")}
-          </Button>
-          <Button
-            variant={pathname === "/published" ? "secondary" : "ghost"}
-            className="justify-center md:justify-start flex-shrink-0"
-            onClick={() => router.push("/published")}
-          >
-            <Globe className="w-4 h-4 mr-2 hidden md:inline-block" />
-            {t("published")}
-          </Button>
-          <Button
-            variant={pathname === "/favorites" ? "secondary" : "ghost"}
-            className="justify-center md:justify-start flex-shrink-0"
-            onClick={() => router.push("/favorites")}
-          >
-            <Heart className="w-4 h-4 mr-2 hidden md:inline-block" />
-            {t("favorites")}
-          </Button>
-          <Button
-            variant={pathname === "/trash" ? "secondary" : "ghost"}
-            className="justify-center md:justify-start flex-shrink-0 text-muted-foreground"
-            onClick={() => router.push("/trash")}
-          >
-            <Trash2 className="w-4 h-4 mr-2 hidden md:inline-block" />
-            {t("trash")}
-          </Button>
-        </div>
+        </p>
       </div>
-    </div>
+
+      <nav aria-label={t("title")} className="px-2 py-2 md:flex-1 md:px-2.5">
+        <div className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
+          {ITEMS.map((item) => {
+            const active = pathname === item.href;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "inline-flex min-h-10 shrink-0 items-center gap-2.5 rounded-md px-3 text-sm font-medium transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  active
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-background/70 hover:text-foreground",
+                )}
+              >
+                <Icon className="h-4 w-4" aria-hidden />
+                {t(item.key)}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </aside>
   );
 }

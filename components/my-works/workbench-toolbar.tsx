@@ -1,10 +1,12 @@
+import { CheckSquare, Filter, MinusSquare, Plus, Search, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus } from "lucide-react";
+import { getSelectAllState } from "@/components/my-works/workbench-list";
 
 interface WorkbenchToolbarProps {
   selectedCount: number;
+  loadedCount: number;
   totalCount: number;
   activeTab: "creations" | "published" | "favorites";
   keyword: string;
@@ -23,6 +25,7 @@ interface WorkbenchToolbarProps {
 
 export function WorkbenchToolbar({
   selectedCount,
+  loadedCount,
   totalCount,
   activeTab,
   keyword,
@@ -38,117 +41,108 @@ export function WorkbenchToolbar({
   onResetFilters,
   onOpenGenerate,
 }: WorkbenchToolbarProps) {
-  const hasFilters = Boolean(keyword || startDate || endDate || sortByLikes);
+  const extraFilterCount = [startDate, endDate, sortByLikes].filter(Boolean).length;
+  const selectAllState = getSelectAllState(selectedCount, loadedCount);
+  const SelectIcon =
+    selectAllState === "all" ? CheckSquare : selectAllState === "some" ? MinusSquare : Square;
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
-      <div className="flex items-center justify-between sm:justify-start gap-4 text-sm text-muted-foreground whitespace-nowrap w-full sm:w-auto">
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
         <button
           type="button"
+          role="checkbox"
+          aria-checked={
+            selectAllState === "all" ? "true" : selectAllState === "some" ? "mixed" : "false"
+          }
           onClick={onToggleSelectAll}
-          className="inline-flex items-center gap-1 text-primary hover:underline"
+          className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-primary transition-colors hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          {selectedCount === totalCount && totalCount > 0
-            ? tWorkbench("deselectAll")
-            : tWorkbench("selectAllOnPage")}
+          <SelectIcon className="h-4 w-4" aria-hidden />
+          {selectAllState === "all" ? tWorkbench("deselectAll") : tWorkbench("selectAll")}
         </button>
-        {totalCount > 0 && <span>{tWorkbench("currentPage", { count: totalCount })}</span>}
+        {loadedCount > 0 && (
+          <span className="hidden whitespace-nowrap text-sm text-muted-foreground md:inline">
+            {tWorkbench("loadedCount", { loaded: loadedCount, total: totalCount })}
+          </span>
+        )}
+        <div className="relative w-52 sm:w-64 md:w-80">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Input
+            placeholder={tWorkbench("keywordPlaceholder")}
+            value={keyword}
+            onChange={(event) => onKeywordChange(event.target.value)}
+            className="h-9 rounded-md border-border bg-muted/50 pl-9"
+          />
+        </div>
       </div>
 
-      <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
-        {onOpenGenerate && (
-          <Button 
-            onClick={onOpenGenerate} 
-            size="sm" 
-            className="h-9 gap-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white hover:opacity-90 border-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">{tWorkbench("startCreating", { defaultValue: "Start Creating" })}</span>
-            <span className="inline sm:hidden">{tWorkbench("create", { defaultValue: "Create" })}</span>
-          </Button>
-        )}
+      <div className="flex shrink-0 items-center justify-end gap-2">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="4" x2="20" y1="6" y2="6" />
-              <line x1="8" x2="16" y1="12" y2="12" />
-              <line x1="11" x2="13" y1="18" y2="18" />
-            </svg>
-            {tWorkbench("filter")}
-            {hasFilters && (
-              <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-                {[keyword, startDate, endDate, sortByLikes].filter(Boolean).length}
-              </span>
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[calc(100vw-2rem)] sm:w-80" align="end">
-          <div className="flex flex-col gap-4">
-            <p className="text-sm font-medium">{tWorkbench("filters")}</p>
+            <Button variant="outline" size="sm" className="h-9 gap-2 rounded-md px-3">
+              <Filter className="h-4 w-4" aria-hidden />
+              {tWorkbench("filter")}
+              {extraFilterCount > 0 && (
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-sm bg-primary px-1 text-[10px] text-primary-foreground">
+                  {extraFilterCount}
+                </span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[calc(100vw-2rem)] sm:w-80" align="end">
+            <div className="flex flex-col gap-4">
+              <p className="text-sm font-medium">{tWorkbench("filters")}</p>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-muted-foreground">{tWorkbench("keyword")}</label>
-              <Input
-                placeholder={tWorkbench("keywordPlaceholder")}
-                value={keyword}
-                onChange={(e) => onKeywordChange(e.target.value)}
-                className="h-9"
-              />
-            </div>
+              {activeTab === "published" && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-muted-foreground">{tWorkbench("sortByLikes")}</label>
+                  <select
+                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    value={sortByLikes}
+                    onChange={(event) => onSortByLikesChange(event.target.value as "asc" | "desc" | "")}
+                  >
+                    <option value="">{tWorkbench("sortDefault")}</option>
+                    <option value="desc">{tWorkbench("sortDesc")}</option>
+                    <option value="asc">{tWorkbench("sortAsc")}</option>
+                  </select>
+                </div>
+              )}
 
-            {activeTab === "published" && (
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-muted-foreground">{tWorkbench("sortByLikes")}</label>
-                <select
-                  className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  value={sortByLikes}
-                  onChange={(e) => onSortByLikesChange(e.target.value as "asc" | "desc" | "")}
-                >
-                  <option value="">{tWorkbench("sortDefault")}</option>
-                  <option value="desc">{tWorkbench("sortDesc")}</option>
-                  <option value="asc">{tWorkbench("sortAsc")}</option>
-                </select>
+                <label className="text-xs text-muted-foreground">{tWorkbench("dateRange")}</label>
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(event) => onStartDateChange(event.target.value)}
+                    className="h-9"
+                  />
+                  <span className="text-center text-muted-foreground">-</span>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(event) => onEndDateChange(event.target.value)}
+                    className="h-9"
+                  />
+                </div>
               </div>
-            )}
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-muted-foreground">{tWorkbench("dateRange")}</label>
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => onStartDateChange(e.target.value)}
-                  className="h-9"
-                />
-                <span className="text-muted-foreground text-center">-</span>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => onEndDateChange(e.target.value)}
-                  className="h-9"
-                />
-              </div>
-            </div>
-
-            {hasFilters && (
-              <Button variant="ghost" size="sm" onClick={onResetFilters} className="h-9 w-full">
-                {tWorkbench("resetFilters")}
+              {extraFilterCount > 0 && (
+                <Button variant="ghost" size="sm" onClick={onResetFilters} className="h-9 w-full">
+                  {tWorkbench("resetFilters")}
                 </Button>
               )}
             </div>
           </PopoverContent>
         </Popover>
+        {onOpenGenerate && (
+          <Button type="button" onClick={onOpenGenerate} className="h-9 rounded-md px-4">
+            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+            <span className="hidden sm:inline">{tWorkbench("startCreating")}</span>
+            <span className="sm:hidden">{tWorkbench("create")}</span>
+          </Button>
+        )}
       </div>
     </div>
   );
