@@ -8,7 +8,7 @@ import ThemeToggle from "@/components/theme-toggle";
 import User from "@/components/user";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Home, LayoutDashboard, Menu, Sparkles, X } from "lucide-react";
+import { Home, LayoutDashboard, Menu, Sparkles, Wallet, X } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,7 @@ const NAV_ICONS = {
   home: Home,
   canvas: Sparkles,
   workbench: LayoutDashboard,
+  pricing: Wallet,
 } as const;
 
 export default function Header() {

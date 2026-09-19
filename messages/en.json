@@ -19,6 +19,11 @@
         "title": "Workbench",
         "url": "/my-works",
         "auth": true
+      },
+      {
+        "key": "pricing",
+        "title": "Plans",
+        "url": "/pricing"
       }
     ],
     "navAria": "Main navigation",
@@ -90,7 +95,9 @@
     "helper": "Describe your wallpaper idea",
     "placeholder": "Neon cyberpunk skyline with floating gardens…",
     "button": "Generate",
+    "buttonWithCost": "Generate · {count} credits",
     "optimize": "Optimize",
+    "optimizeWithCost": "Optimize · {count} credits",
     "optimizeTitle": "AI Optimize Prompt",
     "loading": "Generating…",
     "filterLabel": "Filter by Theme",
@@ -465,6 +472,79 @@
     "consumeHistory": "Consumption History",
     "rechargeHistory": "Recharge History"
   },
+  "pricing": {
+    "eyebrow": "Credit plans",
+    "title": "Pick a pack that matches your output",
+    "subtitle": "Credits are spent on images, video, audio, and text polish. Failed canvas steps refund unused holds. Online checkout is coming soon.",
+    "unitPrice": "Flat rate: 1 credit = ¥0.50",
+    "featured": "Recommended",
+    "credits": "{count} credits",
+    "price": "¥{amount}",
+    "yieldTitle": "Roughly enough for",
+    "yieldImages": "{count} Seedream images",
+    "yieldGpt": "{count} GPT-Image 2K stills",
+    "yieldAudio": "{count} Suno tracks",
+    "yieldVideo": "{count} Fast 720p 5s videos",
+    "yieldVideoNone": "Not enough for a default video — start with stills",
+    "cta": "Checkout coming soon",
+    "ctaHint": "Redeem codes in the account menu add credits today.",
+    "giftNote": "New accounts receive 3 credits, which stack with any pack.",
+    "billingLink": "View billing history",
+    "faqTitle": "FAQ",
+    "packs": {
+      "starter": {
+        "name": "Starter",
+        "audience": "Try the studio",
+        "description": "Best for first stills and prompt tweaks. The run dialog blocks jobs that cost more than your balance, so a default video will not silently fail mid-way.",
+        "features": [
+          "Covers homepage wallpapers and prompt optimize",
+          "Good for checking models and aspect ratios",
+          "Credits stay on the account after they land",
+          "Runs are blocked up front if the balance is too low"
+        ]
+      },
+      "standard": {
+        "name": "Standard",
+        "audience": "Everyday making",
+        "description": "Images, music, and short clips can live on one canvas. This is the most balanced pack for weekly work.",
+        "features": [
+          "Supports repeated image iterations",
+          "Room for Suno tracks and short videos",
+          "Fits a regular publishing cadence",
+          "Same credit price as the other packs"
+        ]
+      },
+      "large": {
+        "name": "Large",
+        "audience": "Batch output",
+        "description": "For frequent runs, series work, and several short videos in a row, without stopping to top up as often.",
+        "features": [
+          "Covers multiple short videos back to back",
+          "Fits cover, storyboard, and soundtrack sets",
+          "Fewer mid-session top-ups",
+          "Same unit price as Starter and Standard"
+        ]
+      }
+    },
+    "faqs": [
+      {
+        "q": "What do credits buy?",
+        "a": "Each successful model call spends credits: wallpaper generation, canvas image / video / audio, storyboard, and text polish. Uploads and plain text nodes are free."
+      },
+      {
+        "q": "Do failed jobs still cost credits?",
+        "a": "Canvas runs reserve credits first, then settle only succeeded steps. Failures and cancels refund the unused hold. Homepage wallpapers deduct before the queue; check billing if a provider job fails after that."
+      },
+      {
+        "q": "Do credits expire?",
+        "a": "Credits currently do not auto-expire. Gift and paid credits share one balance."
+      },
+      {
+        "q": "What if checkout is not live yet?",
+        "a": "Pack prices are already set at 1 credit = ¥0.50. Until payments launch, sign in and redeem a code from the account menu."
+      }
+    ]
+  },
   "transaction": {
     "date": "Date",
     "type": "Type",
@@ -579,6 +659,7 @@
     "closeProperties": "Close properties",
     "noPreview": "No output yet",
     "costHint": "{count} credits",
+    "costFromHint": "from {count} credits",
     "updatedJustNow": "Updated just now",
     "updatedAt": "Updated {time}",
     "layouts": {

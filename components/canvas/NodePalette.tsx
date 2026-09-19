@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { NODE_TYPE_DEFS, NODE_TYPES } from "@/lib/canvas/registry";
+import { NODE_TYPE_DEFS, NODE_TYPES, estimateNodeCost } from "@/lib/canvas/registry";
 import { cn } from "@/lib/utils";
 import { useCanvasStore } from "@/store/useCanvasStore";
 import type { CanvasNodeType } from "@/types/canvas";
@@ -29,7 +29,8 @@ export function NodePalette() {
   return (
     <CanvasGlass className="pointer-events-auto absolute bottom-3 left-3 z-30 flex gap-1 p-1.5 md:bottom-auto md:left-4 md:top-20 md:w-[88px] md:flex-col md:gap-1.5 md:p-2">
       {NODE_TYPES.map((type) => {
-        const cost = NODE_TYPE_DEFS[type].baseCost;
+        const cost = estimateNodeCost(type, NODE_TYPE_DEFS[type].defaults);
+        const variable = type === "image" || type === "video";
         return (
           <button
             key={type}
@@ -54,7 +55,7 @@ export function NodePalette() {
             </span>
             {cost > 0 && (
               <span className="mt-0.5 hidden text-[10px] text-muted-foreground md:block">
-                {t("costHint", { count: cost })}
+                {t(variable ? "costFromHint" : "costHint", { count: cost })}
               </span>
             )}
           </button>

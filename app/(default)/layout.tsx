@@ -17,7 +17,7 @@ export default function ({ children }: { children: React.ReactNode }) {
               {children}
             </div>
           </main>
-          {pathname === "/" && <Footer />}
+          {(pathname === "/" || pathname === "/pricing") && <Footer />}
       </div>
     </AppStoreProvider>
   );

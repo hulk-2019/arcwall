@@ -13,6 +13,7 @@ import { buildPrompt } from "@/lib/prompt-builder";
 import { redis } from "@/lib/redis";
 import { GenWallpaperSchema } from "@/lib/schemas";
 import { redisKeys, redisTTL } from "@/lib/constants";
+import { estimateImageCredits } from "@/lib/canvas/pricing";
 
 export async function POST(req: Request) {
   const { respErr } = createLocaleResp(req);
@@ -61,7 +62,8 @@ export async function POST(req: Request) {
       return respErr(errMsg("request.pending"));
     }
 
-    if (user_balance < 1) {
+    const credits = estimateImageCredits(modelType as string, resolution);
+    if (user_balance < credits) {
       return respErr(errMsg("credits.not.enough"));
     }
 
@@ -117,7 +119,7 @@ export async function POST(req: Request) {
     // 在事务中同时扣减credit和保存wallpaper，确保原子性
     let savedWallpaperId: number;
     try {
-      const result = await consumeCreditsAndSaveWallpaper(user.id, wallpaper);
+      const result = await consumeCreditsAndSaveWallpaper(user.id, wallpaper, credits);
       savedWallpaperId = result.wallpaperId;
       wallpaper.id = savedWallpaperId;
     } catch (e) {

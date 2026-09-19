@@ -19,6 +19,11 @@
         "title": "工作台",
         "url": "/my-works",
         "auth": true
+      },
+      {
+        "key": "pricing",
+        "title": "套餐",
+        "url": "/pricing"
       }
     ],
     "navAria": "主导航",
@@ -90,7 +95,9 @@
     "helper": "描述你想要的壁纸",
     "placeholder": "赛博朋克霓虹城市，漂浮的植物花园…",
     "button": "开始生成",
+    "buttonWithCost": "开始生成 · {count} 积分",
     "optimize": "优化提示词",
+    "optimizeWithCost": "优化提示词 · {count} 积分",
     "optimizeTitle": "AI 优化提示词",
     "loading": "生成中…",
     "filterLabel": "按主题筛选",
@@ -465,6 +472,79 @@
     "consumeHistory": "消耗记录",
     "rechargeHistory": "充值记录"
   },
+  "pricing": {
+    "eyebrow": "积分套餐",
+    "title": "按创作量选择套餐",
+    "subtitle": "积分用于图像、视频、音频和文案润色。失败的画布步骤会退还未消耗的预扣。在线支付即将开放。",
+    "unitPrice": "统一兑换：1 积分 = ¥0.50",
+    "featured": "推荐",
+    "credits": "{count} 积分",
+    "price": "¥{amount}",
+    "yieldTitle": "大约可以完成",
+    "yieldImages": "{count} 张 Seedream 图像",
+    "yieldGpt": "{count} 张 GPT-Image 2K",
+    "yieldAudio": "{count} 首 Suno 音乐",
+    "yieldVideo": "{count} 条 5 秒 Fast 720p 视频",
+    "yieldVideoNone": "不足以生成一条默认视频，适合先出图",
+    "cta": "即将开放购买",
+    "ctaHint": "当前可通过账户菜单中的兑换码到账。",
+    "giftNote": "新用户注册即赠 3 积分，可与套餐叠加。",
+    "billingLink": "查看账单记录",
+    "faqTitle": "常见问题",
+    "packs": {
+      "starter": {
+        "name": "体验包",
+        "audience": "先试手感",
+        "description": "第一次用 ArcWall 出图、改提示词时选这一档。额度按成功生成扣减，不会默默跑高价视频。",
+        "features": [
+          "覆盖首页壁纸生成与提示词优化",
+          "适合确认模型、画幅和风格",
+          "积分到账后长期有效",
+          "余额不足时会在运行前拦截"
+        ]
+      },
+      "standard": {
+        "name": "标准包",
+        "audience": "日常创作",
+        "description": "图、声、短视频可以排进同一条画布。是目前最均衡、也最建议长期使用的一档。",
+        "features": [
+          "支持多轮图像迭代和局部重跑",
+          "可搭配 Suno 配乐与短视频",
+          "适合每周持续出片",
+          "与其他套餐同一兑换单价"
+        ]
+      },
+      "large": {
+        "name": "大额包",
+        "audience": "批量出片",
+        "description": "给高频生成、系列内容和连续短视频准备，减少反复充值打断节奏。",
+        "features": [
+          "可连续生成多条短视频",
+          "适合封面、分镜、配乐成套产出",
+          "减少中途补积分",
+          "单价与体验包、标准包相同"
+        ]
+      }
+    },
+    "faqs": [
+      {
+        "q": "积分用来做什么？",
+        "a": "每次成功调用模型会扣积分，包括壁纸生成、画布图像 / 视频 / 音频、分镜和文案润色。上传素材和纯文本节点不扣费。"
+      },
+      {
+        "q": "生成失败会扣费吗？",
+        "a": "画布会先预扣、再按成功步骤结算，失败或取消会退还未消耗的积分。工作台壁纸在入队前扣费，供应商失败时请从账单核对。"
+      },
+      {
+        "q": "积分会过期吗？",
+        "a": "当前到账积分不会自动过期。赠送积分与付费积分记在同一余额中。"
+      },
+      {
+        "q": "还不能在线支付怎么办？",
+        "a": "套餐价格已经按 1 积分 = ¥0.50 定好。在线收银台上线前，可登录后在账户菜单使用兑换码到账。"
+      }
+    ]
+  },
   "transaction": {
     "date": "时间",
     "type": "类型",
@@ -579,6 +659,7 @@
     "closeProperties": "关闭属性",
     "noPreview": "暂无输出",
     "costHint": "{count} 积分",
+    "costFromHint": "{count} 积分起",
     "updatedJustNow": "刚刚更新",
     "updatedAt": "更新于 {time}",
     "layouts": {

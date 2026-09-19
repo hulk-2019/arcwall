@@ -65,7 +65,7 @@ export function audioStyleTags(style?: AudioStyle): string {
   return AUDIO_STYLE_PRESETS.find((preset) => preset.value === style)?.keywords.join(", ") ?? "";
 }
 
-export const VIDEO_RESOLUTIONS = ["480p", "720p", "1080p"];
+export { VIDEO_RESOLUTIONS } from "./seedance";
 
 /** 可选模型列表：逗号分隔环境变量可覆盖（依赖账号开通情况，默认含当前默认模型） */
 function parseModelList(env: string | undefined, fallback: string[]): string[] {
@@ -152,7 +152,8 @@ export function modelOptionsForType(type: CanvasNodeType): string[] {
 }
 
 /** 文本节点 AI 润色的单次计费（PRD-NOD-003，独立于画布执行） */
-export const POLISH_TEXT_COST = 1;
+export { TEXT_CREDITS as POLISH_TEXT_COST } from "./pricing";
+export { estimateNodeCost } from "./pricing";
 
 export const NODE_TYPE_DEFS: Record<CanvasNodeType, NodeTypeDef> = {
   text: {
@@ -210,7 +211,7 @@ export const NODE_TYPE_DEFS: Record<CanvasNodeType, NodeTypeDef> = {
       { port: "reference_audio", accepts: ["audio"] },
     ],
     outputs: [{ port: OUTPUT_PORT, kind: "video" }],
-    baseCost: 3,
+    baseCost: 26,
     executable: true,
     defaults: {
       title: "视频生成",
@@ -229,7 +230,7 @@ export const NODE_TYPE_DEFS: Record<CanvasNodeType, NodeTypeDef> = {
     icon: "audio",
     inputs: [{ port: "prompt", accepts: ["text"] }],
     outputs: [{ port: OUTPUT_PORT, kind: "audio" }],
-    baseCost: 1,
+    baseCost: 6,
     executable: true,
     defaults: {
       title: "音频生成",
@@ -273,16 +274,6 @@ export function nodeOutputKind(type: CanvasNodeType, config?: CanvasNodeConfig):
     return "image";
   }
   return NODE_TYPE_DEFS[type].outputs[0].kind;
-}
-
-/**
- * 按节点配置计价。估算（estimate）与实际结算（capture）使用同一函数，
- * 保证预扣与最终结算一致（技术方案 §十二）。
- */
-export function estimateNodeCost(type: CanvasNodeType, config?: CanvasNodeConfig): number {
-  const def = NODE_TYPE_DEFS[type];
-  if (!def.executable) return 0;
-  return def.baseCost;
 }
 
 /**

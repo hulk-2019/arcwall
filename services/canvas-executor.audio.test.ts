@@ -348,7 +348,7 @@ describe("Suno music polling", () => {
           ],
         }),
       }),
-      1
+      6
     );
     expect(mocks.enqueueReadySteps).toHaveBeenCalledWith(23);
   });
@@ -381,7 +381,7 @@ describe("Suno music polling", () => {
         storageKeys: ["canvas/result.mp3"],
         meta: expect.objectContaining({ timingStatus: "failed" }),
       }),
-      1
+      6
     );
   });
 

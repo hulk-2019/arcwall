@@ -34,6 +34,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations, useLocale } from "next-intl";
 import { IMAGE_RESOLUTION_OPTIONS, normalizeImageResolution } from "@/lib/image-size";
+import { TEXT_CREDITS, estimateImageCredits } from "@/lib/canvas/pricing";
 
 interface GeneratePanelProps {
   onSuccess?: () => void;
@@ -517,7 +518,7 @@ export function GeneratePanel({ onSuccess, className = "" }: GeneratePanelProps)
               ) : (
                 <Lightbulb className="w-3.5 h-3.5 text-yellow-400" />
               )}
-              {t("optimize")}
+              {t("optimizeWithCost", { count: TEXT_CREDITS })}
             </button>
           </div>
           <Button
@@ -525,7 +526,11 @@ export function GeneratePanel({ onSuccess, className = "" }: GeneratePanelProps)
             disabled={generateMutation.isPending}
             className="w-full md:w-auto rounded-full px-8 h-12 text-base font-semibold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:opacity-90 border-0 shadow-lg text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {generateMutation.isPending ? t("loading") : t("button")}
+            {generateMutation.isPending
+              ? t("loading")
+              : t("buttonWithCost", {
+                  count: estimateImageCredits(selectedModel, selectedResolution),
+                })}
           </Button>
         </div>
       </div>

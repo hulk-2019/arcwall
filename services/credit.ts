@@ -196,11 +196,12 @@ export async function getUserBalanceByEmail(
  * 在事务中同时扣减credit和保存wallpaper，确保原子性
  * @param user_id 用户ID
  * @param wallpaper wallpaper数据
- * @returns 更新后的余额和保存的wallpaper
+ * @param creditsConsumed 按模型与分辨率计算的积分，至少 1
  */
 export async function consumeCreditsAndSaveWallpaper(
   user_id: number,
-  wallpaper: Wallpaper
+  wallpaper: Wallpaper,
+  creditsConsumed: number
 ): Promise<{ balance: number; wallpaperId: number }> {
   const userId = Number(user_id);
   const now = new Date();
@@ -214,19 +215,14 @@ export async function consumeCreditsAndSaveWallpaper(
       });
 
       const currentBalance = balance?.total_credits ?? 0;
+      const credits = Math.max(1, Math.ceil(creditsConsumed));
+      const newBalance = currentBalance - credits;
 
-      // 2. 计算新余额（扣减1个credit）
-      const newBalance = currentBalance - 1;
-
-      // 3. 如果余额不足，抛出错误
       if (newBalance < 0) {
         throw new Error("insufficient.credits");
       }
 
-      // 4. 并发执行三个操作，提高性能
-      // 这三个操作之间没有数据依赖关系，可以并发执行
       const [, , savedWallpaper] = await Promise.all([
-        // 更新或创建余额记录
         tx.user_balance.upsert({
           where: { user_id: userId },
           update: {
@@ -239,13 +235,12 @@ export async function consumeCreditsAndSaveWallpaper(
             updated_at: now,
           },
         }),
-        // 记录交易流水
         tx.credit_transactions.create({
           data: {
             user_id: userId,
-            amount: -1,
+            amount: -credits,
             type: TransactionType.consume,
-            remark: "生成图片消耗",
+            remark: `生成图片消耗 ${credits} 积分`,
             balance_after: newBalance,
             created_at: now,
           },

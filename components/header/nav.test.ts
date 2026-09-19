@@ -14,6 +14,7 @@ const workbench: HeaderNavItem = {
   url: "/my-works",
   auth: true,
 };
+const pricing: HeaderNavItem = { key: "pricing", title: "套餐", url: "/pricing" };
 
 describe("isHeaderNavActive", () => {
   it("marks home active only on the homepage", () => {
@@ -34,6 +35,12 @@ describe("isHeaderNavActive", () => {
     expect(isHeaderNavActive("/favorites", workbench)).toBe(true);
     expect(isHeaderNavActive("/trash", workbench)).toBe(true);
     expect(isHeaderNavActive("/billing", workbench)).toBe(false);
+    expect(isHeaderNavActive("/pricing", workbench)).toBe(false);
+  });
+
+  it("marks pricing active on the plans page", () => {
+    expect(isHeaderNavActive("/pricing", pricing)).toBe(true);
+    expect(isHeaderNavActive("/billing", pricing)).toBe(false);
   });
 });
 
@@ -49,6 +56,7 @@ describe("resolveHeaderNavHref", () => {
 
   it("keeps public and signed-in destinations unchanged", () => {
     expect(resolveHeaderNavHref(home, null)).toBe("/");
+    expect(resolveHeaderNavHref(pricing, null)).toBe("/pricing");
     expect(resolveHeaderNavHref(canvas, { id: 1 })).toBe("/canvas");
     expect(resolveHeaderNavHref(canvas, undefined)).toBe("/canvas");
   });

@@ -13,6 +13,7 @@ const NAV = [
   { key: "home", title: "首页", url: "/" },
   { key: "canvas", title: "AI画布", url: "/canvas", auth: true },
   { key: "workbench", title: "工作台", url: "/my-works", auth: true },
+  { key: "pricing", title: "套餐", url: "/pricing" },
 ];
 
 vi.mock("next-intl", () => ({
@@ -75,7 +76,7 @@ vi.mock("@/components/ui/button", () => ({
 import Header from "./index";
 
 describe("Header navigation", () => {
-  it("renders home, AI canvas, and workbench links", () => {
+  it("renders home, AI canvas, workbench, and pricing links", () => {
     state.pathname = "/";
     state.user = { id: 1 };
     const html = renderToStaticMarkup(<Header />);
@@ -83,8 +84,10 @@ describe("Header navigation", () => {
     expect(html).toContain("首页");
     expect(html).toContain("AI画布");
     expect(html).toContain("工作台");
+    expect(html).toContain("套餐");
     expect(html).toContain('href="/canvas"');
     expect(html).toContain('href="/my-works"');
+    expect(html).toContain('href="/pricing"');
   });
 
   it("sends signed-out users to sign-in for canvas and workbench", () => {

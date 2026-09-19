@@ -83,5 +83,7 @@ describe("GeneratePanel size picker", () => {
     const html = renderToStaticMarkup(<GeneratePanel />);
     expect(html).toContain(">2K<");
     expect(html).toContain(">1K<");
+    expect(html).toContain("buttonWithCost");
+    expect(html).toContain("optimizeWithCost");
   });
 });

@@ -1,4 +1,4 @@
-import { VIDEO_RESOLUTIONS } from "@/lib/canvas/registry";
+export const VIDEO_RESOLUTIONS = ["480p", "720p", "1080p"];
 
 export const MIN_SEEDANCE2_DURATION = 4;
 export const MAX_SEEDANCE2_DURATION = 15;
