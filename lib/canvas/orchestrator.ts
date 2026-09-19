@@ -15,6 +15,13 @@ export const ACTIVE_EXECUTION_STATUSES = ["queued", "running", "cancel_requested
 
 /** poller 租约时长：认领后其他扫描周期不会再认领同一条 */
 export const POLL_LEASE_MS = 60_000;
+/**
+ * 供应商创建任务宽限：Seedance 创建接口处理内联媒体可达 180s。
+ * 在此之前不要把仍无 external_id 的 submitting 任务判为提交中断。
+ */
+export const PROVIDER_SUBMIT_GRACE_MS = Number(process.env.PROVIDER_SUBMIT_GRACE_MS) > 0
+  ? Number(process.env.PROVIDER_SUBMIT_GRACE_MS)
+  : 210_000;
 /** 供应商任务平台超时（技术方案 §十三 风险：视频任务长时间无终态）。可通过环境变量放宽，Suno 歌曲生成实测 2-5 分钟，留足余量 */
 export const PROVIDER_JOB_TIMEOUT_MS = Number(process.env.PROVIDER_JOB_TIMEOUT_MS) > 0
   ? Number(process.env.PROVIDER_JOB_TIMEOUT_MS)

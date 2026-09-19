@@ -59,7 +59,42 @@ describe("302.ai Seedance video tasks", () => {
           "Content-Type": "application/json",
           Authorization: "Bearer proxy-key",
         },
+        timeout: 180_000,
       })
+    );
+  });
+
+  it("uses reference roles for multimodal image and audio inputs", async () => {
+    mocks.post.mockResolvedValue({
+      data: { id: "task-multimodal", status: "queued" },
+    });
+
+    await createVideoTask({
+      model: "doubao-seedance-2-0-fast-260128",
+      prompt: "cut to the rhythm",
+      referenceImageUrls: ["data:image/jpeg;base64,cmVm"],
+      referenceAudioUrl: "https://assets.example.com/clip.wav",
+      resolution: "720p",
+    });
+
+    expect(mocks.post).toHaveBeenCalledWith(
+      "https://proxy.example.com/volcengine/api/v3/contents/generations/tasks",
+      expect.objectContaining({
+        content: [
+          { type: "text", text: "cut to the rhythm" },
+          {
+            type: "image_url",
+            image_url: { url: "data:image/jpeg;base64,cmVm" },
+            role: "reference_image",
+          },
+          {
+            type: "audio_url",
+            audio_url: { url: "https://assets.example.com/clip.wav" },
+            role: "reference_audio",
+          },
+        ],
+      }),
+      expect.any(Object)
     );
   });
 
@@ -122,5 +157,22 @@ describe("302.ai Seedance video tasks", () => {
     ).rejects.toThrow(
       '302.ai 视频任务创建失败（HTTP 404）：{"error":{"code":"InvalidImageURL","message":"image URL could not be fetched"}}'
     );
+  });
+
+  it("maps axios timeouts to a video-create timeout error", async () => {
+    mocks.post.mockRejectedValue(
+      Object.assign(new Error("timeout of 30000ms exceeded"), {
+        code: "ECONNABORTED",
+      })
+    );
+
+    await expect(
+      createVideoTask({
+        model: "doubao-seedance-2-0-fast-260128",
+        prompt: "animate",
+        firstFrameUrl: "data:image/jpeg;base64,cmVm",
+        resolution: "720p",
+      })
+    ).rejects.toThrow("302.ai 视频任务创建超时");
   });
 });

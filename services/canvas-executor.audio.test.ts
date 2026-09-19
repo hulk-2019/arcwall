@@ -44,6 +44,7 @@ vi.mock("@/services/suno-proxy", () => ({
 vi.mock("@/lib/oss", () => ({
   getSignedInternalUrl: vi.fn(),
   fetchImageAsBase64: vi.fn(),
+  fetchMediaAsBase64: vi.fn(),
   uploadFile: mocks.uploadFile,
 }));
 vi.mock("@/services/image-proxy", () => ({
@@ -55,6 +56,7 @@ vi.mock("@/services/image-proxy", () => ({
 }));
 vi.mock("@/lib/canvas/orchestrator", () => ({
   PROVIDER_JOB_TIMEOUT_MS: 900_000,
+  PROVIDER_SUBMIT_GRACE_MS: 210_000,
   enqueueReadySteps: mocks.enqueueReadySteps,
   finalizeExecutionIfDone: vi.fn(),
   pollBackoffMs: mocks.pollBackoffMs,

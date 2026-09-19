@@ -71,8 +71,8 @@ export function useCanvasConnect(containerRef: RefObject<HTMLDivElement | null>)
     setSession(null);
 
     if (targetId == null) return;
-    const connected = useCanvasStore.getState().connectNodes(current.sourceId, targetId);
-    if (!connected) toast.error(t("connectFailed"));
+    const result = useCanvasStore.getState().connectNodes(current.sourceId, targetId);
+    if (!result.ok) toast.error(t(result.errorKey));
   };
 
   const isConnecting = () => sessionRef.current != null;

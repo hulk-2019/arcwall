@@ -24,6 +24,8 @@ export interface CreateVideoTaskInput {
   model: string;
   prompt: string;
   firstFrameUrl?: string;
+  /** 多模态参考图；与 firstFrameUrl 互斥。 */
+  referenceImageUrls?: string[];
   /** 参考音频（PRD-VID-002）：仅在上游连接音频时传入 */
   referenceAudioUrl?: string;
   resolution?: string; // 480p | 720p | 1080p
@@ -76,6 +78,9 @@ function normalizeStatus(raw: string | undefined): VideoTaskStatus {
   }
 }
 
+/** 302.ai 创建任务会先处理内联图片/音频，图生视频常超过 30s。 */
+export const CREATE_VIDEO_TASK_TIMEOUT_MS = 180_000;
+
 export async function createVideoTask(
   input: CreateVideoTaskInput
 ): Promise<VideoTaskRef> {
@@ -85,6 +90,13 @@ export async function createVideoTask(
       type: "image_url",
       image_url: { url: input.firstFrameUrl },
       role: "first_frame",
+    });
+  }
+  for (const url of input.referenceImageUrls ?? []) {
+    content.push({
+      type: "image_url",
+      image_url: { url },
+      role: "reference_image",
     });
   }
   if (input.referenceAudioUrl) {
@@ -108,7 +120,7 @@ export async function createVideoTask(
   try {
     res = await axios.post(apiBase(), body, {
       headers: authHeaders(),
-      timeout: 30_000,
+      timeout: CREATE_VIDEO_TASK_TIMEOUT_MS,
     });
   } catch (error) {
     const response = (error as any)?.response;
@@ -118,6 +130,11 @@ export async function createVideoTask(
       throw new Error(
         `302.ai 视频任务创建失败（HTTP ${response.status}）：${detail || "无响应详情"}`
       );
+    }
+    const code = (error as any)?.code;
+    const message = error instanceof Error ? error.message : "";
+    if (code === "ECONNABORTED" || /timeout/i.test(message)) {
+      throw new Error("302.ai 视频任务创建超时");
     }
     throw error;
   }

@@ -16,25 +16,34 @@ import {
   UPLOAD_ACCEPT,
   UPLOAD_MIME_TYPES,
   UPLOAD_SIZE_LIMITS,
-  VIDEO_RESOLUTIONS,
   modelOptionsForType,
   modelSupportsResolution,
 } from "@/lib/canvas/registry";
+import {
+  clampVideoDuration,
+  clampVideoResolution,
+  videoDurationOptions,
+  videoResolutionOptions,
+} from "@/lib/canvas/seedance";
 import { useModelOptions } from "./hooks/useModelOptions";
-import type { CanvasNodeConfig, CanvasNodeType } from "@/types/canvas";
+import type {
+  CanvasNodeConfig,
+  CanvasNodeType,
+  VideoReferenceMode,
+} from "@/types/canvas";
 import { cn } from "@/lib/utils";
 import { FieldLabel, ParamLabel, ParamSelect } from "./Field";
 
 const LAYOUTS = ["grid3", "grid6", "grid9", "grid12"] as const;
-const VIDEO_DURATIONS = [3, 4, 5, 6, 7, 8, 9, 10];
 
 interface PropertyFieldsProps {
   type: CanvasNodeType;
   config: CanvasNodeConfig;
   previewUrl?: string;
-  hasVideoFirstFrame?: boolean;
+  hasVideoImageReference?: boolean;
   onPatch: (patch: Partial<CanvasNodeConfig>) => void;
   onDiscrete: (patch: Partial<CanvasNodeConfig>) => void;
+  onVideoReferenceModeChange?: (mode: VideoReferenceMode) => void;
   onBeginEdit: () => void;
   labels: PropertyLabels;
 }
@@ -58,6 +67,8 @@ interface PropertyLabels {
   videoMode: string;
   videoModeText: string;
   videoModeImage: string;
+  videoReferenceFirstFrame: string;
+  videoReferenceMultimodal: string;
   duration: string;
   resolution: string;
   uploadFile: string;
@@ -121,9 +132,10 @@ export function PropertyFields({
   type,
   config,
   previewUrl,
-  hasVideoFirstFrame = false,
+  hasVideoImageReference = false,
   onPatch,
   onDiscrete,
+  onVideoReferenceModeChange,
   onBeginEdit,
   labels,
 }: PropertyFieldsProps) {
@@ -138,6 +150,7 @@ export function PropertyFields({
     dictModels.length > 0
       ? dictModels
       : modelOptionsForType(modelType).map((v) => ({ value: v, label: v }));
+  const videoModel = config.model || modelOptions[0]?.value || "";
 
   const handleUpload = async (file: File) => {
     // 客户端校验（与服务端共用 registry 中的白名单与限制）
@@ -224,20 +237,47 @@ export function PropertyFields({
           />
           <ParamEnumField
             label={labels.videoMode}
-            className="w-[72px]"
-            value={hasVideoFirstFrame ? "image" : config.videoMode || "text"}
-            options={[
-              { value: "text", label: labels.videoModeText },
-              { value: "image", label: labels.videoModeImage },
-            ]}
-            disabled={hasVideoFirstFrame}
-            onChange={(v) => onDiscrete({ videoMode: v as "text" | "image" })}
+            className={hasVideoImageReference ? "w-[104px]" : "w-[72px]"}
+            value={
+              hasVideoImageReference
+                ? config.videoReferenceMode || "first_frame"
+                : config.videoMode || "text"
+            }
+            options={
+              hasVideoImageReference
+                ? [
+                    {
+                      value: "first_frame",
+                      label: labels.videoReferenceFirstFrame,
+                    },
+                    {
+                      value: "multimodal",
+                      label: labels.videoReferenceMultimodal,
+                    },
+                  ]
+                : [
+                    { value: "text", label: labels.videoModeText },
+                    { value: "image", label: labels.videoModeImage },
+                  ]
+            }
+            onChange={(value) => {
+              if (hasVideoImageReference) {
+                const mode = value as VideoReferenceMode;
+                if (onVideoReferenceModeChange) onVideoReferenceModeChange(mode);
+                else onDiscrete({ videoReferenceMode: mode });
+              } else {
+                onDiscrete({ videoMode: value as "text" | "image" });
+              }
+            }}
           />
           <ParamEnumField
             label={labels.duration}
             className="w-14"
-            value={String(config.duration || 5)}
-            options={VIDEO_DURATIONS.map((d) => ({ value: String(d), label: `${d}s` }))}
+            value={String(clampVideoDuration(videoModel, config.duration))}
+            options={videoDurationOptions(videoModel).map((d) => ({
+              value: String(d),
+              label: `${d}s`,
+            }))}
             onChange={(v) => onDiscrete({ duration: Number(v) })}
           />
           <ParamEnumField
@@ -250,8 +290,11 @@ export function PropertyFields({
           <ParamEnumField
             label={labels.resolution}
             className="w-[72px]"
-            value={config.resolution || "1080p"}
-            options={VIDEO_RESOLUTIONS.map((r) => ({ value: r, label: r }))}
+            value={clampVideoResolution(videoModel, config.resolution)}
+            options={videoResolutionOptions(videoModel).map((r) => ({
+              value: r,
+              label: r,
+            }))}
             onChange={(v) => onDiscrete({ resolution: v })}
           />
         </div>

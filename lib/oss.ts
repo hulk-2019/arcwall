@@ -154,13 +154,16 @@ export async function downloadAndUploadImageWithThumbnail(
 }
 
 /**
- * Download an image and return it as a base64 data URL so downstream services
- * (e.g. Doubao) receive the image inline without hitting OSS anti-hotlinking.
+ * Download media and return it as a base64 data URL so downstream services
+ * receive the file inline without hitting OSS anti-hotlinking.
  */
-export async function fetchImageAsBase64(imageUrl: string): Promise<string> {
+export async function fetchMediaAsBase64(
+  mediaUrl: string,
+  fallbackType = "application/octet-stream"
+): Promise<string> {
   const response = await axios({
     method: "GET",
-    url: imageUrl,
+    url: mediaUrl,
     responseType: "arraybuffer",
     headers: {
       Referer: process.env.NEXT_PUBLIC_APP_URL,
@@ -168,8 +171,35 @@ export async function fetchImageAsBase64(imageUrl: string): Promise<string> {
   });
 
   const buffer = Buffer.from(response.data);
-  const contentType = (response.headers["content-type"] as string) || "image/jpeg";
+  const headerType = (response.headers["content-type"] as string | undefined)
+    ?.split(";")[0]
+    ?.trim();
+  const contentType = sniffMediaType(buffer, headerType, fallbackType);
   return `data:${contentType};base64,${buffer.toString("base64")}`;
+}
+
+/**
+ * Download an image and return it as a base64 data URL so downstream services
+ * (e.g. Doubao) receive the image inline without hitting OSS anti-hotlinking.
+ */
+export async function fetchImageAsBase64(imageUrl: string): Promise<string> {
+  return fetchMediaAsBase64(imageUrl, "image/jpeg");
+}
+
+function sniffMediaType(
+  buffer: Buffer,
+  headerType: string | undefined,
+  fallbackType: string
+): string {
+  if (headerType && headerType !== "application/octet-stream") return headerType;
+  if (buffer.toString("ascii", 0, 4) === "RIFF") return "audio/wav";
+  if (buffer.toString("ascii", 0, 3) === "ID3") return "audio/mpeg";
+  if (buffer.length >= 2 && buffer[0] === 0xff && (buffer[1] & 0xe0) === 0xe0) {
+    return "audio/mpeg";
+  }
+  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8) return "image/jpeg";
+  if (buffer.toString("ascii", 1, 4) === "PNG") return "image/png";
+  return headerType || fallbackType;
 }
 
 export async function uploadFile(buffer: Buffer, path: string): Promise<string> {

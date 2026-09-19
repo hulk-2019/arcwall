@@ -14,7 +14,11 @@ import type {
   CanvasNodeConfig,
   ExecutionDTO,
   StepStatus,
+  VideoReferenceMode,
 } from "@/types/canvas";
+
+export type ConnectNodesErrorKey = "connectFailed" | "connectFirstFrameNoAudio";
+export type ConnectNodesResult = { ok: true } | { ok: false; errorKey: ConnectNodesErrorKey };
 
 export interface Viewport {
   x: number;
@@ -71,7 +75,8 @@ interface CanvasState {
   beginEdit: () => void;
   deleteNode: (id: string) => void;
   duplicateNode: (id: string) => void;
-  connectNodes: (sourceId: string, targetId: string) => boolean;
+  connectNodes: (sourceId: string, targetId: string) => ConnectNodesResult;
+  setVideoReferenceMode: (nodeId: string, mode: VideoReferenceMode) => number;
   deleteEdge: (id: string) => void;
   select: (id: string | null) => void;
   setViewport: (vp: Partial<Viewport>) => void;
@@ -360,16 +365,69 @@ export const useCanvasStore = create<Store>((set, get) => {
       recordOp({ op: "node.upsert", nodeId: copy.id, type: copy.type, x: copy.x, y: copy.y, config: copy.config });
     },
 
+    setVideoReferenceMode: (nodeId, mode) => {
+      const { nodes, edges } = get();
+      const node = nodes.find((item) => item.id === nodeId);
+      if (!node || node.type !== "video") return 0;
+
+      const removedEdges =
+        mode === "first_frame"
+          ? edges.filter(
+              (edge) => edge.targetNodeId === nodeId && edge.targetPort === "reference_audio"
+            )
+          : [];
+      const removedIds = new Set(removedEdges.map((edge) => edge.id));
+      const config = { ...node.config, videoReferenceMode: mode };
+
+      pushUndo();
+      set({
+        nodes: nodes.map((item) => (item.id === nodeId ? { ...item, config } : item)),
+        edges: edges.filter((edge) => !removedIds.has(edge.id)),
+      });
+      recordOp({ op: "node.config", nodeId, config });
+      for (const edge of removedEdges) {
+        recordOp({ op: "edge.delete", edgeId: edge.id });
+      }
+      return removedEdges.length;
+    },
+
     connectNodes: (sourceId, targetId) => {
       const { nodes, edges } = get();
-      if (sourceId === targetId) return false;
+      if (sourceId === targetId) return { ok: false, errorKey: "connectFailed" };
       const source = nodes.find((n) => n.id === sourceId);
       const target = nodes.find((n) => n.id === targetId);
-      if (!source || !target) return false;
+      if (!source || !target) return { ok: false, errorKey: "connectFailed" };
       // upload 节点的输出类型随 mediaType 变化（image/video/audio）
-      const targetPort = resolveTargetPort(nodeOutputKind(source.type, source.config), target.type);
-      if (!targetPort) return false;
-      if (edges.some((e) => e.sourceNodeId === sourceId && e.targetNodeId === targetId)) return true;
+      const sourceKind = nodeOutputKind(source.type, source.config);
+      const targetPort = resolveTargetPort(sourceKind, target.type);
+      if (!targetPort) return { ok: false, errorKey: "connectFailed" };
+      if (edges.some((e) => e.sourceNodeId === sourceId && e.targetNodeId === targetId)) {
+        return { ok: true };
+      }
+
+      const hasImageReference =
+        target.type === "video" &&
+        edges.some((edge) => edge.targetNodeId === targetId && edge.targetPort === "first_frame");
+      if (target.type === "video" && sourceKind === "audio") {
+        const mode = target.config.videoReferenceMode || "first_frame";
+        if (mode !== "multimodal") {
+          return { ok: false, errorKey: "connectFirstFrameNoAudio" };
+        }
+        if (!hasImageReference) {
+          return { ok: false, errorKey: "connectFailed" };
+        }
+      }
+
+      const hasAudioReference =
+        target.type === "video" &&
+        edges.some(
+          (edge) => edge.targetNodeId === targetId && edge.targetPort === "reference_audio"
+        );
+      const shouldUseMultimodal =
+        target.type === "video" && sourceKind === "image" && hasAudioReference;
+      const targetConfig = shouldUseMultimodal
+        ? { ...target.config, videoReferenceMode: "multimodal" as const }
+        : target.config;
 
       pushUndo();
       const edge: CanvasEdgeDTO = {
@@ -379,7 +437,17 @@ export const useCanvasStore = create<Store>((set, get) => {
         targetNodeId: targetId,
         targetPort,
       };
-      set({ edges: [...edges, edge] });
+      set({
+        nodes: shouldUseMultimodal
+          ? nodes.map((node) =>
+              node.id === targetId ? { ...node, config: targetConfig } : node
+            )
+          : nodes,
+        edges: [...edges, edge],
+      });
+      if (shouldUseMultimodal) {
+        recordOp({ op: "node.config", nodeId: targetId, config: targetConfig });
+      }
       recordOp({
         op: "edge.add",
         edgeId: edge.id,
@@ -387,7 +455,7 @@ export const useCanvasStore = create<Store>((set, get) => {
         targetNodeId: targetId,
         targetPort,
       });
-      return true;
+      return { ok: true };
     },
 
     deleteEdge: (id) => {

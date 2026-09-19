@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useCanvasStore } from "@/store/useCanvasStore";
 import type { CanvasNodeDTO, CanvasNodeOutput } from "@/types/canvas";
@@ -60,8 +61,11 @@ export function NodeCard({
     if (pickMode) {
       const { connectFrom, setConnectFrom } = useCanvasStore.getState();
       if (connectFrom && connectFrom !== node.id) {
-        if (connectNodes(connectFrom, node.id)) {
+        const result = connectNodes(connectFrom, node.id);
+        if (result.ok) {
           setConnectFrom(null);
+        } else {
+          toast.error(t(result.errorKey));
         }
       }
       return;

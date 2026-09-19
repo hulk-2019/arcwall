@@ -37,6 +37,7 @@ export function NodeDock({ node, onRunNode, onRunDownstream, runDisabled }: Node
   const edges = useCanvasStore((s) => s.edges);
   const updateNodeConfig = useCanvasStore((s) => s.updateNodeConfig);
   const editNodeConfig = useCanvasStore((s) => s.editNodeConfig);
+  const setVideoReferenceMode = useCanvasStore((s) => s.setVideoReferenceMode);
   const beginEdit = useCanvasStore((s) => s.beginEdit);
   const deleteEdge = useCanvasStore((s) => s.deleteEdge);
   const setConnectFrom = useCanvasStore((s) => s.setConnectFrom);
@@ -88,6 +89,8 @@ export function NodeDock({ node, onRunNode, onRunDownstream, runDisabled }: Node
     videoMode: t("videoMode"),
     videoModeText: t("videoModeText"),
     videoModeImage: t("videoModeImage"),
+    videoReferenceFirstFrame: t("videoReferenceFirstFrame"),
+    videoReferenceMultimodal: t("videoReferenceMultimodal"),
     duration: t("duration"),
     resolution: t("resolution"),
     uploadFile: t("uploadFile"),
@@ -324,7 +327,7 @@ export function NodeDock({ node, onRunNode, onRunDownstream, runDisabled }: Node
           type={node.type}
           config={node.config}
           previewUrl={node.output?.urls?.[0]}
-          hasVideoFirstFrame={
+          hasVideoImageReference={
             node.type === "video" &&
             references.some(({ edge }) => edge.targetPort === "first_frame")
           }
@@ -336,6 +339,10 @@ export function NodeDock({ node, onRunNode, onRunDownstream, runDisabled }: Node
           onDiscrete={(patch: Partial<CanvasNodeConfig>) =>
             editNodeConfig(node.id, { ...node.config, ...patch })
           }
+          onVideoReferenceModeChange={(mode) => {
+            const removed = setVideoReferenceMode(node.id, mode);
+            if (removed > 0) toast.info(t("audioReferencesRemoved"));
+          }}
         />
 
         {executable && (

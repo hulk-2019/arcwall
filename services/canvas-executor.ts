@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getDoubaoAIClient } from "@/services/openai";
 import {
   fetchImageAsBase64,
+  fetchMediaAsBase64,
   getSignedInternalUrl,
   uploadFile,
 } from "@/lib/oss";
@@ -28,6 +29,12 @@ import {
   imageModelProvider,
 } from "@/lib/canvas/registry";
 import {
+  assertReferenceAudioFitsSeedance,
+  clampVideoDuration,
+  clampVideoResolution,
+  probeAudioDurationSec,
+} from "@/lib/canvas/seedance";
+import {
   fetchSunoTask,
   fetchSunoTiming,
   submitSunoTask,
@@ -42,6 +49,7 @@ import {
 } from "@/services/image-proxy";
 import {
   PROVIDER_JOB_TIMEOUT_MS,
+  PROVIDER_SUBMIT_GRACE_MS,
   enqueueReadySteps,
   finalizeExecutionIfDone,
   pollBackoffMs,
@@ -428,31 +436,54 @@ async function executeVideoSubmit(
   }
 
   const model = config.model || VIDEO_MODEL_DEFAULT;
-  const configuredResolution = config.resolution || "1080p";
-  // Seedance 2.0 Fast 最高支持 720p；历史节点可能仍保存了 1080p。
-  const resolution =
-    model === "doubao-seedance-2-0-fast-260128" && configuredResolution === "1080p"
-      ? "720p"
-      : configuredResolution;
-  const duration = Math.max(3, Math.min(10, Number(config.duration) || 5));
+  const resolution = clampVideoResolution(model, config.resolution);
+  const duration = clampVideoDuration(model, config.duration);
   const ratio = config.aspectRatio || "16:9";
 
   const firstFrame = compiled.firstFrame;
-  // 首帧连线代表图生视频：图片与 prompt 必须一起提交，不能被历史/default text 配置覆盖。
+  const referenceMode = config.videoReferenceMode || "first_frame";
+  // 图片连线代表图生视频：由节点配置决定严格首帧或多模态参考。
   const mode = firstFrame ? "image" : config.videoMode || "text";
   let firstFrameUrl: string | undefined;
+  let referenceImageUrls: string[] | undefined;
   if (mode === "image") {
     if (!firstFrame) {
       throw new NormalizedStepError("INPUT_NOT_READY", "图生视频缺少首帧");
     }
     // OSS 有 Referer 白名单，Ark 无法直接回源；由本服务读取后内联提交。
-    firstFrameUrl = await fetchImageAsBase64(await toHttpUrl(firstFrame));
+    const inlineImage = await fetchImageAsBase64(await toHttpUrl(firstFrame));
+    if (referenceMode === "multimodal") {
+      referenceImageUrls = [inlineImage];
+    } else {
+      firstFrameUrl = inlineImage;
+    }
   }
 
   // 参考音频（PRD-VID-002）：上游音频连接后透传给供应商，模型不支持时按供应商错误归一
   let referenceAudioUrl: string | undefined;
   if (compiled.referenceAudios.length > 0) {
-    referenceAudioUrl = await toHttpUrl(compiled.referenceAudios[0]);
+    if (!firstFrame || referenceMode !== "multimodal") {
+      throw new NormalizedStepError(
+        "MODEL_CAPABILITY_MISMATCH",
+        "参考音频需要图片并使用多模态参考模式"
+      );
+    }
+    const audioUrl = await toHttpUrl(compiled.referenceAudios[0]);
+    const inlineAudio = await fetchMediaAsBase64(audioUrl, "audio/mpeg");
+    const comma = inlineAudio.indexOf(",");
+    const audioBuffer = Buffer.from(inlineAudio.slice(comma + 1), "base64");
+    try {
+      assertReferenceAudioFitsSeedance({
+        durationSec: probeAudioDurationSec(audioBuffer),
+        byteLength: audioBuffer.length,
+      });
+    } catch (error) {
+      throw new NormalizedStepError(
+        "MODEL_CAPABILITY_MISMATCH",
+        error instanceof Error ? error.message : "参考音频不符合模型限制"
+      );
+    }
+    referenceAudioUrl = inlineAudio;
   }
 
   // 先落 SUBMITTING 记录再提交供应商：崩溃后可由恢复任务收敛（技术方案 §七点三）
@@ -461,7 +492,7 @@ async function executeVideoSubmit(
       step_run_id: stepRunId,
       provider: "302ai",
       status: "submitting",
-      next_poll_at: new Date(Date.now() + 60_000),
+      next_poll_at: new Date(Date.now() + PROVIDER_SUBMIT_GRACE_MS),
     },
   });
 
@@ -470,14 +501,15 @@ async function executeVideoSubmit(
       model,
       prompt,
       firstFrameUrl,
+      referenceImageUrls,
       referenceAudioUrl,
       resolution,
       ratio,
       duration,
     });
 
-    await prisma.provider_jobs.update({
-      where: { id: job.id },
+    const attached = await prisma.provider_jobs.updateMany({
+      where: { id: job.id, status: "submitting" },
       data: {
         external_id: task.providerTaskId,
         status: "running",
@@ -486,6 +518,10 @@ async function executeVideoSubmit(
         updated_at: new Date(),
       },
     });
+    if (attached.count === 0) {
+      await cancelVideoTask(task.providerTaskId).catch(() => false);
+      throw new NormalizedStepError("PROVIDER_TIMEOUT", "供应商任务提交中断");
+    }
 
     // 供应商任务已提交，本步骤保持 running，由 poller 驱动至终态
     return {
@@ -494,8 +530,8 @@ async function executeVideoSubmit(
       asyncJob: { provider: "302ai", externalId: task.providerTaskId },
     };
   } catch (e) {
-    await prisma.provider_jobs.update({
-      where: { id: job.id },
+    await prisma.provider_jobs.updateMany({
+      where: { id: job.id, status: "submitting" },
       data: { status: "failed", updated_at: new Date() },
     });
     throw e;
@@ -785,6 +821,17 @@ export async function pollProviderJob(providerJobId: number): Promise<void> {
     return;
   }
   if (!stepRun || !job.external_id) {
+    const createdAt = job.created_at?.getTime() ?? 0;
+    if (stepRun && Date.now() < createdAt + PROVIDER_SUBMIT_GRACE_MS) {
+      await prisma.provider_jobs.update({
+        where: { id: job.id },
+        data: {
+          next_poll_at: new Date(createdAt + PROVIDER_SUBMIT_GRACE_MS),
+          updated_at: new Date(),
+        },
+      });
+      return;
+    }
     // 提交阶段中断且无 external_id：无法查询，按平台超时失败
     await prisma.provider_jobs.update({
       where: { id: job.id },

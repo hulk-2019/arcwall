@@ -216,6 +216,7 @@ export const NODE_TYPE_DEFS: Record<CanvasNodeType, NodeTypeDef> = {
       title: "视频生成",
       prompt: "",
       videoMode: "text",
+      videoReferenceMode: "first_frame",
       duration: 5,
       resolution: "1080p",
       aspectRatio: "16:9",

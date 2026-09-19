@@ -26,6 +26,8 @@ export type AudioStyle =
   | "folk"
   | "jazz";
 
+export type VideoReferenceMode = "first_frame" | "multimodal";
+
 export type ExecutionStatus =
   | "queued"
   | "running"
@@ -69,6 +71,8 @@ export interface CanvasNodeConfig {
   layout?: string; // "grid3" | "grid6" | "grid9" | "grid12" | "keyframes"
   // video 节点
   videoMode?: "text" | "image";
+  /** 有图片引用时：严格首帧或多模态参考。 */
+  videoReferenceMode?: VideoReferenceMode;
   duration?: number;
   // video: 480p/720p/1080p；image（GPT-Image 系列）: 1k/2k
   resolution?: string;

@@ -40,6 +40,8 @@ const labels = {
   videoMode: "Video mode",
   videoModeText: "Text to video",
   videoModeImage: "Image to video",
+  videoReferenceFirstFrame: "First frame",
+  videoReferenceMultimodal: "Multimodal reference",
   duration: "Duration",
   resolution: "Resolution",
   uploadFile: "Upload",
@@ -53,12 +55,16 @@ const labels = {
 };
 
 describe("PropertyFields video mode", () => {
-  it("shows image-to-video and locks the mode when a first-frame reference is connected", () => {
+  it("allows switching between first-frame and multimodal modes when an image is connected", () => {
     const html = renderToStaticMarkup(
       <PropertyFields
         type="video"
-        config={{ model: "video-model", videoMode: "text" }}
-        hasVideoFirstFrame
+        config={{
+          model: "video-model",
+          videoMode: "text",
+          videoReferenceMode: "multimodal",
+        }}
+        hasVideoImageReference
         labels={labels}
         onPatch={vi.fn()}
         onDiscrete={vi.fn()}
@@ -66,8 +72,34 @@ describe("PropertyFields video mode", () => {
       />
     );
 
-    expect(html).toContain('<option value="image" selected="">Image to video</option>');
-    expect(html).toMatch(/<select[^>]*disabled=""/);
+    expect(html).toContain('<option value="first_frame">First frame</option>');
+    expect(html).toContain(
+      '<option value="multimodal" selected="">Multimodal reference</option>'
+    );
+    expect(html).not.toMatch(/<select[^>]*disabled=""/);
+  });
+
+  it("hides 3s and 1080p for Seedance 2.0", () => {
+    const html = renderToStaticMarkup(
+      <PropertyFields
+        type="video"
+        config={{
+          model: "doubao-seedance-2-0-fast-260128",
+          duration: 3,
+          resolution: "1080p",
+        }}
+        labels={labels}
+        onPatch={vi.fn()}
+        onDiscrete={vi.fn()}
+        onBeginEdit={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('<option value="4" selected="">4s</option>');
+    expect(html).toContain('<option value="15">15s</option>');
+    expect(html).not.toContain('value="3"');
+    expect(html).toContain('<option value="720p" selected="">720p</option>');
+    expect(html).not.toContain('value="1080p"');
   });
 });
 
