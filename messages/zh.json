@@ -172,7 +172,9 @@
       "retry": "重试",
       "makeSame": "做同款",
       "unfavorite": "取消收藏",
-      "publishToHomepage": "发布至首页"
+      "publishToHomepage": "发布至首页",
+      "audioWork": "音频作品",
+      "videoWork": "视频作品"
     },
     "workbench": {
       "confirmDelete": "确定要删除这个作品吗？",
@@ -646,6 +648,10 @@
     "polishFailed": "润色失败",
     "polishEmpty": "请先输入文本内容",
     "preview": "预览",
+    "saveToWorkbench": "保存至工作台",
+    "saveToWorkbenchSuccess": "已保存至工作台",
+    "saveToWorkbenchAlreadySaved": "该素材已在工作台",
+    "saveToWorkbenchFailed": "保存至工作台失败",
     "download": "下载",
     "downloadOriginal": "下载原文件",
     "downloadFailed": "下载失败，请重试",
@@ -682,5 +688,11 @@
     "duplicateNode": "复制节点",
     "staleOutput": "产物过期",
     "staleOutputHint": "配置在最近一次生成后有修改，当前展示的是旧产物；重新运行本节点后，下游才可引用最新结果"
+  },
+  "audioPlayer": {
+    "play": "播放",
+    "pause": "暂停",
+    "replay": "重试",
+    "volume": "音量"
   }
 }

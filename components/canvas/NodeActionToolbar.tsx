@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Copy, Download, Eye, FileArchive, Loader2, Trash2 } from "lucide-react";
+import { BookmarkPlus, Copy, Download, Eye, FileArchive, Loader2, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { startIsolatedDownload, withDownloadLock } from "@/lib/canvas/download";
-import { prepareCanvasDownload } from "@/services/api";
+import { prepareCanvasDownload, saveCanvasMediaToWorkbench } from "@/services/api";
 import { useCanvasStore } from "@/store/useCanvasStore";
 import type { CanvasNodeDTO } from "@/types/canvas";
 import { NODE_WIDTH } from "./node-size";
@@ -21,7 +21,7 @@ import type { TimedLyricWord } from "@/lib/audio-lyrics";
 const TOOLBAR_GAP = 10;
 
 /**
- * 选中节点上方的操作浮框：预览 / 复制 / 删除。
+ * 选中节点上方的操作浮框：预览 / 保存至工作台 / 下载 / 复制 / 删除。
  * 预览是节点媒体的唯一大图入口（节点内缩略图不再响应点击）。
  */
 export function NodeActionToolbar({ node }: { node: CanvasNodeDTO }) {
@@ -32,8 +32,10 @@ export function NodeActionToolbar({ node }: { node: CanvasNodeDTO }) {
   const openMediaPreview = useCanvasStore((s) => s.openMediaPreview);
   const downloadLock = useRef(false);
   const downloadAbort = useRef<AbortController | null>(null);
+  const saveLock = useRef(false);
   const mounted = useRef(true);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     mounted.current = true;
@@ -64,6 +66,7 @@ export function NodeActionToolbar({ node }: { node: CanvasNodeDTO }) {
             ? "image"
             : null;
   const canDownload = Boolean(canvasId && previewKind && urls.length > 0);
+  const canSaveToWorkbench = canDownload;
   const canDownloadLyrics = node.type === "audio" && Boolean(lyrics);
 
   async function download(endpoint: string, key: string) {
@@ -83,6 +86,29 @@ export function NodeActionToolbar({ node }: { node: CanvasNodeDTO }) {
         if (mounted.current) setDownloading(null);
       }
     });
+  }
+
+  async function saveToWorkbench() {
+    if (!canvasId || saveLock.current) return;
+    saveLock.current = true;
+    setSaving(true);
+    try {
+      const result = await saveCanvasMediaToWorkbench({ canvasId, nodeId: node.id });
+      if (result.code !== 0) {
+        toast.error(result.message || t("saveToWorkbenchFailed"));
+        return;
+      }
+      const saved = Number(result.data?.saved ?? 0);
+      const alreadySaved = Number(result.data?.alreadySaved ?? 0);
+      if (saved > 0) toast.success(t("saveToWorkbenchSuccess"));
+      else if (alreadySaved > 0) toast.success(t("saveToWorkbenchAlreadySaved"));
+      else toast.error(t("saveToWorkbenchFailed"));
+    } catch {
+      toast.error(t("saveToWorkbenchFailed"));
+    } finally {
+      saveLock.current = false;
+      if (mounted.current) setSaving(false);
+    }
   }
 
   return (
@@ -113,6 +139,25 @@ export function NodeActionToolbar({ node }: { node: CanvasNodeDTO }) {
           }
         >
           <Eye className="h-3.5 w-3.5" />
+        </Button>
+      )}
+      {canSaveToWorkbench && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 rounded-full text-muted-foreground hover:text-foreground"
+          title={t("saveToWorkbench")}
+          aria-label={t("saveToWorkbench")}
+          aria-busy={saving}
+          disabled={saving}
+          onClick={() => void saveToWorkbench()}
+        >
+          {saving ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <BookmarkPlus className="h-3.5 w-3.5" />
+          )}
         </Button>
       )}
       {canDownload && (

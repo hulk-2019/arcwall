@@ -47,6 +47,10 @@ describe("MediaPreviewDialog audio lyrics", () => {
 
     expect(html).toContain("灯火沿着河流");
     expect(html).toContain("晚风轻轻吹");
+    expect(html).toContain("data-audio-disc-player");
+    expect(html).toContain("data-film-disc");
+    expect(html).toContain("bg-red-950");
+    expect(html).not.toContain("bg-muted/30");
     expect(html).not.toContain("downloadOriginal");
     expect(html).not.toContain("downloadLyricsMp3");
     expect(html).not.toContain("downloadSongPackage");

@@ -5,6 +5,8 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Wallpaper } from "@/types/wallpaper";
 import { ImageWithPlaceholder } from "@/components/ui/image-with-placeholder";
 import { Loading } from "@/components/ui/loading";
+import { wallpaperMediaType } from "@/lib/wallpaper-media";
+import { AudioDiscPlayer } from "@/components/ui/audio-disc-player";
 
 interface WallpaperPreviewDialogProps {
   wallpaper: Wallpaper | null;
@@ -91,6 +93,8 @@ export function WallpaperPreviewDialog({
   }, [wallpaper]);
 
   if (!wallpaper) return null;
+  const mediaType = wallpaperMediaType(wallpaper);
+  const isImage = mediaType === "image";
 
   return (
     <>
@@ -113,11 +117,27 @@ export function WallpaperPreviewDialog({
 
           <div className="relative flex flex-col md:flex-row w-full h-full md:h-auto md:rounded-2xl overflow-hidden bg-background">
             <div
-              className="relative flex-shrink-0 w-full md:w-[68%] bg-black cursor-zoom-in"
+              className={`relative flex-shrink-0 w-full md:w-[68%] bg-black ${isImage ? "cursor-zoom-in" : ""}`}
               style={{ minHeight: "58vh" }}
-              onClick={() => previewUrl && setIsImageFullscreen(true)}
+              onClick={() => isImage && previewUrl && setIsImageFullscreen(true)}
             >
-              {previewUrl ? (
+              {mediaType === "video" && previewUrl ? (
+                <video
+                  src={previewUrl}
+                  controls
+                  autoPlay
+                  className="h-full w-full object-contain"
+                  style={{ minHeight: "58vh" }}
+                />
+              ) : mediaType === "audio" && previewUrl ? (
+                <AudioDiscPlayer
+                  src={previewUrl}
+                  title={wallpaper.img_description}
+                  autoPlay
+                  size="lg"
+                  className="min-h-[58vh]"
+                />
+              ) : previewUrl ? (
                 <ImageWithPlaceholder
                   src={previewUrl}
                   alt={wallpaper.img_description}

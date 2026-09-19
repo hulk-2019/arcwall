@@ -62,6 +62,7 @@ model wallpapers {
   img_path            String?   @db.Text
   img_thumbnail_path  String?   @db.Text
   img_watermark_path  String?   @db.Text
+  media_type          String    @default("image") @db.VarChar(20) // image | video | audio
   status              Int       @default(0) // 0: Generating, 1: Success, 2: Failed
   failure_reason      String?   @db.Text
   llm_params          Json?
@@ -112,6 +113,7 @@ model system_wallpapers {
   img_path       String?   @db.Text
   img_thumbnail_path String? @db.Text
   img_watermark_path String? @db.Text
+  media_type     String    @default("image") @db.VarChar(20) // image | video | audio
   llm_params     Json?
   created_at     DateTime? @db.Timestamptz()
   updated_at     DateTime? @db.Timestamptz()

@@ -26,4 +26,5 @@ export interface Wallpaper {
   is_favorite?: boolean;
   likes_count?: number;
   is_public?: boolean;
+  media_type?: "image" | "video" | "audio";
 }

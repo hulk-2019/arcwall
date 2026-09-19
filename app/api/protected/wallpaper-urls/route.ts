@@ -81,7 +81,7 @@ export async function POST(req: Request) {
     if (type === "download") {
       path = wallpaper.img_path;
     } else if (type === "preview") {
-      path = wallpaper.img_watermark_path;
+      path = wallpaper.img_watermark_path || wallpaper.img_path;
     }
 
     if (!path) {

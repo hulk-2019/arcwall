@@ -9,6 +9,7 @@ import { Wallpaper } from "@/types/wallpaper";
 import { toast } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { isPublishableWallpaper } from "@/lib/wallpaper-media";
 import {
   getMyWorks,
   genWallpaper,
@@ -316,6 +317,10 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
   };
 
   const handlePublishClick = (wallpaper: Wallpaper) => {
+    if (!isPublishableWallpaper(wallpaper)) {
+      toast.error(tWorkbench("noEligibleWorks"));
+      return;
+    }
     if (
       !confirm(tWorkbench("confirmPublish"))
     ) {
@@ -467,7 +472,7 @@ export function WorkbenchContent({ activeTab }: WorkbenchContentProps) {
     // Check if any of the selected wallpapers are not eligible (already published, generating, failed)
     const eligibleIds = selectedIds.filter((id) => {
       const wp = wallpapers.find((w) => w.id === id);
-      return wp && wp.status === 1 && !wp.is_public;
+      return wp && isPublishableWallpaper(wp);
     });
 
     if (eligibleIds.length === 0) {

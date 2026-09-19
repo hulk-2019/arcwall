@@ -387,6 +387,8 @@ export function formatWallpaper(row: any): Wallpaper {
     status: row.status ?? 0,
     failure_reason: row.failure_reason || undefined,
     is_public: row.is_public ?? false,
+    media_type:
+      row.media_type === "video" || row.media_type === "audio" ? row.media_type : "image",
   };
 
   if (row.user) {

@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Edit, Eye, Trash2, Download, X, CheckSquare, Square, Upload, MoreHorizontal, Sparkles, Heart, ImageOff, AlertCircle,
+  Edit, Eye, Trash2, Download, X, CheckSquare, Square, Upload, MoreHorizontal, Sparkles, Heart, ImageOff, AlertCircle, Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,8 @@ import { Loading } from "@/components/ui/loading";
 import { ImageWithPlaceholder } from "@/components/ui/image-with-placeholder";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTranslations } from "next-intl";
+import { wallpaperMediaType } from "@/lib/wallpaper-media";
+import { AudioDiscPlayer } from "@/components/ui/audio-disc-player";
 
 interface WallpaperCardProps {
   wallpaper: Wallpaper;
@@ -37,6 +39,7 @@ export function WallpaperCard({
   handleEdit, handleUnfavorite, handleDownload, handleUnpublish, handlePublishClick,
 }: WallpaperCardProps) {
   const t = useTranslations("myWorks.card");
+  const mediaType = wallpaperMediaType(wallpaper);
 
   return (
     <article className="group relative overflow-hidden rounded-lg border border-border/80 bg-card text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg">
@@ -70,6 +73,25 @@ export function WallpaperCard({
                 </Popover>
               )}
             </div>
+          </div>
+        ) : mediaType === "video" ? (
+          <div onClick={() => handlePreview(wallpaper)} className="relative h-full w-full cursor-pointer bg-black">
+            <video
+              src={wallpaper.img_url || ""}
+              className="h-full w-full object-cover"
+              muted
+              playsInline
+              preload="metadata"
+            />
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20">
+              <Play className="h-8 w-8 text-white" fill="currentColor" />
+            </div>
+            <span className="sr-only">{t("videoWork")}</span>
+          </div>
+        ) : mediaType === "audio" ? (
+          <div onClick={() => handlePreview(wallpaper)} className="h-full w-full cursor-pointer">
+            <AudioDiscPlayer variant="cover" title={wallpaper.img_description} size="md" />
+            <span className="sr-only">{t("audioWork")}</span>
           </div>
         ) : (
           <div onClick={() => handlePreview(wallpaper)} className="h-full w-full cursor-pointer">

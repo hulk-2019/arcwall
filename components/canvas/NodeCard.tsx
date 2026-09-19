@@ -9,6 +9,7 @@ import { useCanvasStore } from "@/store/useCanvasStore";
 import type { CanvasNodeDTO, CanvasNodeOutput } from "@/types/canvas";
 import { NODE_TYPE_ACCENT, NODE_TYPE_TONE, NodeTypeIcon, STATUS_BADGE } from "./node-meta";
 import { NODE_WIDTH, nodeHeight } from "./node-size";
+import { AudioDiscPlayer } from "@/components/ui/audio-disc-player";
 
 /** 未生成时的占位：铺满媒体区（区域高度已按画幅计算），展示提示词 */
 function RatioPlaceholder({ children }: { children: React.ReactNode }) {
@@ -163,7 +164,7 @@ export function NodeCard({
       <div
         className={cn(
           "relative mt-2 min-h-0 flex-1 overflow-hidden",
-          node.type === "image" || node.type === "video"
+          node.type === "image" || node.type === "video" || node.type === "audio"
             ? ""
             : "px-4 pb-3 text-xs text-muted-foreground"
         )}
@@ -211,17 +212,18 @@ function NodePreview({ node, output }: { node: CanvasNodeDTO; output?: CanvasNod
   if (node.type === "audio") {
     return (
       <div className="flex h-full flex-col">
-        <p className="line-clamp-3 leading-relaxed">{node.config.text || t("noPreview")}</p>
         {output?.urls?.[0] ? (
-          <audio
+          <AudioDiscPlayer
             src={output.urls[0]}
-            controls
-            preload="none"
-            className="mt-auto w-full"
-            onPointerDown={(e) => e.stopPropagation()}
+            title={node.config.title || node.config.text}
+            size="sm"
+            className="min-h-0 flex-1"
           />
         ) : (
-          <p className="mt-auto text-muted-foreground/60">{t("noPreview")}</p>
+          <>
+            <p className="line-clamp-3 leading-relaxed">{node.config.text || t("noPreview")}</p>
+            <p className="mt-auto text-muted-foreground/60">{t("noPreview")}</p>
+          </>
         )}
       </div>
     );
@@ -296,9 +298,11 @@ function UploadMedia({
 }) {
   if (kind === "audio") {
     return (
-      <div className="flex h-full items-end pb-4">
-        <audio src={url} controls preload="none" className="w-full" />
-      </div>
+      <AudioDiscPlayer
+        src={url}
+        size="sm"
+        className="h-full"
+      />
     );
   }
   if (kind === "video") {

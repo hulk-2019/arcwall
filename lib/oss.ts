@@ -28,6 +28,48 @@ export function generateOssKey(): Record<string, string> {
   };
 }
 
+function wallpaperDatePrefix(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}${month}${day}`;
+}
+
+/** Copy canvas media into the workbench `wallpapers/` prefix, keeping the source extension. */
+export function generateWorkbenchMediaKeys(extension: string): {
+  original: string;
+  thumbnail: string;
+} {
+  const ext = extension.startsWith(".") ? extension : `.${extension || "bin"}`;
+  const dateStr = wallpaperDatePrefix();
+  return {
+    original: `wallpapers/${dateStr}/${randomUUID().replace(/-/g, "")}${ext}`,
+    thumbnail: `wallpapers/${dateStr}/${randomUUID().replace(/-/g, "")}.jpg`,
+  };
+}
+
+export async function copyOssObject(sourceKey: string, destKey: string): Promise<string> {
+  const result = await client.copy(destKey, sourceKey);
+  return (result as { name?: string }).name || destKey;
+}
+
+export async function getOssObjectBuffer(key: string): Promise<Buffer> {
+  const result = await client.get(key, { headers: internalDownloadHeaders() });
+  return Buffer.from(result.content as Buffer);
+}
+
+export async function uploadJpegThumbnail(buffer: Buffer, destKey: string): Promise<string> {
+  const thumbnailBuffer = await sharp(buffer)
+    .resize(300, 300, {
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+    .jpeg({ quality: 30 })
+    .toBuffer();
+  return uploadFile(thumbnailBuffer, destKey);
+}
+
 export async function downloadImage(imageUrl: string, outputPath: string) {
   try {
     const response = await axios({

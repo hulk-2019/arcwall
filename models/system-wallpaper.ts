@@ -82,6 +82,8 @@ export function formatSystemWallpaper(row: any): Wallpaper {
     img_path: row.img_path || undefined,
     img_thumbnail_path: row.img_thumbnail_path || undefined,
     img_watermark_path: row.img_watermark_path || undefined,
+    media_type:
+      row.media_type === "video" || row.media_type === "audio" ? row.media_type : "image",
     model_name: row.model_name || "",
     llm_params: row.llm_params,
     created_at: row.created_at ? row.created_at.toISOString() : "",
@@ -119,6 +121,7 @@ export async function insertSystemWallpaper(wallpaper: Wallpaper, creatorId?: nu
       img_path: wallpaper.img_path,
       img_thumbnail_path: wallpaper.img_thumbnail_path,
       img_watermark_path: wallpaper.img_watermark_path,
+      media_type: wallpaper.media_type || "image",
       llm_params: wallpaper.llm_params || {},
       created_at: createdAt,
       updated_at: createdAt,

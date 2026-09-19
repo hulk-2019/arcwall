@@ -4,6 +4,7 @@ import { requireAuthOrResponse } from "@/lib/auth";
 import { findUserByEmail } from "@/models/user";
 import { prisma } from "@/lib/prisma";
 import { PublishWallpaperSchema } from "@/lib/schemas";
+import { wallpaperMediaType } from "@/lib/wallpaper-media";
 
 export async function POST(req: Request) {
   const { respErr } = createLocaleResp(req);
@@ -59,6 +60,7 @@ export async function POST(req: Request) {
       img_path: w.img_path,
       img_thumbnail_path: w.img_thumbnail_path,
       img_watermark_path: w.img_watermark_path,
+      media_type: wallpaperMediaType(w),
       llm_params: w.llm_params ? JSON.parse(JSON.stringify(w.llm_params)) : {},
       created_at: createdAt,
       updated_at: createdAt,

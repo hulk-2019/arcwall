@@ -93,6 +93,7 @@ export async function POST(req: Request) {
           img_path: true,
           img_thumbnail_path: true,
           img_watermark_path: true,
+          media_type: true,
           llm_params: true,
           created_at: true,
           user: {

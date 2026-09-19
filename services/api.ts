@@ -164,6 +164,11 @@ export const getCanvasModels = (type: string) =>
     method: "POST",
     body: JSON.stringify({ categories: ["canvas_model"], type }),
   });
+export const saveCanvasMediaToWorkbench = (data: { canvasId: number; nodeId: string }) =>
+  fetcher("/api/protected/canvas/save-to-workbench", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 export const polishCanvasText = (canvasId: number, text: string) =>
   fetcher("/api/protected/canvas/polish-text", {
     method: "POST",

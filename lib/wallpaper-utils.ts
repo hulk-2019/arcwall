@@ -74,6 +74,16 @@ export async function addThumbnailUrlToWallpaper(wallpaper: Wallpaper): Promise<
       console.log(`Failed to generate signed URL for ${wallpaper.img_thumbnail_path}:`, e);
       result.img_thumbnail_url = '';
     }
+  } else if (
+    wallpaper.img_path &&
+    (wallpaper.media_type === "video" || wallpaper.media_type === "audio")
+  ) {
+    try {
+      result.img_url = await getSignedUrl(wallpaper.img_path, 86400);
+    } catch (e) {
+      console.log(`Failed to generate signed URL for ${wallpaper.img_path}:`, e);
+      result.img_url = "";
+    }
   }
 
   return result;

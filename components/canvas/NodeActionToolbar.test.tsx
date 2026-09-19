@@ -7,6 +7,7 @@ import type { CanvasNodeDTO } from "@/types/canvas";
 
 const mocks = vi.hoisted(() => ({
   prepareCanvasDownload: vi.fn(),
+  saveCanvasMediaToWorkbench: vi.fn(),
   downloadItems: [] as Array<() => Promise<void>>,
 }));
 
@@ -25,6 +26,7 @@ vi.mock("@/store/useCanvasStore", () => ({
 }));
 vi.mock("@/services/api", () => ({
   prepareCanvasDownload: mocks.prepareCanvasDownload,
+  saveCanvasMediaToWorkbench: mocks.saveCanvasMediaToWorkbench,
 }));
 vi.mock("@/components/ui/button", () => ({
   Button: ({ children, asChild: _asChild, ...props }: React.PropsWithChildren<any>) => (
@@ -101,5 +103,23 @@ describe("NodeActionToolbar downloads", () => {
 
     expect(document.createElement).toHaveBeenCalledWith("iframe");
     expect(frame.src).toBe("https://oss.test/song.mp3");
+  });
+
+  it("shows save to workbench for media nodes with output", () => {
+    const html = renderToStaticMarkup(<NodeActionToolbar node={audioNode} />);
+    expect(html).toContain("saveToWorkbench");
+  });
+
+  it("hides save to workbench when the node has no media", () => {
+    const html = renderToStaticMarkup(
+      <NodeActionToolbar
+        node={{
+          ...audioNode,
+          type: "text",
+          output: { kind: "text", text: "hello" },
+        }}
+      />
+    );
+    expect(html).not.toContain("saveToWorkbench");
   });
 });

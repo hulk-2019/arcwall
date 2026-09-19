@@ -87,11 +87,16 @@ const config = {
           from: { transform: "translateX(0)" },
           to: { transform: "translateX(-100%)" },
         },
+        "disc-spin": {
+          from: { transform: "rotate(0deg)" },
+          to: { transform: "rotate(360deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         marquee: "marquee 40s linear infinite",
+        "disc-spin": "disc-spin 8s linear infinite",
       },
     },
   },

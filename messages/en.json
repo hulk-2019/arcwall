@@ -172,7 +172,9 @@
       "retry": "Retry",
       "makeSame": "Make Same",
       "unfavorite": "Unfavorite",
-      "publishToHomepage": "Publish to Homepage"
+      "publishToHomepage": "Publish to Homepage",
+      "audioWork": "Audio work",
+      "videoWork": "Video work"
     },
     "workbench": {
       "confirmDelete": "Are you sure you want to delete this wallpaper?",
@@ -646,6 +648,10 @@
     "polishFailed": "Polish failed",
     "polishEmpty": "Enter some text first",
     "preview": "Preview",
+    "saveToWorkbench": "Save to workbench",
+    "saveToWorkbenchSuccess": "Saved to workbench",
+    "saveToWorkbenchAlreadySaved": "Already in the workbench",
+    "saveToWorkbenchFailed": "Failed to save to workbench",
     "download": "Download",
     "downloadOriginal": "Download original",
     "downloadFailed": "Download failed. Please try again.",
@@ -682,5 +688,11 @@
     "duplicateNode": "Duplicate node",
     "staleOutput": "Output stale",
     "staleOutputHint": "Config changed after the last run; showing an outdated output. Re-run this node so downstream nodes can reference the latest result"
+  },
+  "audioPlayer": {
+    "play": "Play",
+    "pause": "Pause",
+    "replay": "Replay",
+    "volume": "Volume"
   }
 }

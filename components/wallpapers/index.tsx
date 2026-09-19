@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Sparkles, Heart, Eye } from "lucide-react";
+import { Sparkles, Heart, Eye, Play } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Wallpaper } from "@/types/wallpaper";
@@ -18,6 +18,8 @@ import { useMutation } from "@tanstack/react-query";
 import { toggleFavorite } from "@/services/api";
 import { WallpaperPreviewDialog } from "@/components/ui/wallpaper-preview-dialog";
 import { useTranslations } from "next-intl";
+import { wallpaperMediaType } from "@/lib/wallpaper-media";
+import { AudioDiscPlayer } from "@/components/ui/audio-disc-player";
 
 interface Props {
   wallpapers: Wallpaper[] | null;
@@ -156,12 +158,7 @@ export default function WallpapersGrid({ wallpapers, loading }: Props) {
                     style={{ aspectRatio: getAspectRatio(wallpaper.aspect_ratio_name) }}
                     onClick={() => setPreviewIndex(idx)}
                   >
-                    <ImageWithPlaceholder
-                      src={wallpaper.img_thumbnail_url || ""}
-                      alt={wallpaper.img_description}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
+                    <HomepageMediaCover wallpaper={wallpaper} />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                     
                     <div className="absolute top-3 right-3 left-3 flex justify-between items-start opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
@@ -188,6 +185,7 @@ export default function WallpapersGrid({ wallpapers, loading }: Props) {
                           </TooltipTrigger>
                           <TooltipContent><p>{tPreview("card.preview")}</p></TooltipContent>
                         </Tooltip>
+                        {wallpaperMediaType(wallpaper) === "image" && (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -201,6 +199,7 @@ export default function WallpapersGrid({ wallpapers, loading }: Props) {
                           </TooltipTrigger>
                           <TooltipContent><p>{t("makeSame")}</p></TooltipContent>
                         </Tooltip>
+                        )}
                       </div>
                     </div>
 
@@ -239,7 +238,8 @@ export default function WallpapersGrid({ wallpapers, loading }: Props) {
           totalCount={wallpapers.length}
           onPrev={() => setPreviewIndex((prev) => prev === null ? prev : prev === 0 ? wallpapers.length - 1 : prev - 1)}
           onNext={() => setPreviewIndex((prev) => prev === null ? prev : prev === wallpapers.length - 1 ? 0 : prev + 1)}
-          renderActions={(wallpaper) => (
+          renderActions={(wallpaper) =>
+            wallpaperMediaType(wallpaper) === "image" ? (
             <Button
               className="w-full rounded-full gap-2 font-semibold"
               onClick={() => { handleMakeSame(wallpaper); setPreviewIndex(null); }}
@@ -247,9 +247,41 @@ export default function WallpapersGrid({ wallpapers, loading }: Props) {
               <Sparkles className="h-4 w-4" />
               {t("makeSame")}
             </Button>
-          )}
+            ) : null
+          }
         />
       )}
     </TooltipProvider>
+  );
+}
+
+function HomepageMediaCover({ wallpaper }: { wallpaper: Wallpaper }) {
+  const mediaType = wallpaperMediaType(wallpaper);
+  if (mediaType === "video") {
+    return (
+      <>
+        <video
+          src={wallpaper.img_url || ""}
+          className="h-full w-full object-cover"
+          muted
+          playsInline
+          preload="metadata"
+        />
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20">
+          <Play className="h-8 w-8 text-white" fill="currentColor" />
+        </div>
+      </>
+    );
+  }
+  if (mediaType === "audio") {
+    return <AudioDiscPlayer variant="cover" title={wallpaper.img_description} size="md" />;
+  }
+  return (
+    <ImageWithPlaceholder
+      src={wallpaper.img_thumbnail_url || ""}
+      alt={wallpaper.img_description}
+      fill
+      className="object-cover transition-transform duration-700 group-hover:scale-110"
+    />
   );
 }

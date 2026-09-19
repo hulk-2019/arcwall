@@ -12,7 +12,7 @@ vi.mock("ali-oss", () => ({
   },
 }));
 
-import { getSignedDownloadUrl, objectExists } from "./oss";
+import { getSignedDownloadUrl, objectExists, generateWorkbenchMediaKeys } from "./oss";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -48,5 +48,13 @@ describe("objectExists", () => {
     mocks.head.mockRejectedValue({ code: "NoSuchKey", status: 404 });
 
     await expect(objectExists("canvas/downloads/missing.zip")).resolves.toBe(false);
+  });
+});
+
+describe("generateWorkbenchMediaKeys", () => {
+  it("keeps the source extension under wallpapers/", () => {
+    const keys = generateWorkbenchMediaKeys(".mp4");
+    expect(keys.original).toMatch(/^wallpapers\/\d{8}\/[a-f0-9]+\.mp4$/);
+    expect(keys.thumbnail).toMatch(/^wallpapers\/\d{8}\/[a-f0-9]+\.jpg$/);
   });
 });

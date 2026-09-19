@@ -60,7 +60,10 @@ export const ERROR_MESSAGES = {
   "canvas.polish.failed": { zh: "AI 润色失败", en: "AI polish failed" },
   "canvas.polish.too.long": { zh: "文本过长（最多 5000 字）", en: "Text too long (5000 chars max)" },
   "canvas.lyrics.failed": { zh: "Suno 歌词生成失败", en: "Failed to generate Suno lyrics" },
-  "canvas.lyrics.too.long": { zh: "歌词描述过长（最多 200 字）", en: "Lyrics description is too long (200 chars max)" }
+  "canvas.lyrics.too.long": { zh: "歌词描述过长（最多 200 字）", en: "Lyrics description is too long (200 chars max)" },
+  "canvas.workbench.save.failed": { zh: "保存至工作台失败", en: "Failed to save to workbench" },
+  "canvas.workbench.no.media": { zh: "节点还没有可保存的素材", en: "This node has no media to save" },
+  "canvas.workbench.unsupported.node": { zh: "仅图片、视频、音频节点可保存至工作台", en: "Only image, video, and audio nodes can be saved to the workbench" }
 } as const;
 
 export type ErrorMessageKey = keyof typeof ERROR_MESSAGES;
